@@ -1,0 +1,4 @@
+# Workspace packages. There is no packages/ directory yet:
+# it will appear only when a genuinely shared package is needed (see docs/decisions/0001).
+packages:
+  - "apps/*"

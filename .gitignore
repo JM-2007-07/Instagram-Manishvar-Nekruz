@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment files: only *.env.example files are committed
+.env
+.env.*
+!.env.example
+
+# Local media storage used in development (see docs/architecture/ARCHITECTURE.md)
+apps/api/storage/
+
+# Tests and coverage
+coverage/
+test-results/
+playwright-report/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json
