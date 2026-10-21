@@ -31,12 +31,12 @@ Phases 3, 4 и 5 зависят только от Phase 2 и могут идти
   - ESLint, Prettier, `typecheck`, тестовые раннеры в обоих приложениях;
   - backend: валидация env, Prisma подключён к БД, глобальный префикс, `ValidationPipe`, фильтр ошибок, проверка `Origin`, `helmet`, Swagger, `GET /health`;
   - frontend: rewrite `/api/*`, `lib/api` (клиент, server-клиент, ошибки), `QueryClientProvider`, страница-заглушка, вызывающая `/health`;
-  - `pnpm contract` работает; CI в GitHub Actions: lint, typecheck, test, проверка контракта.
+  - `npm run contract` работает; CI в GitHub Actions: lint, typecheck, test, проверка контракта.
 - **Критерии приёмки:**
-  - `pnpm install && pnpm dev` на чистой машине по LOCAL_SETUP.md запускает оба приложения;
+  - `npm install && npm run dev` на чистой машине по LOCAL_SETUP.md запускает оба приложения;
   - страница web показывает статус `/api/v1/health`, полученный **через прокси**;
   - проверено, что через rewrite проходят `Set-Cookie`, `Origin` и `multipart` 100 МБ (результат записан в ADR 0004);
-  - изменённый DTO без `pnpm contract` роняет CI;
+  - изменённый DTO без `npm run contract` роняет CI;
   - бизнес-функций нет.
 
 ## Phase 1 — Аутентификация и сессии

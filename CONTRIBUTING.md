@@ -36,7 +36,7 @@ chore(ci): add contract check
 - Каждое изменение в `main` — через PR с [шаблоном](.github/pull_request_template.md).
 - Ревью второго студента обязательно; цель ревью — и качество, и понимание чужого кода.
 - PR небольшой: одна задача, желательно до ~400 строк изменений (без сгенерированных файлов).
-- Перед запросом ревью: `pnpm lint`, `pnpm typecheck`, `pnpm test`, [чек-лист качества](docs/QUALITY_CHECKLIST.md).
+- Перед запросом ревью: `npm run lint`, `npm run typecheck`, `npm run test`, [чек-лист качества](docs/QUALITY_CHECKLIST.md).
 - CI должен быть зелёным. Слияние — **Squash and merge**, заголовок PR — в формате коммита.
 - Ревью — в течение одного рабочего дня; блокирующие замечания отмечаются явно.
 
@@ -55,11 +55,12 @@ chore(ci): add contract check
 |---|---|
 | `apps/api/prisma/schema.prisma`, `prisma/migrations/` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-schemaprisma-и-миграции) |
 | `docs/api/API_CONTRACT.md`, `docs/api/openapi.json`, `apps/web/src/lib/api/schema.d.ts` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-api-контракта) |
-| корневые `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml` | при конфликте lockfile — взять версию `main` и выполнить `pnpm install` заново |
+| корневые `package.json`, `package-lock.json` | при конфликте lockfile — взять версию `main`, затем `npm install` заново |
 | `apps/api/src/common/`, `config/`, `prisma/`, `storage/`, `main.ts`, `app.module.ts` | владелец фундамента backend (A) или по договорённости |
 | `apps/web/src/lib/`, `app/layout.tsx`, `app/(main)/layout.tsx`, `components/layout/`, `next.config.ts`, `proxy.ts` | владелец фундамента frontend (B) или по договорённости |
 | `apps/web/src/components/ui/` | добавлять компоненты через CLI shadcn можно обоим; правки существующих — по договорённости |
-| `.github/`, `.env.example`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/` | только через PR с ревью второго |
+| `.github/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/` | только через PR с ревью второго |
+| `docs/STATUS.md` | меняют оба: каждый — только строки своих задач; записи журнала добавляются сверху. При конфликте слияния сохраняются **обе** записи |
 
 Регистрация модуля в `app.module.ts` — одна строка; конфликт решается простым объединением обеих строк.
 
@@ -73,7 +74,7 @@ chore(ci): add contract check
 
 ## Изменения контракта
 
-1. Небольшие (новый endpoint, новое необязательное поле) — PR с обновлённым `API_CONTRACT.md` и `pnpm contract`.
+1. Небольшие (новый endpoint, новое необязательное поле) — PR с обновлённым `API_CONTRACT.md` и `npm run contract`.
 2. Ломающие (переименование, удаление, смена типа или обязательности) — сначала сообщение второму, затем PR.
 3. Изменение общих соглашений — ADR в `docs/decisions/`.
 

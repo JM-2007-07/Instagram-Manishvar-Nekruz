@@ -390,4 +390,4 @@ type UserSearchEntry = { id: string; user: UserSummary; createdAt: string };
 
 Любое изменение путей, методов, полей или кодов ошибок — по процессу
 [CHANGE_PROCESS.md](../development/CHANGE_PROCESS.md#изменение-api-контракта): сначала этот документ,
-затем DTO NestJS, затем `pnpm contract` (экспорт Swagger + генерация типов frontend), всё — в одном PR.
+затем DTO NestJS, затем `npm run contract` (экспорт Swagger + генерация типов frontend), всё — в одном PR.

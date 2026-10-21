@@ -11,7 +11,7 @@
 ## Решение
 
 - Источник истины — DTO NestJS с декораторами Swagger.
-- `pnpm contract`: backend экспортирует `docs/api/openapi.json`; `openapi-typescript` генерирует
+- `npm run contract`: backend экспортирует `docs/api/openapi.json`; `openapi-typescript` генерирует
   `apps/web/src/lib/api/schema.d.ts`. Оба файла коммитятся.
 - CI повторяет генерацию и падает при расхождении; `typecheck` ловит вызовы несуществующих endpoint'ов.
 

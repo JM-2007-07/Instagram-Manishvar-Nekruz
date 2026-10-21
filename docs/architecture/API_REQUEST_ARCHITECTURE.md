@@ -168,9 +168,9 @@ export const postKeys = {
 ## 10. Соответствие контракту
 
 1. Backend — источник истины: DTO NestJS + декораторы → Swagger.
-2. `pnpm contract`: экспорт `docs/api/openapi.json` → генерация `apps/web/src/lib/api/schema.d.ts`.
+2. `npm run contract`: экспорт `docs/api/openapi.json` → генерация `apps/web/src/lib/api/schema.d.ts`.
 3. Оба файла коммитятся. Изменение контракта видно в diff PR.
-4. CI выполняет `pnpm contract` и падает, если сгенерированные файлы отличаются от закоммиченных,
-   затем `pnpm typecheck` — frontend не соберётся, если вызывает несуществующий endpoint или поле.
+4. CI выполняет `npm run contract` и падает, если сгенерированные файлы отличаются от закоммиченных,
+   затем `npm run typecheck` — frontend не соберётся, если вызывает несуществующий endpoint или поле.
 
 Процесс изменения: [CHANGE_PROCESS.md](../development/CHANGE_PROCESS.md#изменение-api-контракта).
