@@ -13,7 +13,7 @@ flowchart TD
     AUTH --> USERS[users / профили]
     ST --> USERS
     AUTH --> FOL[follows]
-    USERS --> SH[search-history]
+    USERS --> SH[search-history] 
     ST --> POSTS[posts]
     AUTH --> POSTS
     FOL --> FEED[лента /feed]
