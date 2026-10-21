@@ -20,8 +20,9 @@ color: cyan
 2. `docs/development/CODING_CONVENTIONS.md` §1 и §3 — структура `features/`, образцы `api.ts` и мутации в компоненте. **Следуй им.**
 3. `docs/architecture/API_REQUEST_ARCHITECTURE.md` — `baseApi`, store, типы (§4), эндпоинты (§6.2),
    **таблица тегов §6.3**, ленты и опрос (§6.4), оптимистичные обновления (§6.5), ошибки (§7), загрузка файлов (§9).
-4. `docs/architecture/RENDERING_STRATEGY.md` — `page.tsx` без загрузки данных, данные в Client Component.
-5. Спецификация функции в `docs/features/`: сценарии, ошибки и пустые состояния, критерии приёмки.
+4. `docs/architecture/RENDERING_STRATEGY.md` — `page.tsx` без загрузки данных, структура маршрутов, окна `@modal`.
+4a. **`docs/design/DESIGN_SYSTEM.md` и `docs/design/SCREENS.md`** — токены, размеры и раскладка экрана задачи. Обязательно для любого UI.
+5. Функции в `docs/product/FEATURE_CATALOG.md` и спецификация в `docs/features/`: сценарии, ошибки и пустые состояния, критерии приёмки.
 6. `apps/web/src/lib/api/schema.d.ts`, `types.ts`, `base-api.ts` и существующие `features/*/api.ts` — повторяй их форму.
 
 # Входные данные от оркестратора
@@ -39,7 +40,8 @@ ID задачи, модуль, шаг плана (страницы, компон
    - `build.query` для чтения, `build.infiniteQuery` для постраничных списков (`initialPageParam: 1`,
      `getNextPageParam` по `page * limit < total`), `build.mutation` для изменений;
    - `providesTags` / `invalidatesTags` — строго по таблице §6.3; если нужного тега нет в таблице — остановись и сообщи;
-   - `onQueryStarted` + `updateQueryData` — **только** для лайков и избранного (через `updatePostInCache`);
+   - `onQueryStarted` + `updateQueryData` — **только** в случаях из API_REQUEST_ARCHITECTURE.md §6.5 (лайки, сохранение,
+     сообщения и реакции) с откатом при ошибке;
    - `query` содержит только `url`, `method`, `params`, `body` — без логики;
    - хуки экспортируются в конце файла.
 3. **Компоненты** в `features/<name>/components/`: Client Component с хуками; три состояния — `isLoading` → skeleton,
@@ -61,6 +63,10 @@ ID задачи, модуль, шаг плана (страницы, компон
 - Браузер ходит только на относительный `/api/v1/...`. Cookie не читаются из JavaScript.
 - Нет `dangerouslySetInnerHTML`; пользовательский текст выводится как текст.
 - Адаптивность от 360 px; подписи у полей; управление с клавиатуры; `alt` у изображений.
+- Дизайн: только токены из DESIGN_SYSTEM.md (никаких `#…`), размеры из §4, иконки lucide-react, свой бренд (`BrandLogo`,
+  `APP_NAME`); экран проверяется в светлой и тёмной теме на 375 и 1150 px и сравнивается с SCREENS.md.
+- Списки — `infiniteQuery` с курсором; события Socket.IO — обработчики в `features/<name>/realtime.ts` (§6.6);
+  загрузка файлов — только `uploadMedia()` (§9).
 - Тексты интерфейса — на языке, выбранном в Q2 (по умолчанию русский).
 
 # Запрещено

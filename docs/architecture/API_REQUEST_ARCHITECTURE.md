@@ -42,8 +42,9 @@ async rewrites() {
 |---|---|---|
 | Браузер (RTK Query) | `/api/v1` (относительный) | константа в `lib/api/base-api.ts` |
 | Сервер Next.js (`serverFetch`, `next.config.ts`) | `${API_INTERNAL_URL}/api/v1` | `apps/web/.env.local`, проверяется при старте |
+| Браузер (Socket.IO) | `NEXT_PUBLIC_REALTIME_URL` | `apps/web/.env.local` — единственный публичный адрес ([ADR 0013](../decisions/0013-realtime-socketio.md)) |
 
-Переменной `NEXT_PUBLIC_API_URL` нет: браузеру не нужен адрес NestJS.
+Переменной `NEXT_PUBLIC_API_URL` нет: REST браузер вызывает только через относительный `/api/v1`.
 
 ## 4. Устройство API-слоя
 
@@ -79,7 +80,7 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
   const code = (result.error?.data as ApiErrorBody | undefined)?.code;
   if (result.error?.status === 401 && code === 'UNAUTHENTICATED') {
     api.dispatch(baseApi.util.resetApiState());
-    window.location.assign('/login');
+    window.location.assign('/accounts/login/');
   }
   return result;
 };
@@ -87,8 +88,9 @@ const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQuery
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithAuth,
-  tagTypes: ['Me', 'User', 'Follow', 'Post', 'Feed', 'Comment', 'Favorite',
-             'Story', 'Chat', 'Message', 'SearchHistory', 'Location'],
+  tagTypes: ['Me', 'Settings', 'Session', 'User', 'Follow', 'FollowRequest', 'CloseFriend', 'Privacy',
+             'Post', 'Feed', 'Comment', 'Saved', 'Collection', 'Hashtag', 'Story', 'Highlight',
+             'Chat', 'Message', 'Call', 'Notification', 'Badge', 'SearchHistory', 'Location', 'Report'],
   refetchOnReconnect: true,  // после потери сети данные обновятся сами
   endpoints: () => ({}),     // эндпоинты добавляют функции через injectEndpoints
 });
@@ -132,7 +134,7 @@ type Schemas = components['schemas'];
 
 export type Post = Schemas['PostResponseDto'];        // имена DTO фиксируются в NestJS (T0.2 и далее)
 export type Profile = Schemas['ProfileResponseDto'];
-export type Page<T> = { items: T[]; page: number; limit: number; total: number };
+export type Page<T> = { items: T[]; nextCursor: string | null };   // ADR 0017
 export type ApiErrorBody = Schemas['ApiErrorDto'];
 ```
 
@@ -145,7 +147,7 @@ Server Components **не загружают данные страниц** (ADR 0
 
 | Где | Что | Как |
 |---|---|---|
-| layout `(main)` | проверка сессии до показа приложения | `serverFetch('/me')` с cookie пользователя; `401` → `redirect('/login')` |
+| layout `(main)` | проверка сессии до показа приложения | `serverFetch('/me')` с cookie пользователя; `401` → `redirect('/accounts/login/')` |
 | layout `(auth)` | вошедший пользователь не видит страницу входа | `serverFetch('/me')`; `200` → `redirect('/')` |
 | `generateMetadata` (по необходимости) | заголовок вкладки | `serverFetch` |
 
@@ -191,13 +193,12 @@ export const postsApi = baseApi.injectEndpoints({
       providesTags: (_result, _error, postId) => [{ type: 'Post', id: postId }],
     }),
 
-    getFeed: build.infiniteQuery<Page<Post>, void, number>({
+    getFeed: build.infiniteQuery<Page<Post>, void, string | null>({
       infiniteQueryOptions: {
-        initialPageParam: 1,
-        getNextPageParam: (lastPage) =>
-          lastPage.page * lastPage.limit < lastPage.total ? lastPage.page + 1 : undefined,
+        initialPageParam: null,                                   // первая страница — без курсора
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       },
-      query: ({ pageParam }) => ({ url: '/feed', params: { page: pageParam, limit: 20 } }),
+      query: ({ pageParam }) => ({ url: '/feed', params: { cursor: pageParam ?? undefined, limit: 20 } }),
       providesTags: ['Feed'],
     }),
 
@@ -214,63 +215,81 @@ export const { useGetPostQuery, useGetFeedInfiniteQuery, useDeletePostMutation }
 Правила, которые делают код однообразным:
 
 1. Один файл `api.ts` на функцию; один вызов `injectEndpoints`; хуки экспортируются в конце файла.
-2. Имена: запрос — `getX`, `listX` (бесконечный список — тоже `getX`, хук `useGetXInfiniteQuery`), изменение —
-   глагол: `createPost`, `deletePost`, `likePost`, `followUser`.
-3. Каждый `query` возвращает только URL и метод/тело — никакой логики.
+2. Имена: чтение — `getX` (бесконечный список — тоже `getX`, хук `useGetXInfiniteQuery`), изменение — глагол:
+   `createPost`, `deletePost`, `likePost`, `followUser`.
+3. Каждый `query` возвращает только URL, метод, `params`, `body` — никакой логики.
 4. Каждый запрос объявляет `providesTags`, каждая мутация — `invalidatesTags` по таблице §6.3.
-5. В компонентах мутации вызываются с `.unwrap()` внутри `try/catch`, ошибки разбираются `getApiError()`.
+5. Списки — всегда `infiniteQuery` с курсором по образцу выше (ADR 0017).
+6. В компонентах мутации вызываются с `.unwrap()` внутри `try/catch`, ошибки разбираются `getApiError()`.
 
 ### 6.3 Правила инвалидации
 
 Тег — метка данных в кэше. Запрос «предоставляет» теги, мутация «сбрасывает» теги, и все запросы с этими тегами
-загружаются заново. `{ type: 'Post', id }` — конкретный пост; `'Feed'` — весь список.
+загружаются заново. `{ type: 'Post', id }` — конкретный объект; `'Feed'` — все ленты и сетки публикаций.
 
 | Запрос | `providesTags` |
 |---|---|
-| `getMe` | `Me` |
-| `getProfile(userId)` | `{User, id}` |
-| `getFollowers` / `getFollowing(userId)` | `{Follow, userId}` |
-| `getPost(postId)` | `{Post, id}` |
-| `getFeed`, `getExplore`, `getUserPosts`, `getReels` | `Feed` |
-| `getComments(postId)` | `{Comment, postId}` |
-| `getFavorites` | `Favorite` |
-| `getStoriesFeed`, `getUserStories`, `getStory` | `Story` |
-| `getChats` | `Chat` |
+| `getMe`, `getBadges` | `Me`, `Badge` |
+| `getSettings`, `getNotificationPreferences`, `getSessions` | `Settings`, `Session` |
+| `getProfile(userId)`, `getProfileByUserName` | `{User, id}` |
+| `getFollowers` / `getFollowing(userId)`, `getMutualFollowers` | `{Follow, userId}` |
+| `getFollowRequests` | `FollowRequest` |
+| `getCloseFriends`, `getFavoriteAccounts` | `CloseFriend` |
+| `getBlocked`, `getRestricted`, `getMuted`, `getStoryHiddenFrom` | `Privacy` |
+| `getPost(postId)`, `getPostByShortcode` | `{Post, id}` |
+| `getFeed*`, `getExplore`, `getReels`, `getUserPosts`, `getUserReels`, `getUserTagged`, `getArchivedPosts`, `getHashtagPosts`, `getLocationPosts` | `Feed` |
+| `getComments(postId)`, `getReplies(commentId)` | `{Comment, postId}` |
+| `getSaved`, `getCollections`, `getCollectionPosts` | `Saved`, `Collection` |
+| `getHashtag` | `{Hashtag, name}` |
+| `getStoryTray`, `getUserStories`, `getStory`, `getStoryViewers`, `getArchivedStories` | `Story` |
+| `getHighlights(userId)`, `getHighlight` | `Highlight` |
+| `getChats`, `getChat` | `Chat` |
 | `getMessages(chatId)` | `{Message, chatId}` |
-| `getTextHistory` / `getUserHistory` | `{SearchHistory, 'queries'}` / `{SearchHistory, 'users'}` |
-| `getLocations` | `Location` |
+| `getCall` | `{Call, id}` |
+| `getNotifications` | `Notification` |
+| `getSearchHistory(type)` | `{SearchHistory, type}` |
+| `getLocations`, `getLocation` | `Location` |
+| `getReports` (Admin) | `Report` |
 
 | Мутация | `invalidatesTags` |
 |---|---|
-| вход, выход, регистрация | — весь кэш: `dispatch(baseApi.util.resetApiState())`, затем переход |
-| `updateMe`, аватар | `Me`, `{User, myId}` |
+| вход, выход, регистрация, подтверждение кода, соцвход | весь кэш: `dispatch(baseApi.util.resetApiState())`, затем переход |
+| `updateMe`, имя пользователя, email, аватар, ссылки | `Me`, `{User, myId}` |
+| `updateSettings`, настройки уведомлений, завершение сессии | `Settings`, `Session` |
 | `followUser` / `unfollowUser` | `{User, userId}`, `{Follow, userId}`, `{Follow, myId}`, `Feed`, `Story` |
-| `createPost` / `deletePost` | `Feed`, `{Post, id}` (удаление), `{User, myId}` (счётчик) |
-| `likePost`, `favoritePost` (+ снятие) | оптимистичное обновление (§6.5), затем `Favorite` для избранного |
-| `createComment` / `deleteComment` | `{Comment, postId}`, `{Post, postId}` (счётчик) |
-| `createStory` / `deleteStory` | `Story` |
-| `likeStory`, `viewStory` | `Story` (просмотр — без инвалидации, только запись) |
-| `sendMessage` / `deleteMessage` | `{Message, chatId}`, `Chat` |
-| `createChat` / `deleteChat` | `Chat` |
-| история поиска | соответствующий `{SearchHistory, …}` |
-| локации (Admin) | `Location` |
-| `viewPost` | — (не влияет на то, что видит сам пользователь) |
+| принять/отклонить запрос, удалить подписчика | `FollowRequest`, `{Follow, myId}`, `{User, myId}`, `Badge` |
+| близкие друзья, избранные аккаунты | `CloseFriend`, `Feed` (избранные), `Story` (близкие) |
+| блок, ограничение, скрытие, «скрыть историю от» | `Privacy`, `{User, userId}`, `Feed`, `Story`, `Chat`, `Comment` |
+| `createPost` / `updatePost` / `deletePost`, архив, закрепление | `Feed`, `{Post, id}`, `{User, myId}` |
+| `likePost`, `savePost` (+ снятие) | оптимистичное обновление (§6.5), затем `Saved` для сохранения |
+| `createComment` / `updateComment` / `deleteComment`, закрепление, одобрение | `{Comment, postId}`, `{Post, postId}` (счётчик) |
+| `likeComment` | оптимистичное обновление комментария в кэше `getComments`/`getReplies` |
+| подборки | `Collection`, `Saved` |
+| `createStory` / `deleteStory` | `Story`, `Highlight` |
+| `likeStory`, ответы на стикеры | оптимистично в `getStory`; `Story` |
+| `viewStory` | без инвалидации; кольцо в `getStoryTray` обновляется через `updateQueryData` |
+| актуальное | `Highlight` |
+| сообщения, реакции, редактирование, отмена | оптимистично в `{Message, chatId}`; `Chat` |
+| чаты: создать, изменить, участники, принять, удалить, без звука, прочитано | `Chat`, `Badge` |
+| звонки | `{Call, id}`, `{Message, chatId}` |
+| `markNotificationsRead` | `Notification`, `Badge` |
+| история поиска | `{SearchHistory, type}` |
+| жалоба | — (тост «Спасибо, что сообщили») |
+| Admin: места, жалобы, галочки, баны | `Location`, `Report`, `{User, userId}` |
+| `playPost` | — |
 
-### 6.4 Пагинация, поиск, опрос
+### 6.4 Пагинация и поиск
 
-- Ленты, комментарии, сообщения, списки подписчиков — `build.infiniteQuery` (образец в §6.2):
-  `fetchNextPage()` при прокрутке, `hasNextPage` — есть ли ещё страницы, данные — `data.pages`.
-- Сообщения чата: новые сначала; при сдвиге страниц из-за новых сообщений дубли убираются по `id` при отображении (Q29).
-- Поиск: обычный `build.query` с аргументом-строкой; ввод с задержкой ~300 мс (debounce) перед запросом;
-  пустая строка — `skip: true`.
-- Чат без real-time (Q19): `useGetMessagesInfiniteQuery(chatId, { pollingInterval: 5000, skipPollingIfUnfocused: true })` —
-  опрос только на открытом экране чата и только когда вкладка активна.
+- Все списки — `build.infiniteQuery` с курсором (образец §6.2): `fetchNextPage()` при прокрутке
+  (`IntersectionObserver` у последнего элемента), `hasNextPage`, данные — `data.pages.flatMap(p => p.items)`.
+- Сообщения чата: `getMessages` — новые сначала; на экране список переворачивается, подгрузка — при прокрутке вверх.
+- Поиск: `build.query` с аргументом-строкой; ввод с задержкой ~300 мс (debounce); пустая строка — `skip: true`.
 - Хранение неиспользуемых данных — по умолчанию RTK Query (60 с); `refetchOnReconnect: true` в `createApi`.
 
-### 6.5 Оптимистичные обновления — только лайки и избранное
+### 6.5 Оптимистичные обновления
 
-Пользователь должен видеть сердце сразу, а не через полсекунды. Для этого мутация меняет кэш до ответа сервера
-и откатывает изменение при ошибке:
+Мгновенная реакция нужна там, где пользователь ждёт её в Instagram: лайки (постов, комментариев, историй),
+сохранение, отправка сообщения, реакции на сообщения. Мутация меняет кэш до ответа сервера и откатывает при ошибке:
 
 ```ts
 likePost: build.mutation<void, { postId: string; liked: boolean }>({
@@ -278,7 +297,7 @@ likePost: build.mutation<void, { postId: string; liked: boolean }>({
   async onQueryStarted({ postId, liked }, { dispatch, getState, queryFulfilled }) {
     const patches = updatePostInCache(dispatch, getState, postId, (post) => {
       post.isLikedByMe = liked;
-      post.likeCount += liked ? 1 : -1;
+      if (post.likeCount !== null) post.likeCount += liked ? 1 : -1;   // null — число скрыто автором
     });
     try {
       await queryFulfilled;
@@ -290,9 +309,34 @@ likePost: build.mutation<void, { postId: string; liked: boolean }>({
 ```
 
 `updatePostInCache` (`features/posts/cache.ts`, ~20 строк) применяет одно изменение ко всем местам, где пост лежит
-в кэше: `getPost` и бесконечные списки (`getFeed`, `getExplore`, `getUserPosts`, `getReels`) — через
-`postsApi.util.selectCachedArgsForQuery` и `postsApi.util.updateQueryData`. Так лайк в ленте и на странице поста
-всегда совпадает. Для всех остальных мутаций — только инвалидация тегов.
+в кэше: `getPost` и бесконечные списки с тегом `Feed` — через `postsApi.util.selectCachedArgsForQuery` и
+`postsApi.util.updateQueryData`. Так лайк в ленте и на странице поста всегда совпадает.
+
+Сообщение отправляется с `clientId`: в кэш сразу добавляется сообщение со статусом «отправляется», ответ сервера
+(или событие `message:new` с тем же `clientId`) заменяет его, ошибка — помечает «Не отправлено. Повторить».
+
+### 6.6 Реальное время → кэш RTK Query
+
+Одно подключение Socket.IO на вкладку (`lib/realtime.ts`), создаётся после входа в `StoreProvider` и закрывается при
+выходе. Каждое событие из [REALTIME.md](../api/REALTIME.md) обрабатывается **одной функцией** рядом с эндпоинтами
+своей функции (`features/chat/realtime.ts`, `features/notifications/realtime.ts`):
+
+```ts
+// features/chat/realtime.ts (образец)
+export function registerChatEvents(socket: Socket, dispatch: AppDispatch) {
+  socket.on('message:new', ({ message }) => {
+    dispatch(chatApi.util.updateQueryData('getMessages', message.chatId, (draft) => {
+      const first = draft.pages[0];
+      if (!first.items.some((m) => m.id === message.id)) first.items.unshift(message);
+    }));
+    dispatch(baseApi.util.invalidateTags(['Chat', 'Badge']));
+  });
+}
+```
+
+Правила: событие либо точечно меняет кэш (`updateQueryData`), либо сбрасывает тег — без своей логики «что
+показывать»; эфемерные состояния (печатает, в сети, входящий звонок) — в локальном `useState`/контексте экрана,
+не в Redux. После переподключения — сброс тегов `Chat`, `Message`, `Notification`, `Badge`.
 
 ## 7. Ошибки и состояния загрузки
 
@@ -316,17 +360,25 @@ likePost: build.mutation<void, { postId: string; liked: boolean }>({
 
 ## 9. Загрузка файлов
 
+Двухшаговая, как в контракте ([endpoints/media.md](../api/endpoints/media.md)):
+
+1. **Загрузка** каждого файла — `uploadMedia(file, purpose, onProgress)` в `lib/api/upload.ts`. Это **единственное
+   исключение** из правила «запросы только через RTK Query»: прогресс загрузки нужен на экране создания публикации, а
+   `fetch` его не сообщает, поэтому функция использует `XMLHttpRequest` (тот же origin, cookie отправляется сама).
+2. **Создание объекта** — обычная мутация RTK Query с `mediaIds` в JSON:
+
 ```ts
-createPost: build.mutation<Post, FormData>({
-  query: (formData) => ({ url: '/posts', method: 'POST', body: formData }),
-  invalidatesTags: ['Feed'],
+createPost: build.mutation<Post, CreatePostBody>({
+  query: (body) => ({ url: '/posts', method: 'POST', body }),
+  invalidatesTags: ['Feed', 'Me'],
 }),
 ```
 
-- Тело — `FormData` с полями из контракта (`file` или `files`); `Content-Type` с границей выставляет браузер — вручную не задаётся.
-- До отправки frontend проверяет тип и размер (для удобства); окончательную проверку делает backend.
-- Индикатор прогресса `fetch` не поддерживает. Если он понадобится для видео — отдельная функция на
-  `XMLHttpRequest` только для загрузки (решение при реализации reels, T3.5).
+- До загрузки frontend проверяет тип и размер (для удобства); окончательную проверку делает backend.
+- Видео остаётся в статусе `PROCESSING`; экран ждёт события `media:processed` и только потом активирует «Поделиться»
+  (или публикует пост сразу со статусом `PROCESSING` — для reels, как в Instagram «Публикация обрабатывается»).
+- Обрезка, фильтры, редактор историй выполняются в браузере на `<canvas>` до загрузки; на сервер уходит готовое изображение.
+- Голосовые: `MediaRecorder` → Blob → `uploadMedia(blob, 'VOICE')` → `sendMessage({ type: 'VOICE', mediaIds })`.
 
 ## 10. Соответствие контракту
 

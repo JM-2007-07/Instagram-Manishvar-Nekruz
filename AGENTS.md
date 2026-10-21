@@ -10,7 +10,8 @@
 - Монорепозиторий **npm workspaces**: `apps/web` (Next.js App Router, TypeScript, Tailwind, shadcn/ui, RTK Query)
   и `apps/api` (NestJS, REST `/api/v1`, Swagger, Prisma, PostgreSQL).
 - Сессии — серверные, в PostgreSQL, HttpOnly cookie. Браузер ходит в API через same-origin прокси Next.js.
-- Главный критерий качества: **студент может объяснить любой файл преподавателю.** Простота важнее «правильных» абстракций.
+- Цель продукта — **паритет с веб-Instagram** по функциям и дизайну, со своим брендом ([ADR 0011](docs/decisions/0011-instagram-parity-scope.md), [ADR 0012](docs/decisions/0012-design-system-instagram.md)).
+- Главный критерий качества кода: **студент может объяснить любой файл преподавателю.** Простота важнее «правильных» абстракций.
 
 ## 2. С чего начать — порядок чтения
 
@@ -19,7 +20,9 @@
 | 1 | [docs/STATUS.md](docs/STATUS.md) | **что сделано, что в работе, что дальше**, блокеры, оглавление историй (§7) — прочитай 1–3 последние истории |
 | 2 | [docs/README.md](docs/README.md) | карта документации: какой документ за что отвечает и что читать под задачу |
 | 3 | [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) | как устроена система (10 минут чтения) |
-| 4 | [docs/GLOSSARY.md](docs/GLOSSARY.md) | термины и обозначения (`T1.2`, `Q10`, `P4`, Owner, reel…) |
+| 4 | [docs/GLOSSARY.md](docs/GLOSSARY.md) | термины и обозначения (`F-DM-05`, `T1.2`, `Q10`, `P4`, Owner, reel…) |
+| 4a | [docs/product/FEATURE_CATALOG.md](docs/product/FEATURE_CATALOG.md) | что умеет продукт и как ведёт себя каждая функция |
+| 4b | [docs/design/DESIGN_SYSTEM.md](docs/design/DESIGN_SYSTEM.md), [SCREENS.md](docs/design/SCREENS.md) | как выглядит интерфейс (для любой UI-задачи) |
 | 5 | документы под задачу | по таблице «Что читать под задачу» в [docs/README.md](docs/README.md#что-читать-под-задачу) |
 | 6 | [docs/development/AGENT_PLAYBOOKS.md](docs/development/AGENT_PLAYBOOKS.md) | пошаговый порядок работы для типовых задач |
 | 7 | [docs/development/AI_AGENTS.md](docs/development/AI_AGENTS.md) | роли субагентов (planner, backend-dev, reviewer…), модели и конвейер задачи |
@@ -34,10 +37,12 @@
 |---|---|
 | Что сейчас происходит, какая задача следующая | [docs/STATUS.md](docs/STATUS.md) |
 | Как проект пришёл к текущему состоянию (хроника действий) | [docs/stories/](docs/stories/README.md) |
-| Что строим и что исключено | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) |
+| Что умеет продукт, поведение функций | [docs/product/FEATURE_CATALOG.md](docs/product/FEATURE_CATALOG.md) |
+| Границы объёма, NFR | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) |
+| Как выглядит экран | [docs/design/SCREENS.md](docs/design/SCREENS.md), значения — [DESIGN_SYSTEM.md](docs/design/DESIGN_SYSTEM.md) |
 | Открытые вопросы и значения по умолчанию | [docs/REQUIREMENTS.md §5](docs/REQUIREMENTS.md#5-открытые-вопросы) |
 | Какие задачи, в каком порядке, кто владелец | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) |
-| Endpoint'ы (до появления кода) | [docs/api/API_CONTRACT.md](docs/api/API_CONTRACT.md) |
+| Endpoint'ы и события (до появления кода) | [docs/api/API_CONTRACT.md](docs/api/API_CONTRACT.md) → `docs/api/endpoints/<module>.md`, [REALTIME.md](docs/api/REALTIME.md) |
 | Endpoint'ы (после появления кода) | DTO/контроллеры NestJS → `docs/api/openapi.json` |
 | Модель данных | [docs/database/DATA_MODEL.md](docs/database/DATA_MODEL.md), затем `apps/api/prisma/schema.prisma` |
 | Почему принято решение | [docs/decisions/](docs/decisions/README.md) (ADR) |
@@ -67,19 +72,27 @@
 
 **Архитектура**
 - Бизнес-логика, права и БД — только в NestJS. Next.js не дублирует бизнес-правила.
-- Браузер ходит только в same-origin `/api/v1/...`. Нет `NEXT_PUBLIC_API_URL`.
+- REST браузер вызывает только через same-origin `/api/v1/...`. Нет `NEXT_PUBLIC_API_URL`; единственный публичный адрес —
+  `NEXT_PUBLIC_REALTIME_URL` для Socket.IO (ADR 0013).
 - Запросы из браузера — только RTK Query: один `baseApi` (`apps/web/src/lib/api/base-api.ts`), эндпоинты функции — `injectEndpoints`
   в `features/<name>/api.ts` ([образец](docs/development/CODING_CONVENTIONS.md#32-apits--образец-формы)). Server Components — только `serverFetch` для проверки сессии.
   Не добавлять axios, TanStack Query, SWR, openapi-fetch, Zustand, свои Redux slice'ы, Server Actions для изменений.
+  Исключения ровно два: загрузка файлов с прогрессом — `uploadMedia()` в `lib/api/upload.ts`; события — одно подключение
+  Socket.IO в `lib/realtime.ts`, которое обновляет кэш RTK Query.
 - Компоненты не вызывают API напрямую — только через `features/<name>/api.ts`.
 - Типы API генерируются (`npm run contract`). Не редактировать руками: `docs/api/openapi.json`,
   `apps/web/src/lib/api/schema.d.ts`, `docs/api/original-swagger.json`, влитые миграции Prisma.
 - `apps/web` не импортирует из `apps/api` и наоборот.
-- Не добавлять Redis, BullMQ, Socket.IO, Docker, пакеты в `packages/` без ADR и одобрения пользователя.
+- Socket.IO, WebRTC, sharp, ffmpeg уже приняты (ADR 0013, 0015, 0016). Не добавлять Redis, BullMQ, Docker, медиасервер,
+  пакеты в `packages/` без ADR и одобрения пользователя.
+- **Дизайн:** раскладка и значения — только из DESIGN_SYSTEM.md и SCREENS.md, в компонентах — только токены;
+  свой бренд: не использовать логотип, название, шрифт Instagram Sans и иконки Instagram (ADR 0012).
 
 **Безопасность**
 - Сессия — HttpOnly cookie; JavaScript не читает и не хранит токен. Текущий пользователь — только из `@CurrentUser()`.
 - Каждое изменение данных проверяет права владельца в сервисе; изменения — не через `GET`.
+- Каждая выдача (REST, события, файлы) фильтруется по приватности через `VisibilityService` модуля `privacy`:
+  блокировки в обе стороны, закрытые аккаунты, аудитория историй.
 - Никаких секретов в коде, документах, логах. Не читать и не выводить содержимое `.env`.
 
 **Совместная работа**

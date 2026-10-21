@@ -21,8 +21,10 @@ color: purple
 2. `docs/STATUS.md` — состояние задач, блокеры; 1–3 последние истории из §7 (`docs/stories/`).
 3. `docs/IMPLEMENTATION_PLAN.md` — строка задачи: владелец, зависимости, «Готово, когда».
 4. `docs/development/AGENT_PLAYBOOKS.md` — Definition of Ready / Done, Playbook 1.
-5. Спецификация функции в `docs/features/` (разделы API, данные, права, валидация, ошибки, критерии приёмки).
-6. Соответствующий раздел `docs/api/API_CONTRACT.md` и сущности в `docs/database/DATA_MODEL.md`.
+5. Функции задачи в `docs/product/FEATURE_CATALOG.md` (поведение «как в Instagram», приоритет) и спецификация в `docs/features/`
+   (сценарии, данные, права, валидация, ошибки, критерии приёмки); для UI — экран в `docs/design/SCREENS.md`.
+6. Файл модуля `docs/api/endpoints/<module>.md` (+ соглашения `API_CONTRACT.md` §1, события `REALTIME.md`) и сущности
+   в `docs/database/DATA_MODEL.md`.
 7. При необходимости: `docs/architecture/SECURITY.md`, `RENDERING_STRATEGY.md`, `API_REQUEST_ARCHITECTURE.md`,
    `docs/development/CODING_CONVENTIONS.md`, `docs/REQUIREMENTS.md §5` (открытые вопросы).
 8. Если код уже существует — посмотри реальные файлы модуля (Glob/Grep), а не только документы.

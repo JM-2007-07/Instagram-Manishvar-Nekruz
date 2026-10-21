@@ -54,12 +54,13 @@ chore(ci): add contract check
 | Файл / каталог | Правило |
 |---|---|
 | `apps/api/prisma/schema.prisma`, `prisma/migrations/` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-schemaprisma-и-миграции) |
-| `docs/api/API_CONTRACT.md`, `docs/api/openapi.json`, `apps/web/src/lib/api/schema.d.ts` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-api-контракта) |
+| `docs/api/API_CONTRACT.md` (соглашения, модели), `docs/api/REALTIME.md`, `docs/api/openapi.json`, `apps/web/src/lib/api/schema.d.ts` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-api-контракта) |
+| `docs/api/endpoints/<module>.md` | владелец модуля; изменения, влияющие на чужой модуль, — по CHANGE_PROCESS.md |
 | корневые `package.json`, `package-lock.json` | при конфликте lockfile — взять версию `main`, затем `npm install` заново |
-| `apps/api/src/common/`, `config/`, `prisma/`, `storage/`, `main.ts`, `app.module.ts` | владелец фундамента backend (A) или по договорённости |
-| `apps/web/src/lib/`, `app/layout.tsx`, `app/(main)/layout.tsx`, `components/layout/`, `next.config.ts`, `proxy.ts` | владелец фундамента frontend (B) или по договорённости |
+| `apps/api/src/common/`, `config/`, `prisma/`, `storage/`, `mail/`, `realtime/`, `privacy/` (VisibilityService), `notifications/`, `main.ts`, `app.module.ts` | владелец модуля (IMPLEMENTATION_PLAN) + обязательное ревью второго |
+| `apps/web/src/lib/`, `app/layout.tsx`, `app/(main)/layout.tsx`, `components/layout/`, `next.config.ts`, `proxy.ts` | владелец фундамента frontend + обязательное ревью второго |
 | `apps/web/src/components/ui/` | добавлять компоненты через CLI shadcn можно обоим; правки существующих — по договорённости |
-| `.github/`, `.claude/agents/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/` | только через PR с ревью второго |
+| `.github/`, `.claude/agents/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/`, `docs/product/`, `docs/design/` | только через PR с ревью второго |
 | `docs/STATUS.md` | меняют оба: каждый — только строки своих задач; строки оглавления историй добавляются сверху. При конфликте слияния сохраняются **обе** строки |
 | `docs/stories/` | только добавление новых файлов; чужие истории не редактируются (конфликтов не бывает) |
 

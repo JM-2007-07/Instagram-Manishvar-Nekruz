@@ -17,6 +17,13 @@ ADR (Architecture Decision Record) — короткая запись: какое
 | [0008](0008-npm-workspaces.md) | npm workspaces вместо pnpm | ✅ Принято |
 | [0009](0009-ai-subagents.md) | ИИ-агенты с разделением по моделям (Opus / Sonnet / Haiku) | ✅ Принято |
 | [0010](0010-rtk-query.md) | RTK Query для запросов frontend (ручные эндпоинты + типы из Swagger) | ✅ Принято |
+| [0011](0011-instagram-parity-scope.md) | Объём продукта: паритет с веб-Instagram, приоритеты P0/P1/P2 | ✅ Принято |
+| [0012](0012-design-system-instagram.md) | Дизайн-система по измерениям Instagram, свой бренд | ✅ Принято |
+| [0013](0013-realtime-socketio.md) | Реальное время: Socket.IO в NestJS | ✅ Принято (проверка в Phase 0) |
+| [0014](0014-oauth-google-facebook.md) | Вход через Google и Facebook (OAuth на backend) | ✅ Принято |
+| [0015](0015-webrtc-calls.md) | Аудио- и видеозвонки: WebRTC + сигнализация Socket.IO | ✅ Принято |
+| [0016](0016-media-processing.md) | Обработка медиа: sharp, ffmpeg, фоновая очередь | ✅ Принято |
+| [0017](0017-cursor-pagination.md) | Курсорная пагинация для всех списков | ✅ Принято |
 
 ## Как добавить ADR
 

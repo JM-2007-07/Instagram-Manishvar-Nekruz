@@ -54,7 +54,7 @@ sequenceDiagram
     participant N as Next.js (rewrite)
     participant A as NestJS
     participant D as PostgreSQL
-    B->>N: POST /api/v1/auth/login {userName, password}
+    B->>N: POST /api/v1/auth/login {login, password}
     N->>A: тот же запрос (+ Origin)
     A->>A: проверка Origin, rate limit
     A->>D: найти пользователя, проверить пароль (argon2id)
@@ -66,7 +66,46 @@ sequenceDiagram
 - При ошибке — `401 INVALID_CREDENTIALS` без уточнения, что неверно (логин или пароль).
 - Если пользователь не найден, всё равно выполняется проверка хеша с фиктивным значением — время
   ответа не выдаёт, существует ли аккаунт.
-- Регистрация создаёт пользователя и (по умолчанию, Q4) сразу сессию.
+- `login` — имя пользователя или email (Q3). Вход до подтверждения email → `403 EMAIL_NOT_VERIFIED` с возможностью
+  отправить код ещё раз.
+
+### Регистрация с подтверждением email
+
+1. `POST /auth/register` — проверка уникальности, возраста (≥ 13 по `birthday`), пароля; создаётся `User` без
+   `emailVerifiedAt` и `EmailVerificationCode` (хеш 6-значного кода, 15 минут 📝, 5 попыток 📝); письмо через `MailService`
+   (в разработке — в лог).
+2. `POST /auth/register/verify` — код верный → `emailVerifiedAt`, создаётся сессия, cookie (Q4).
+3. Неподтверждённые аккаунты старше 7 дней 📝 удаляются фоновой задачей; имя пользователя освобождается.
+
+### Вход через Google и Facebook ([ADR 0014](../decisions/0014-oauth-google-facebook.md))
+
+```mermaid
+sequenceDiagram
+    participant B as Браузер
+    participant A as NestJS (через прокси)
+    participant P as Google / Facebook
+    B->>A: GET /api/v1/auth/oauth/google
+    A-->>B: 302 к провайдеру (state, PKCE) + cookie oauth_state
+    B->>P: вход и согласие
+    P-->>B: 302 /api/v1/auth/oauth/google/callback?code&state
+    B->>A: callback + cookie oauth_state
+    A->>P: обмен code → токены, профиль
+    alt аккаунт найден / привязан
+        A-->>B: 302 / + Set-Cookie: sid
+    else новый пользователь
+        A-->>B: 302 /accounts/oauth/complete/ + cookie oauth_pending (10 мин)
+        B->>A: POST /auth/oauth/complete {userName, birthday}
+        A-->>B: 201 Me + Set-Cookie: sid
+    end
+```
+
+Аккаунт, созданный через провайдера, не имеет пароля (`hasPassword = false`) и может задать его через
+`POST /auth/password/change` без текущего пароля.
+
+### Активные сессии
+
+`GET /auth/sessions` показывает устройства (браузер и ОС из `userAgent`, время последней активности, текущая);
+`DELETE /auth/sessions/{id}` завершает сессию — открытые сокеты этой сессии закрываются.
 
 ### Проверка сессии на каждом запросе
 
@@ -98,9 +137,9 @@ sequenceDiagram
 
 | Где | Что делает | Чего не делает |
 |---|---|---|
-| `proxy.ts` (бывший middleware) | если cookie нет — редирект на `/login` для страниц `(main)`; если есть — пропускает | **не проверяет** сессию по-настоящему: это только удобство |
-| layout `(main)` (Server Component) | `serverFetch('/me')` с cookie пользователя; `401` → `redirect('/login')` | не загружает данные страниц |
-| Client Components (RTK Query) | запросы через прокси; `401 UNAUTHENTICATED` → `baseQueryWithAuth` сбрасывает кэш и ведёт на `/login`; вход/выход → `resetApiState()` | не читают cookie, не хранят токен в store |
+| `proxy.ts` (бывший middleware) | если cookie нет — редирект на `/accounts/login/` для страниц `(main)`; если есть — пропускает | **не проверяет** сессию по-настоящему: это только удобство |
+| layout `(main)` (Server Component) | `serverFetch('/me')` с cookie пользователя; `401` → `redirect('/accounts/login/')` | не загружает данные страниц |
+| Client Components (RTK Query) | запросы через прокси; `401 UNAUTHENTICATED` → `baseQueryWithAuth` сбрасывает кэш и ведёт на `/accounts/login/`; вход/выход → `resetApiState()` | не читают cookie, не хранят токен в store |
 
 Настоящая проверка — **всегда в NestJS**.
 
@@ -113,8 +152,13 @@ sequenceDiagram
 
 ## 7. Роли
 
-Поле `role` у пользователя: `USER` (по умолчанию) и `ADMIN` — ❓ Q6. Пока вопрос не решён, роль `ADMIN`
-закладывается в схему, но административные endpoint'ы не реализуются.
+Поле `role`: `USER` (по умолчанию) и `ADMIN` (Q6 решён). Администратор управляет жалобами, галочками, банами и местами
+([endpoints/admin.md](../api/endpoints/admin.md)); первый администратор создаётся seed-скриптом. Бан завершает все сессии.
+
+## 7a. Двухфакторная аутентификация (P2)
+
+TOTP (приложение-аутентификатор) + резервные коды; после пароля вход требует код (`POST /auth/login/2fa`).
+Секрет хранится зашифрованным ключом из env.
 
 ## 8. Rate limiting чувствительных операций
 

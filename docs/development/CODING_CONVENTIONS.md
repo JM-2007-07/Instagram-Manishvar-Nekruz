@@ -107,7 +107,8 @@ export class CreateCommentDto {
 ```
 src/features/posts/
 ├── api.ts                 # baseApi.injectEndpoints: эндпоинты, теги, экспорт хуков
-├── cache.ts               # (только posts) updatePostInCache для оптимистичных лайков/избранного
+├── cache.ts               # (только posts) updatePostInCache для оптимистичных лайков и сохранения
+├── realtime.ts            # (если есть события) обработчики Socket.IO → кэш RTK Query
 ├── schemas.ts             # zod-схемы форм (только проверки для удобства)
 └── components/
     ├── post-card.tsx
@@ -126,14 +127,14 @@ import type { Comment, Page } from '@/lib/api/types';
 
 export const commentsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getComments: build.infiniteQuery<Page<Comment>, string, number>({
+    getComments: build.infiniteQuery<Page<Comment>, string, string | null>({
       infiniteQueryOptions: {
-        initialPageParam: 1,
-        getNextPageParam: (last) => (last.page * last.limit < last.total ? last.page + 1 : undefined),
+        initialPageParam: null,
+        getNextPageParam: (last) => last.nextCursor ?? undefined,
       },
       query: ({ queryArg: postId, pageParam }) => ({
         url: `/posts/${postId}/comments`,
-        params: { page: pageParam, limit: 20 },
+        params: { cursor: pageParam ?? undefined, limit: 20 },
       }),
       providesTags: (_result, _error, postId) => [{ type: 'Comment', id: postId }],
     }),
@@ -160,7 +161,9 @@ export const { useGetCommentsInfiniteQuery, useCreateCommentMutation } = comment
 | `query` возвращает только URL, метод, `params`, `body` — без логики | логика — в backend |
 | Каждый запрос — `providesTags`, каждая мутация — `invalidatesTags` по таблице API_REQUEST_ARCHITECTURE.md §6.3 | данные не устаревают |
 | Типы — только из `@/lib/api/types` | типы совпадают со Swagger |
-| `onQueryStarted` с `updateQueryData` — только для лайков и избранного | остальное проще и надёжнее через теги |
+| `onQueryStarted` с `updateQueryData` — только лайки, сохранение, сообщения и реакции (API_REQUEST_ARCHITECTURE.md §6.5) | остальное проще и надёжнее через теги |
+| Списки — `infiniteQuery` с курсором: `initialPageParam: null`, `getNextPageParam: (last) => last.nextCursor ?? undefined` | ADR 0017 |
+| Загрузка файлов — только `uploadMedia()` из `lib/api/upload.ts`, затем мутация с `mediaIds` | прогресс загрузки (§9) |
 | Никаких `fetch`, `axios`, `useEffect` для загрузки данных | один способ запросов |
 
 ### 3.3 Мутация в компоненте
@@ -188,7 +191,15 @@ export function CommentForm({ postId }: { postId: string }) {
 - Каждый компонент с данными обрабатывает: загрузку (skeleton), пусто (текст из спецификации), ошибку («Повторить»).
 - UI-примитивы — из `components/ui` (shadcn/ui); стили — классы Tailwind, без отдельных CSS-файлов на компонент.
 - Локальное состояние UI — `useState`; Redux store содержит только кэш RTK Query.
-- Пользовательский текст выводится как текст; `dangerouslySetInnerHTML` запрещён.
+- Пользовательский текст выводится как текст; `dangerouslySetInnerHTML` запрещён. Хэштеги и упоминания в тексте
+  превращаются в ссылки одним компонентом `RichText` (разбор строки → массив текст/ссылка), без HTML.
+
+### 3.5 Дизайн
+- Цвета, шрифты, размеры, анимации — **только токены** из [DESIGN_SYSTEM.md](../design/DESIGN_SYSTEM.md)
+  (`bg-background`, `text-muted-foreground`); «сырые» `#…` в компонентах запрещены.
+- Повторяющиеся размеры (ширина ленты 630, карточки 470, меню 72/238, сетка 3:4) — константы в `src/lib/design.ts`.
+- Иконки — `lucide-react`, 24 px; логотип и название — компонент `BrandLogo` и `APP_NAME` из конфигурации.
+- Каждый экран сверяется с [SCREENS.md](../design/SCREENS.md) в светлой и тёмной теме и на ширине 375 / 1150 px.
 
 ## 4. Тесты
 

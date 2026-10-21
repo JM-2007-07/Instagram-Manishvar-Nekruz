@@ -1,23 +1,29 @@
 # Спецификации функций
 
-Каждая спецификация описывает поведение функции для **обоих** приложений. Перед реализацией функции
-её спецификацию читают вместе с [API_CONTRACT.md](../api/API_CONTRACT.md) и [DATA_MODEL.md](../database/DATA_MODEL.md).
+Каждая спецификация описывает поведение функции для **обоих** приложений. Перед реализацией читается вместе с
+[каталогом функций](../product/FEATURE_CATALOG.md), файлом эндпоинтов модуля в [api/endpoints/](../api/API_CONTRACT.md#2-эндпоинты-по-модулям),
+[DATA_MODEL.md](../database/DATA_MODEL.md) и экранами в [design/SCREENS.md](../design/SCREENS.md).
 
-| Спецификация | Модуль backend | Владелец | Фаза | Статус |
-|---|---|---|---|---|
-| [auth.md](auth.md) | `auth` | A (UI в Phase 1 — B) | 1 | ✅ готова к реализации |
-| [users-and-profiles.md](users-and-profiles.md) | `users` | A | 2 | ✅ (Q5, Q7–Q9) |
-| [follows.md](follows.md) | `follows` | A | 2 | ✅ |
-| [posts.md](posts.md) | `posts` | B | 2 (reels — 3) | ✅ (Q10, Q28) |
-| [post-interactions.md](post-interactions.md) | `posts` | B | 3 | ✅ (Q13–Q15) |
-| [stories.md](stories.md) | `stories` | B | 4 | ✅ (Q11, Q12) |
-| [search-history.md](search-history.md) | `search-history` | A | 3 | ✅ |
-| [locations.md](locations.md) | `locations` | A | 4 | ⚠️ назначение неясно (Q6, Q20) |
-| [chat.md](chat.md) | `chats` | A | 5 | ✅ (Q16–Q19, Q29) |
-| [notifications.md](notifications.md) | — | — | 6 | ❓ не согласовано (Q21) |
+| Спецификация | Функции | Модуль backend | Статус |
+|---|---|---|---|
+| [auth.md](auth.md) | F-ACC-* | `auth` | ✅ |
+| [users-and-profiles.md](users-and-profiles.md) | F-PRF-* | `users` | ✅ |
+| [follows.md](follows.md) | F-SOC-* | `follows` | ✅ |
+| [privacy-and-safety.md](privacy-and-safety.md) | F-PRV-* | `privacy` | ✅ |
+| [posts.md](posts.md) | F-PST-*, F-FED-*, F-REL-* | `posts` | ✅ |
+| [post-interactions.md](post-interactions.md) | F-INT-* | `posts`, `comments`, `collections` | ✅ |
+| [stories.md](stories.md) | F-STR-* | `stories` | ✅ (Q30) |
+| [chat.md](chat.md) | F-DM-* | `chats` | ✅ |
+| [calls.md](calls.md) | F-CAL-* | `calls` | ✅ (Q34) |
+| [search-and-explore.md](search-and-explore.md) | F-SRC-01…03 | `search` | ✅ |
+| [hashtags-and-mentions.md](hashtags-and-mentions.md) | F-TAG-*, F-SRC-04 | `tags` | ✅ |
+| [notifications.md](notifications.md) | F-NTF-* | `notifications` | ✅ |
+| [settings.md](settings.md) | F-SET-* | `settings` | ✅ |
+| [locations.md](locations.md) | F-PST-07, F-SRC-05, F-MOD-03 | `locations` | ✅ |
+| [moderation.md](moderation.md) | F-PRV-11, F-MOD-* | `admin` | ✅ |
 
-Медиа (`storage`, `media`) — сквозной механизм, описан в [ARCHITECTURE.md](../architecture/ARCHITECTURE.md#5-данные-и-медиа)
-и [SECURITY.md](../architecture/SECURITY.md#загрузка-файлов).
+Владельцы модулей назначаются в [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) (следующий шаг — Q26).
+Медиа (`media`, `storage`) — сквозной механизм: [endpoints/media.md](../api/endpoints/media.md), ADR 0007 и 0016.
 
-Структура каждой спецификации: назначение → сценарии → API → данные → права → валидация →
-ошибки и пустые состояния → зависимости → критерии приёмки → открытые вопросы.
+Структура каждой спецификации: назначение → сценарии → данные → права → валидация → ошибки и пустые состояния →
+зависимости → критерии приёмки → открытые вопросы.

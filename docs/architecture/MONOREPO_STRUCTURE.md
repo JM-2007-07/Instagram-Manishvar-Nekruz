@@ -10,7 +10,9 @@ instagram-social-network/
 │   ├── web/                      # Next.js — см. apps/web/README.md
 │   └── api/                      # NestJS + Prisma — см. apps/api/README.md
 ├── docs/
-│   ├── api/                      # исходный Swagger, inventory, наш контракт, openapi.json (генерируется)
+│   ├── product/                  # каталог функций (паритет с Instagram)
+│   ├── design/                   # дизайн-система и экраны
+│   ├── api/                      # исходный Swagger, inventory, наш контракт + endpoints/ по модулям, REALTIME, openapi.json (генерируется)
 │   ├── architecture/
 │   ├── database/
 │   ├── features/

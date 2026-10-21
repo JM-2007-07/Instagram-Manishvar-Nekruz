@@ -16,7 +16,8 @@
 | изменение общих соглашений (формат ошибок, пагинация, cookie) | ADR + согласование обоих |
 
 ### Шаги
-1. Обновить [API_CONTRACT.md](../api/API_CONTRACT.md) (таблица модуля, при необходимости — черновые модели).
+1. Обновить файл модуля `docs/api/endpoints/<module>.md` (и [API_CONTRACT.md](../api/API_CONTRACT.md) — если меняются
+   соглашения или общие модели §1.4; [REALTIME.md](../api/REALTIME.md) — если меняются события).
 2. Реализовать изменения в DTO/контроллере NestJS.
 3. `npm run contract` — обновит `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts`.
 4. `npm run typecheck` — исправить места во frontend, которые сломались (если это ваш модуль) или

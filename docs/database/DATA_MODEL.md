@@ -1,141 +1,203 @@
-# Модель данных (кандидат)
+# Модель данных
 
-> **Статус: 📝 черновик.** Это кандидатная модель, выведенная из исходного Swagger и требований.
-> `schema.prisma` пишется по ней в соответствующих фазах, а не целиком заранее.
-> Неопределённые связи и правила удаления отмечены ❓ со ссылкой на вопрос в
-> [REQUIREMENTS.md](../REQUIREMENTS.md#5-открытые-вопросы).
+> **Статус: 📝 кандидат** под каталог функций ([ADR 0011](../decisions/0011-instagram-parity-scope.md)). `schema.prisma` пишется
+> по этой модели **по модулям в своих задачах**, а не целиком заранее. Поля с 📝 уточняются при реализации функции.
+> Правила проектирования — [DATABASE_DECISIONS.md](DATABASE_DECISIONS.md).
 
 ## 1. Общие правила
 
-- Все первичные ключи — UUID (`@default(uuid())`). Обоснование — [DATABASE_DECISIONS.md](DATABASE_DECISIONS.md#идентификаторы).
+- Первичные ключи — UUID ([решение](DATABASE_DECISIONS.md#идентификаторы)); у публикаций дополнительно `shortcode` (11 символов) для адресов `/p/…`.
 - У каждой таблицы `createdAt`; у изменяемых — `updatedAt`.
-- Имена моделей и полей — английские, camelCase (стандарт Prisma); таблицы — как имена моделей.
-- Счётчики (лайки, комментарии, подписчики) **вычисляются** запросом `_count`, а не хранятся.
-  Денормализация — только если появится доказанная проблема производительности.
+- Отношения «пользователь ↔ объект» (лайк, сохранение, подписка, блок) — составной первичный ключ.
+- Счётчики вычисляются (`_count`), кроме `Post.playCount` (воспроизведения — не уникальные записи).
+- Каждая модель принадлежит **одному модулю** (колонка «Модуль»): его владелец меняет модель по CHANGE_PROCESS.md.
+- Перечисления (enum) — в верхнем регистре: `ACCEPTED`, `PENDING`.
 
-## 2. Диаграмма
+## 2. Обзор
 
 ```mermaid
 erDiagram
-    User ||--o{ Session : has
-    User ||--o{ PasswordResetToken : has
-    User ||--o| MediaFile : "avatar"
-    User ||--o{ Follow : "follower"
-    User ||--o{ Follow : "following"
+    User ||--o{ Session : ""
+    User ||--o{ OAuthAccount : ""
+    User ||--|| UserSettings : ""
+    User ||--o{ Follow : "follower / following"
+    User ||--o{ Block : ""
     User ||--o{ Post : writes
-    Post ||--|{ PostMedia : contains
-    MediaFile ||--o| PostMedia : ""
-    Post ||--o{ PostLike : ""
-    Post ||--o{ PostView : ""
-    Post ||--o{ PostFavorite : ""
+    Post ||--|{ PostMedia : ""
+    PostMedia }o--|| MediaFile : ""
     Post ||--o{ Comment : ""
-    User ||--o{ Comment : writes
+    Comment ||--o{ Comment : "replies"
+    Post ||--o{ PostLike : ""
+    Post ||--o{ SavedPost : ""
+    Post ||--o{ PostHashtag : ""
+    Hashtag ||--o{ PostHashtag : ""
+    Post }o--o| Location : ""
     User ||--o{ Story : posts
-    Story }o--o| MediaFile : "image/video"
-    Story }o--o| Post : "shared post"
-    Story ||--o{ StoryView : ""
-    Story ||--o{ StoryLike : ""
+    Story ||--o{ StorySticker : ""
+    User ||--o{ Highlight : ""
+    Highlight ||--o{ HighlightItem : ""
+    Chat ||--|{ ChatParticipant : ""
     Chat ||--o{ Message : ""
-    User ||--o{ Message : sends
-    Message }o--o| MediaFile : attachment
-    User ||--o{ TextSearchEntry : ""
-    User ||--o{ UserSearchEntry : ""
-    Post }o--o| Location : "Q20"
+    Message ||--o{ MessageReaction : ""
+    Chat ||--o{ Call : ""
+    User ||--o{ Notification : receives
+    User ||--o{ Report : files
 ```
 
-## 3. Сущности
+## 3. Сущности по модулям
 
-### Аккаунт
+### Аккаунт (`auth`)
 
-| Модель | Поля | Ограничения | Источник |
+| Модель | Поля | Ограничения, заметки | Функции |
 |---|---|---|---|
-| `User` | `id`, `userName`, `email`, `fullName`, `passwordHash`, `role` (`USER`/`ADMIN`), `about?`, `gender?`, `avatarMediaId?`, `createdAt`, `updatedAt` | `userName` и `email` уникальны, хранятся в нижнем регистре | #1 RegisterDto, #54 UpdateUserProfileDto, #56 |
-| `Session` | см. [AUTHENTICATION.md](../architecture/AUTHENTICATION.md#1-модель) | `tokenHash` уникален; индекс по `userId` | наше решение |
-| `PasswordResetToken` | `id`, `userId`, `tokenHash`, `expiresAt`, `usedAt?`, `createdAt` | `tokenHash` уникален | #3, #4 |
+| `User` | `id`, `userName`, `email`, `emailVerifiedAt?`, `passwordHash?`, `fullName`, `birthday`, `role` (`USER`/`ADMIN`), `isVerified`, `status` (`ACTIVE`/`DEACTIVATED`/`PENDING_DELETION`/`BANNED`), `deletionScheduledAt?`, профиль (ниже), `createdAt`, `updatedAt` | `userName`, `email` уникальны, в нижнем регистре; `passwordHash` пуст у аккаунтов только с соцвходом | F-ACC-* |
+| `Session` | `id`, `tokenHash`, `userId`, `userAgent?`, `ipAddress?`, `createdAt`, `lastUsedAt`, `expiresAt`, `absoluteExpiresAt` | `tokenHash` уникален | F-ACC-10, [AUTHENTICATION.md](../architecture/AUTHENTICATION.md#1-модель) |
+| `PasswordResetToken` | `id`, `userId`, `tokenHash`, `expiresAt`, `usedAt?` | одноразовый | F-ACC-08 |
+| `EmailVerificationCode` | `id`, `userId`, `email`, `codeHash`, `purpose` (`SIGNUP`/`EMAIL_CHANGE`), `attempts`, `expiresAt`, `usedAt?` | 6 цифр, ≤ 5 попыток 📝, 15 минут 📝 | F-ACC-01, 12 |
+| `OAuthAccount` | `provider` (`GOOGLE`/`FACEBOOK`), `providerUserId`, `userId`, `email?`, `createdAt` | PK (`provider`, `providerUserId`) | F-ACC-04…06 |
+| `UsernameChange` | `id`, `userId`, `oldUserName`, `newUserName`, `changedAt` | для лимита частоты и возврата старого имени 14 дней | F-ACC-11 |
+| `TwoFactorSecret` (P2) | `userId`, `secretEncrypted`, `backupCodeHashes[]`, `enabledAt?` | | F-ACC-15 |
 
-- Профиль хранится в `User` (связь 1:1 не нужна) — см. DATABASE_DECISIONS.md.
-- `gender` — enum, значения ❓ Q9 (в Swagger `0/1` без подписей). До ответа — nullable.
-- `role` ❓ Q6 — поле добавляется, административные функции — нет.
+### Профиль (`users`) — поля в `User`
 
-### Медиа
+`bio?` (≤ 150 📝), `pronouns?`, `gender?` (`FEMALE`/`MALE`/`CUSTOM`/`PREFER_NOT_TO_SAY`), `genderCustom?`,
+`avatarMediaId?`, `isPrivate` (по умолчанию `false`).
 
-| Модель | Поля | Комментарий |
+| Модель | Поля | Ограничения | Функции |
+|---|---|---|---|
+| `UserLink` | `id`, `userId`, `url`, `title?`, `position` | до 5 📝 | F-PRF-03 |
+
+### Настройки (`settings`)
+
+| Модель | Поля | Функции |
 |---|---|---|
-| `MediaFile` | `id`, `ownerId`, `storageKey`, `kind` (`IMAGE`/`VIDEO`), `mimeType`, `sizeBytes`, `width?`, `height?`, `durationSec?`, `createdAt` | метаданные файла; сам файл — в хранилище по `storageKey` |
-| `PostMedia` | `postId`, `mediaId`, `position` | PK (`postId`, `position`); `mediaId` уникален (файл принадлежит одному посту) |
+| `UserSettings` | `userId` (PK), `commentsFrom`, `tagsFrom`, `mentionsFrom` (`EVERYONE`/`FOLLOWING`/`MUTUAL`/`NO_ONE`), `showActivityStatus`, `hideLikeCounts`, `allowStoryResharing`, `theme` (`LIGHT`/`DARK`/`SYSTEM`), `language` | F-PRV-06, 07, 09, 10, F-SET-02, 03 |
+| `NotificationPreference` | `userId`, `type`, `enabled` — PK (`userId`, `type`) | F-NTF-06 |
 
-Один `MediaFile` используется ровно в одном месте (пост, сторис, аватар или сообщение). Это упрощает
-удаление: удалили владельца → удалили файл.
+### Подписки (`follows`)
 
-### Подписки
+| Модель | Поля | Ограничения | Функции |
+|---|---|---|---|
+| `Follow` | `followerId`, `followingId`, `status` (`ACCEPTED`/`PENDING`), `createdAt`, `acceptedAt?` | PK (пара); CHECK `followerId <> followingId` | F-SOC-01…05 |
+| `CloseFriend` | `ownerId`, `friendId`, `createdAt` | PK (пара) | F-SOC-06 |
+| `FavoriteAccount` | `ownerId`, `targetId`, `createdAt` | PK (пара), до 50 📝 | F-SOC-07 |
 
-| Модель | Поля | Ограничения |
+### Приватность (`privacy`)
+
+| Модель | Поля | Функции |
 |---|---|---|
-| `Follow` | `followerId`, `followingId`, `createdAt` | PK (`followerId`, `followingId`); `followerId ≠ followingId` (проверка в сервисе + CHECK в миграции) |
+| `Block` | `blockerId`, `blockedId`, `createdAt` — PK (пара) | F-PRV-02 |
+| `Restrict` | `ownerId`, `targetId`, `createdAt` | F-PRV-03 |
+| `Mute` | `ownerId`, `targetId`, `mutePosts`, `muteStories` | F-PRV-04 |
+| `StoryHiddenFrom` | `ownerId`, `viewerId` | F-PRV-05 |
+| `HiddenWord` (P2) | `id`, `userId`, `word` | F-PRV-08 |
 
-### Посты и взаимодействия
+### Медиа (`media`)
 
-| Модель | Поля | Ограничения / вопросы |
+| Модель | Поля | Заметки | Функции |
+|---|---|---|---|
+| `MediaFile` | `id`, `ownerId`, `kind` (`IMAGE`/`VIDEO`/`AUDIO`), `status` (`PROCESSING`/`READY`/`FAILED`), `storageKey`, `mimeType`, `sizeBytes`, `width?`, `height?`, `durationSec?`, `thumbnailKey?`, `variants` (JSON: ключи уменьшенных копий), `createdAt` | один файл — одно место использования; обработка — ADR 0016 | все с медиа |
+
+### Публикации (`posts`)
+
+| Модель | Поля | Ограничения | Функции |
+|---|---|---|---|
+| `Post` | `id`, `shortcode`, `authorId`, `type` (`POST`/`REEL`), `status` (`PROCESSING`/`PUBLISHED`), `caption?` (≤ 2200 📝), `locationId?`, `commentsDisabled`, `hideLikeCount`, `isArchived`, `pinnedAt?`, `playCount`, `editedAt?`, `publishedAt?`, `createdAt`, `updatedAt` | `shortcode` уникален; индексы (`authorId`, `publishedAt`), (`type`, `publishedAt`) | F-PST-*, F-REL-* |
+| `PostMedia` | `postId`, `mediaId`, `position`, `altText?`, `cropAspect?` | PK (`postId`, `position`); `mediaId` уникален; до 20 📝 | F-PST-02, 03, 09 |
+| `PostUserTag` | `postId`, `position`, `taggedUserId`, `x`, `y` (0..1) | до 20 📝 на медиа | F-PST-06, F-PRF-07 |
+| `PostCollaborator` (P2) | `postId`, `userId`, `status` (`PENDING`/`ACCEPTED`) | до 5 📝 | F-PST-08 |
+| `PostLike` | `userId`, `postId`, `createdAt` | PK (пара) | F-INT-01, 02 |
+| `PostPlay` | `userId`, `postId`, `lastCountedAt` | PK (пара): увеличивает `playCount` не чаще раза в час 📝 | F-INT-12, F-REL-04 |
+| `PostMention` | `postId`, `userId` | PK (пара) | F-TAG-02 |
+
+### Комментарии (`comments`)
+
+| Модель | Поля | Ограничения | Функции |
+|---|---|---|---|
+| `Comment` | `id`, `postId`, `authorId`, `parentId?`, `text`, `pinnedAt?`, `editedAt?`, `isPendingApproval` (комментарий ограниченного пользователя), `createdAt` | `parentId` — только комментарий верхнего уровня (CHECK + сервис); индекс (`postId`, `parentId`, `createdAt`) | F-INT-03…08 |
+| `CommentLike` | `userId`, `commentId`, `createdAt` | PK (пара) | F-INT-05 |
+| `CommentMention` | `commentId`, `userId` | PK (пара) | F-TAG-02 |
+
+### Сохранённое (`collections`)
+
+| Модель | Поля | Функции |
 |---|---|---|
-| `Post` | `id`, `authorId`, `title?`, `content?`, `isReel`, `locationId?`, `createdAt`, `updatedAt` | `isReel` — Q10; `locationId` — Q20; индекс (`authorId`, `createdAt`) |
-| `PostLike` | `userId`, `postId`, `createdAt` | PK (`userId`, `postId`) — один лайк от пользователя |
-| `PostView` | `userId`, `postId`, `viewedAt` | PK (`userId`, `postId`) — уникальные просмотры (Q14) |
-| `PostFavorite` | `userId`, `postId`, `createdAt` | PK (`userId`, `postId`) |
-| `Comment` | `id`, `postId`, `authorId`, `text`, `createdAt` | индекс (`postId`, `createdAt`); ответов на комментарии нет |
+| `SavedPost` | `userId`, `postId`, `createdAt` — PK (пара) | F-INT-09 |
+| `Collection` | `id`, `ownerId`, `name`, `coverPostId?`, `createdAt` | F-INT-10 |
+| `CollectionItem` | `collectionId`, `postId`, `addedAt` — PK (пара); пост должен быть в `SavedPost` | F-INT-10 |
 
-`title` и `content` взяты из #26. Нужны ли оба поля в интерфейсе (у Instagram только подпись) — уточняется
-в спецификации постов; в БД оба nullable.
+### Хэштеги (`tags`)
 
-### Сторис
-
-| Модель | Поля | Ограничения / вопросы |
+| Модель | Поля | Функции |
 |---|---|---|
-| `Story` | `id`, `authorId`, `mediaId?`, `sharedPostId?`, `createdAt`, `expiresAt` | ровно одно из `mediaId`/`sharedPostId` (CHECK); `expiresAt = createdAt + 24 ч` (Q11); индекс (`authorId`, `expiresAt`) |
-| `StoryView` | `storyId`, `viewerId`, `viewedAt` | PK (`storyId`, `viewerId`) |
-| `StoryLike` | `storyId`, `userId`, `createdAt` | PK (`storyId`, `userId`) |
+| `Hashtag` | `id`, `name` (уникальное, нижний регистр, без `#`), `createdAt` | F-TAG-01, F-SRC-04 |
+| `PostHashtag` | `postId`, `hashtagId` — PK (пара); из подписи и первого комментария автора 📝 | F-TAG-01 |
 
-❓ Q12: что происходит со сторис, если исходный пост удалён (по умолчанию — сторис тоже удаляется, `onDelete: Cascade`).
+### Истории (`stories`)
 
-### Чаты
+| Модель | Поля | Ограничения | Функции |
+|---|---|---|---|
+| `Story` | `id`, `authorId`, `mediaId?`, `sharedPostId?`, `audience` (`EVERYONE`/`CLOSE_FRIENDS`), `durationSec`, `createdAt`, `expiresAt` | ровно одно из `mediaId`/`sharedPostId` с фоном (CHECK); индекс (`authorId`, `expiresAt`) | F-STR-02…13 |
+| `StorySticker` | `id`, `storyId`, `type` (`MENTION`/`LOCATION`/`HASHTAG`/`LINK`/`POLL`/`QUESTION`/`SLIDER`/`QUIZ`/`COUNTDOWN`), `x`, `y`, `width`, `height`, `rotation`, `data` (JSON по типу) | | F-STR-04 |
+| `StoryStickerResponse` | `stickerId`, `userId`, `value` (JSON), `createdAt` — PK (пара) | | F-STR-04, 11 |
+| `StoryView` | `storyId`, `viewerId`, `viewedAt` — PK (пара) | автор не записывается | F-STR-11 |
+| `StoryLike` | `storyId`, `userId`, `createdAt` — PK (пара) | | F-STR-10 |
+| `Highlight` | `id`, `ownerId`, `title`, `coverMediaId?`, `createdAt`, `updatedAt` | | F-STR-20 |
+| `HighlightItem` | `highlightId`, `storyId`, `position` — PK (`highlightId`, `storyId`) | история из архива владельца | F-STR-20 |
 
-| Модель | Поля | Ограничения / вопросы |
+### Direct (`chats`)
+
+| Модель | Поля | Ограничения | Функции |
+|---|---|---|---|
+| `Chat` | `id`, `type` (`DIRECT`/`GROUP`), `title?`, `avatarMediaId?`, `createdById`, `lastMessageAt`, `createdAt` | для `DIRECT` — один чат на пару (уникальный ключ пары в отдельном поле `directKey` = «меньший id:больший id») | F-DM-01…03 |
+| `ChatParticipant` | `chatId`, `userId`, `role` (`MEMBER`/`ADMIN`), `status` (`ACTIVE`/`REQUEST`/`LEFT`), `joinedAt`, `lastReadMessageId?`, `mutedUntil?`, `clearedAt?` | PK (пара); `clearedAt` — «удалить чат у себя»: сообщения раньше не показываются | F-DM-03, 10, 13, 14 |
+| `Message` | `id`, `chatId`, `senderId?`, `type` (`TEXT`/`MEDIA`/`VOICE`/`SHARE_POST`/`SHARE_PROFILE`/`SHARE_STORY`/`STORY_REPLY`/`STORY_REACTION`/`CALL`/`SYSTEM`), `text?`, `replyToId?`, `sharedPostId?`, `sharedUserId?`, `storyId?`, `callId?`, `systemData?` (JSON), `editedAt?`, `unsentAt?`, `createdAt` | `unsentAt` — отменённое сообщение не отдаётся никому; индекс (`chatId`, `createdAt`) | F-DM-04…09 |
+| `MessageMedia` | `messageId`, `mediaId`, `position` | | F-DM-04, 05 |
+| `MessageReaction` | `messageId`, `userId`, `emoji`, `createdAt` — PK (`messageId`, `userId`) | одна реакция на пользователя | F-DM-07 |
+| `Note` (P2) | `userId` (PK), `text`, `audience`, `expiresAt` | 60 символов 📝 | F-DM-16 |
+
+### Звонки (`calls`)
+
+| Модель | Поля | Функции |
 |---|---|---|
-| `Chat` | `id`, `user1Id`, `user2Id`, `createdAt`, `updatedAt` | только 1:1 (как в #8); `user1Id < user2Id`, уникальная пара — один чат на двоих |
-| `Message` | `id`, `chatId`, `senderId`, `text?`, `attachmentMediaId?`, `createdAt` | хотя бы одно из `text`/`attachmentMediaId`; индекс (`chatId`, `createdAt`) |
+| `Call` | `id`, `chatId`, `initiatorId`, `type` (`AUDIO`/`VIDEO`), `status` (`RINGING`/`ONGOING`/`ENDED`/`MISSED`/`DECLINED`), `startedAt`, `answeredAt?`, `endedAt?` | F-CAL-* |
+| `CallParticipant` | `callId`, `userId`, `joinedAt?`, `leftAt?` — PK (пара) | F-CAL-04 |
 
-❓ Q16: удаление чата — для обоих (физически) или «скрыть у себя» (тогда понадобится поле
-`user1DeletedAt`/`user2DeletedAt`). ❓ Q18: прочитанность (поле `lastReadAt` у участника).
-Две колонки вместо таблицы участников — потому что групповых чатов в контракте нет; это проще объяснить
-и проще запросы. При появлении групповых чатов — миграция на `ChatParticipant`.
+### Уведомления (`notifications`)
 
-### История поиска
+| Модель | Поля | Заметки | Функции |
+|---|---|---|---|
+| `Notification` | `id`, `recipientId`, `actorId`, `type` (`POST_LIKE`, `COMMENT_LIKE`, `COMMENT`, `COMMENT_REPLY`, `MENTION_POST`, `MENTION_COMMENT`, `MENTION_STORY`, `POST_TAG`, `FOLLOW`, `FOLLOW_REQUEST`, `FOLLOW_ACCEPTED`, `COLLAB_INVITE`), `postId?`, `commentId?`, `storyId?`, `readAt?`, `createdAt` | индекс (`recipientId`, `createdAt`); группировка — при выдаче по (`type`, `postId`) за период | F-NTF-* |
 
-| Модель | Поля | Ограничения |
+### Поиск (`search`)
+
+| Модель | Поля | Функции |
 |---|---|---|
-| `TextSearchEntry` | `id`, `userId`, `text`, `createdAt` | уникальная пара (`userId`, `text`) — повтор обновляет `createdAt` |
-| `UserSearchEntry` | `id`, `userId`, `searchedUserId`, `createdAt` | уникальная пара (`userId`, `searchedUserId`) |
+| `SearchHistoryEntry` | `id`, `userId`, `type` (`QUERY`/`USER`/`HASHTAG`/`LOCATION`), `query?`, `targetUserId?`, `hashtagId?`, `locationId?`, `createdAt` | уникальность по (`userId`, `type`, цель) — повтор поднимает запись; до 50 📝 | F-SRC-03 (исходный Swagger #42–#49) |
 
-### Локации
+### Места (`locations`)
 
-| Модель | Поля | Вопросы |
+| Модель | Поля | Функции |
 |---|---|---|
-| `Location` | `id`, `city`, `state`, `zipCode`, `country`, `createdAt` | Q20: связь с постами (`Post.locationId`), уникальность комбинации, кто создаёт |
+| `Location` | `id`, `name`, `slug`, `city`, `state?`, `zipCode?`, `country`, `latitude?`, `longitude?`, `createdAt` | F-PST-07, F-SRC-05, F-MOD-03 (исходный Swagger #16–#20) |
 
-### Уведомления — не моделируются ❓ Q21
+### Модерация (`admin`)
 
-Возможная форма после согласования: `Notification { id, recipientId, actorId, type, postId?, commentId?, readAt?, createdAt }`.
-
-## 4. Правила удаления (черновик)
-
-| Удаляется | Что происходит | Статус |
+| Модель | Поля | Функции |
 |---|---|---|
-| `User` | каскадно: сессии, токены, посты, комментарии, лайки, просмотры, избранное, сторис, подписки, история поиска, медиафайлы | ❓ Q7 (жёсткое удаление по умолчанию) |
-| `User` → его сообщения и чаты | по умолчанию чаты удаляются вместе с сообщениями | ❓ Q7, Q16 |
-| `Post` | каскадно: `PostMedia` + файлы, лайки, просмотры, избранное, комментарии; сторис с этим постом | ❓ Q12 |
-| `Story` | каскадно: просмотры, лайки, файл | — |
-| `Comment`, `Message` | файл вложения (для сообщения) | — |
-| `Location` | у постов `locationId` → `null` | ❓ Q20 |
-| Аватар | `MediaFile` и файл в хранилище | — |
+| `Report` | `id`, `reporterId`, `targetType` (`POST`/`COMMENT`/`USER`/`MESSAGE`/`STORY`), `targetId`, `reason`, `details?`, `status` (`OPEN`/`RESOLVED`/`REJECTED`), `resolvedById?`, `resolvedAt?`, `createdAt` | F-PRV-11, F-MOD-01 |
 
-Файлы в хранилище удаляются **после** успешной транзакции БД. Если удаление файла не удалось — ошибка
-логируется (файл-«сирота» не ломает данные); периодическая очистка — с появлением BullMQ.
+## 4. Правила удаления
+
+| Удаляется | Что происходит |
+|---|---|
+| `User` (после 30 дней `PENDING_DELETION` 📝) | каскадно: сессии, токены, OAuth, настройки, подписки, блоки, посты (с медиа), комментарии, лайки, сохранённое, истории, актуальное, история поиска, уведомления (где получатель или автор). Сообщения в чужих чатах остаются (`senderId` → `null`, показывается «Пользователь ‹APP_NAME›») |
+| `Post` | `PostMedia` + файлы, отметки, соавторы, лайки, воспроизведения, комментарии (с ответами), упоминания, хэштег-связи, сохранения, элементы подборок, уведомления; истории с этим постом показывают «Публикация недоступна» (`sharedPostId` → `null`) |
+| `Comment` | ответы, лайки, упоминания, уведомления |
+| `Story` (удаление автором) | стикеры, ответы на стикеры, просмотры, лайки, элементы актуального, файл. Истечение срока **не удаляет** — история уходит в архив |
+| `Chat` у себя | только `ChatParticipant.clearedAt = now()`; чат удаляется полностью, когда все участники ушли |
+| `Message` «отменить отправку» | `unsentAt`, текст и медиа удаляются; реакции удаляются |
+| `Location` | у публикаций и стикеров `locationId` → `null` |
+| `Hashtag` | не удаляется (справочник) |
+
+Файлы в хранилище удаляются **после** успешной транзакции; ошибки — в лог, очистка «сирот» — фоновая задача (ADR 0016).

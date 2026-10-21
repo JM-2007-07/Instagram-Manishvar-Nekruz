@@ -18,7 +18,7 @@
 | Агент | Модель | Может менять | Вход | Выход |
 |---|---|---|---|---|
 | [`planner`](../../.claude/agents/planner.md) | Opus | ничего | ID задачи | готовность, вопросы, общие файлы, шаги по агентам, риски |
-| [`contract-designer`](../../.claude/agents/contract-designer.md) | Opus | `API_CONTRACT.md`, `docs/database/*`, `schema.prisma`, миграции | шаг плана + согласие пользователя на общие файлы | изменения API/данных, миграция, указания dev-агентам |
+| [`contract-designer`](../../.claude/agents/contract-designer.md) | Opus | `docs/api/API_CONTRACT.md`, `docs/api/endpoints/*`, `REALTIME.md`, `docs/database/*`, `schema.prisma`, миграции | шаг плана + согласие пользователя на общие файлы | изменения API/данных, миграция, указания dev-агентам |
 | [`backend-dev`](../../.claude/agents/backend-dev.md) | Sonnet | `apps/api` (кроме prisma и общих файлов без указания) | шаг плана | реализованные endpoint'ы, результат lint/typecheck, что покрыть тестами |
 | [`frontend-dev`](../../.claude/agents/frontend-dev.md) | Sonnet | `apps/web` (кроме общих файлов без указания) | шаг плана, сгенерированные типы | страницы, компоненты, хуки, инвалидация, состояния |
 | [`test-writer`](../../.claude/agents/test-writer.md) | Sonnet | только тесты | что реализовано | тесты, покрытие критериев приёмки, найденные ошибки |
