@@ -99,8 +99,8 @@ sequenceDiagram
 | Где | Что делает | Чего не делает |
 |---|---|---|
 | `proxy.ts` (бывший middleware) | если cookie нет — редирект на `/login` для страниц `(main)`; если есть — пропускает | **не проверяет** сессию по-настоящему: это только удобство |
-| layout `(main)` (Server Component) | `GET /me` с cookie пользователя; `401` → `redirect('/login')` | не хранит пользователя в глобальном store |
-| Client Components | запросы через прокси; на `401` — переход на `/login` | не читают cookie |
+| layout `(main)` (Server Component) | `serverFetch('/me')` с cookie пользователя; `401` → `redirect('/login')` | не загружает данные страниц |
+| Client Components (RTK Query) | запросы через прокси; `401 UNAUTHENTICATED` → `baseQueryWithAuth` сбрасывает кэш и ведёт на `/login`; вход/выход → `resetApiState()` | не читают cookie, не хранят токен в store |
 
 Настоящая проверка — **всегда в NestJS**.
 

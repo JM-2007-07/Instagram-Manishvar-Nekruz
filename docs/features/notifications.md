@@ -13,7 +13,7 @@
 - Модуль `notifications` в NestJS. Другие модули (posts, follows, chats) вызывают `NotificationsService.create(...)`
   после успешного действия — без очередей, пока нагрузка учебная.
 - Модель-кандидат — в [DATA_MODEL.md](../database/DATA_MODEL.md#уведомления--не-моделируются--q21).
-- Простейший вариант: `GET /notifications` + polling TanStack Query.
+- Простейший вариант: `GET /notifications` + опрос RTK Query (`pollingInterval`).
 - Real-time: Socket.IO-шлюз в NestJS, аутентификация по той же cookie сессии при подключении;
   Redis-адаптер — только при нескольких экземплярах backend. BullMQ — если появятся массовые/отложенные рассылки.
 - Каждое добавление инфраструктуры — отдельный ADR.

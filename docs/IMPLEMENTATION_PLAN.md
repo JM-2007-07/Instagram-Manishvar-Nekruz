@@ -68,7 +68,7 @@ flowchart TD
 |---|---|---|---|---|
 | T0.1 | Корень: Prettier, `concurrently`, общие правила форматирования | A | — | `npm install` в корне проходит; `npx prettier --check .` работает |
 | T0.2 | Каркас NestJS: структура, ESLint (включая правила границ из ADR 0008), Jest, env-валидация, Prisma + подключение, префикс, `ValidationPipe`, фильтр ошибок, `helmet`, проверка `Origin`, Swagger, `GET /health`, скрипт `openapi:export` | A | T0.1 | `npm run dev:api` → `GET /api/v1/health` = 200; lint/typecheck/test зелёные |
-| T0.3 | Каркас Next.js: Tailwind, shadcn/ui init, ESLint (правила границ), Vitest, rewrites, `lib/api/*`, `QueryClientProvider`, Toaster, страница статуса `/health` | B | T0.1 | `npm run dev:web` открывает страницу; lint/typecheck/test зелёные |
+| T0.3 | Каркас Next.js: Tailwind, shadcn/ui init, ESLint (правила границ), Vitest, rewrites, `lib/api/*` (base-api, types, errors, server), store + `StoreProvider` (RTK Query), Toaster, страница статуса `/health` | B | T0.1 | `npm run dev:web` открывает страницу; lint/typecheck/test зелёные |
 | T0.4 | Скрипт `api:types`, корневой `npm run contract`, проверка прокси (cookie, Origin, multipart 100 МБ) → обновить ADR 0004 | A + B | T0.2, T0.3 | страница web показывает `/health` **через прокси**; результат проверки записан в ADR 0004 |
 | T0.5 | GitHub Actions: `npm ci`, lint, typecheck, test, проверка контракта; защита ветки `main` | A | T0.4 | PR с изменённым DTO без `npm run contract` падает в CI |
 | T0.6 | Harness: скрипт проверки ссылок документации в CI; `.claude/settings.json` (запрет чтения `.env`, запрет правки сгенерированных файлов); актуализация команд в AGENTS.md | A (ревью B) | T0.5 | битая ссылка в docs роняет CI; агент не может прочитать `.env` |

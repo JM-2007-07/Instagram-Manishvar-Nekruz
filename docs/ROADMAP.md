@@ -30,7 +30,7 @@ Phases 3, 4 и 5 зависят только от Phase 2 и могут идти
   - каркасы `apps/api` (NestJS) и `apps/web` (Next.js + Tailwind + shadcn/ui), установленные зависимости, lockfile;
   - ESLint, Prettier, `typecheck`, тестовые раннеры в обоих приложениях;
   - backend: валидация env, Prisma подключён к БД, глобальный префикс, `ValidationPipe`, фильтр ошибок, проверка `Origin`, `helmet`, Swagger, `GET /health`;
-  - frontend: rewrite `/api/*`, `lib/api` (клиент, server-клиент, ошибки), `QueryClientProvider`, страница-заглушка, вызывающая `/health`;
+  - frontend: rewrite `/api/*`, `lib/api` (`baseApi` RTK Query, `serverFetch`, ошибки), store + `StoreProvider`, страница-заглушка, вызывающая `/health`;
   - `npm run contract` работает; CI в GitHub Actions: lint, typecheck, test, проверка контракта.
 - **Критерии приёмки:**
   - `npm install && npm run dev` на чистой машине по LOCAL_SETUP.md запускает оба приложения;

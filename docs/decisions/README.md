@@ -11,11 +11,12 @@ ADR (Architecture Decision Record) — короткая запись: какое
 | [0002](0002-rest-api-v1.md) | Новый REST API `/api/v1` с полным покрытием исходного Swagger | ✅ Принято |
 | [0003](0003-server-sessions.md) | Серверные сессии в PostgreSQL и HttpOnly cookie вместо JWT | ✅ Принято |
 | [0004](0004-same-origin-proxy.md) | Same-origin прокси через Next.js rewrites | ✅ Принято (проверка в Phase 0) |
-| [0005](0005-tanstack-query.md) | TanStack Query + openapi-fetch как единственный способ запросов с клиента | ✅ Принято |
+| [0005](0005-tanstack-query.md) | TanStack Query + openapi-fetch для запросов с клиента | ↪️ Заменено 0010 |
 | [0006](0006-openapi-generated-types.md) | Типы frontend генерируются из Swagger NestJS | ✅ Принято |
 | [0007](0007-media-storage.md) | Локальное хранилище медиа в разработке, S3-совместимое позже | ✅ Принято |
 | [0008](0008-npm-workspaces.md) | npm workspaces вместо pnpm | ✅ Принято |
 | [0009](0009-ai-subagents.md) | ИИ-агенты с разделением по моделям (Opus / Sonnet / Haiku) | ✅ Принято |
+| [0010](0010-rtk-query.md) | RTK Query для запросов frontend (ручные эндпоинты + типы из Swagger) | ✅ Принято |
 
 ## Как добавить ADR
 

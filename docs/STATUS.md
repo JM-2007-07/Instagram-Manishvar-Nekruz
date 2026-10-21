@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-21 18:53.
+> Последнее обновление: 2026-10-21 19:14.
 > План (что и в каком порядке) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -25,6 +25,7 @@
   соглашения о коде, сценарии работы) — в ветке `docs/npm-and-agent-docs`, ещё не влито.
 - ✅ 8 субагентов Claude Code с разделением по моделям (ADR 0009, [AI_AGENTS.md](development/AI_AGENTS.md)) — в той же ветке.
 - ✅ Истории — журнал действий в [docs/stories/](stories/README.md), оглавление в §7 — в той же ветке.
+- ✅ Запросы frontend переведены на RTK Query (ADR 0010) — в той же ветке.
 - ℹ️ В `main` влит PR #2 (ветка `nek`): пробный коммит, пробел в `IMPLEMENTATION_PLAN.md`; с нашей веткой не конфликтует.
 
 ## 3. Доска задач
@@ -77,6 +78,7 @@
 | 2026-10-21 | pnpm → npm workspaces | ADR 0008 |
 | 2026-10-21 | Субагенты: Opus — план/контракт/ревью, Sonnet — код/тесты, Haiku — проверки/STATUS | ADR 0009 |
 | 2026-10-21 | Шаги фиксируются коммитами в текущей ветке; новая ветка не создаётся на каждое изменение | AGENTS.md §5 |
+| 2026-10-21 | Запросы frontend — RTK Query (TanStack Query и openapi-fetch не используются) | ADR 0010 |
 | 2026-10-21 | Каждое значимое действие фиксируется историей `docs/stories/ГГГГ-ММ-ДД_ЧЧММ_<slug>.md` | [stories/README.md](stories/README.md) |
 
 ## 6. Известные проблемы и риски
@@ -95,6 +97,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-21 19:14 | [switch-to-rtk-query](stories/2026-10-21_1914_switch-to-rtk-query.md) | запросы frontend — RTK Query (ADR 0010 вместо 0005): baseApi, теги, infiniteQuery, клиентская загрузка данных |
 | 2026-10-21 18:53 | [add-stories](stories/2026-10-21_1853_add-stories.md) | введены истории; три истории задним числом; создание истории — часть Definition of Done |
 | 2026-10-21 10:42 | [add-subagents](stories/2026-10-21_1042_add-subagents.md) | 8 субагентов (Opus/Sonnet/Haiku), AI_AGENTS.md, ADR 0009 |
 | 2026-10-21 10:38 | [npm-and-harness-docs](stories/2026-10-21_1038_npm-and-harness-docs.md) | pnpm → npm (ADR 0008); AGENTS.md, карта docs, STATUS, глоссарий, playbooks; ID задач |

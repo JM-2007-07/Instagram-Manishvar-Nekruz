@@ -7,7 +7,7 @@
 ## 1. Проект за 30 секунд
 
 - Учебный экзаменационный проект двух студентов: Instagram-подобная соцсеть.
-- Монорепозиторий **npm workspaces**: `apps/web` (Next.js App Router, TypeScript, Tailwind, shadcn/ui, TanStack Query)
+- Монорепозиторий **npm workspaces**: `apps/web` (Next.js App Router, TypeScript, Tailwind, shadcn/ui, RTK Query)
   и `apps/api` (NestJS, REST `/api/v1`, Swagger, Prisma, PostgreSQL).
 - Сессии — серверные, в PostgreSQL, HttpOnly cookie. Браузер ходит в API через same-origin прокси Next.js.
 - Главный критерий качества: **студент может объяснить любой файл преподавателю.** Простота важнее «правильных» абстракций.
@@ -68,8 +68,9 @@
 **Архитектура**
 - Бизнес-логика, права и БД — только в NestJS. Next.js не дублирует бизнес-правила.
 - Браузер ходит только в same-origin `/api/v1/...`. Нет `NEXT_PUBLIC_API_URL`.
-- Один HTTP-клиент: `openapi-fetch` из `apps/web/src/lib/api`; серверное состояние — только TanStack Query.
-  Не добавлять axios, RTK Query, SWR, Redux, Zustand, Server Actions для изменений.
+- Запросы из браузера — только RTK Query: один `baseApi` (`apps/web/src/lib/api/base-api.ts`), эндпоинты функции — `injectEndpoints`
+  в `features/<name>/api.ts` ([образец](docs/development/CODING_CONVENTIONS.md#32-apits--образец-формы)). Server Components — только `serverFetch` для проверки сессии.
+  Не добавлять axios, TanStack Query, SWR, openapi-fetch, Zustand, свои Redux slice'ы, Server Actions для изменений.
 - Компоненты не вызывают API напрямую — только через `features/<name>/api.ts`.
 - Типы API генерируются (`npm run contract`). Не редактировать руками: `docs/api/openapi.json`,
   `apps/web/src/lib/api/schema.d.ts`, `docs/api/original-swagger.json`, влитые миграции Prisma.

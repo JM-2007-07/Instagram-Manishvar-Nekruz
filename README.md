@@ -11,7 +11,7 @@
 
 | Часть | Стек |
 |---|---|
-| Frontend (`apps/web`) | Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, openapi-fetch |
+| Frontend (`apps/web`) | Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, Redux Toolkit (RTK Query) |
 | Backend (`apps/api`) | NestJS, TypeScript, REST `/api/v1`, Swagger/OpenAPI |
 | База данных | PostgreSQL + Prisma |
 | Аутентификация | серверные сессии в PostgreSQL, HttpOnly cookie, Argon2id |

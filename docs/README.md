@@ -44,7 +44,7 @@
 |---|---|
 | [ARCHITECTURE.md](architecture/ARCHITECTURE.md) | общая схема, модули backend и их зависимости, будущая инфраструктура |
 | [MONOREPO_STRUCTURE.md](architecture/MONOREPO_STRUCTURE.md) | дерево репозитория, npm workspaces, скрипты |
-| [API_REQUEST_ARCHITECTURE.md](architecture/API_REQUEST_ARCHITECTURE.md) | прокси, API-клиент, TanStack Query, инвалидация, ошибки |
+| [API_REQUEST_ARCHITECTURE.md](architecture/API_REQUEST_ARCHITECTURE.md) | прокси, RTK Query (baseApi, эндпоинты, теги, бесконечные ленты, оптимистичные лайки), ошибки |
 | [AUTHENTICATION.md](architecture/AUTHENTICATION.md) | сессии, cookie, сроки, сценарии входа/выхода/паролей |
 | [SECURITY.md](architecture/SECURITY.md) | авторизация, CSRF, CORS, валидация, rate limit, загрузки |
 | [RENDERING_STRATEGY.md](architecture/RENDERING_STRATEGY.md) | Server/Client Components, маршруты, кэширование |

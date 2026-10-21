@@ -1,6 +1,6 @@
 # 0005. TanStack Query + openapi-fetch
 
-- Статус: Принято
+- Статус: Заменено ([0010](0010-rtk-query.md)) — запросы frontend переведены на RTK Query
 - Дата: 2026-10-20
 
 ## Контекст
