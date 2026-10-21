@@ -17,7 +17,8 @@ instagram-social-network/
 │   ├── development/
 │   ├── decisions/                # ADR
 │   ├── README.md                 # карта документации
-│   ├── STATUS.md                 # текущее состояние и журнал сессий
+│   ├── STATUS.md                 # текущее состояние и оглавление историй
+│   ├── stories/                  # истории: журнал действий ГГГГ-ММ-ДД_ЧЧММ_<slug>.md
 │   ├── GLOSSARY.md
 │   ├── REQUIREMENTS.md
 │   ├── ROADMAP.md
