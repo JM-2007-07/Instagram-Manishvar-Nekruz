@@ -22,6 +22,7 @@
 | 4 | [docs/GLOSSARY.md](docs/GLOSSARY.md) | термины и обозначения (`T1.2`, `Q10`, `P4`, Owner, reel…) |
 | 5 | документы под задачу | по таблице «Что читать под задачу» в [docs/README.md](docs/README.md#что-читать-под-задачу) |
 | 6 | [docs/development/AGENT_PLAYBOOKS.md](docs/development/AGENT_PLAYBOOKS.md) | пошаговый порядок работы для типовых задач |
+| 7 | [docs/development/AI_AGENTS.md](docs/development/AI_AGENTS.md) | роли субагентов (planner, backend-dev, reviewer…), модели и конвейер задачи |
 
 Не читай всё подряд: шагов 1–4 достаточно, чтобы понять проект; дальше — только нужное для задачи.
 
@@ -81,7 +82,9 @@
 **Совместная работа**
 - Общие файлы ([CONTRIBUTING.md](CONTRIBUTING.md#общие-файлы)), `schema.prisma` и API-контракт затрагивают второго
   разработчика: **остановись и предупреди пользователя**, затем следуй [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md).
-- Не коммить, не пушь, не создавай PR без просьбы пользователя. Работа — в feature-ветке, не в `main`.
+- Завершённые логические шаги фиксируй **коммитами в текущей ветке** (Conventional Commits, см. CONTRIBUTING.md).
+  Не создавай новую ветку на каждое изменение. Новые ветки, push и PR — только по просьбе пользователя.
+  Не работай напрямую в `main`.
 
 ## 6. Команды
 

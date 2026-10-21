@@ -27,6 +27,8 @@ instagram-social-network/
 │   └── docker/                   # пока пусто (Docker не нужен на старте)
 ├── .github/
 │   └── pull_request_template.md  # CI workflow добавляется в Phase 0
+├── .claude/
+│   └── agents/                   # 8 субагентов Claude Code (docs/development/AI_AGENTS.md)
 ├── .editorconfig  .gitattributes  .gitignore  .nvmrc
 ├── package.json                  # workspaces + корневые скрипты
 ├── package-lock.json             # появится в Phase 0 (единственный lockfile)

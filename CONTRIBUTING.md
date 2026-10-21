@@ -59,7 +59,7 @@ chore(ci): add contract check
 | `apps/api/src/common/`, `config/`, `prisma/`, `storage/`, `main.ts`, `app.module.ts` | владелец фундамента backend (A) или по договорённости |
 | `apps/web/src/lib/`, `app/layout.tsx`, `app/(main)/layout.tsx`, `components/layout/`, `next.config.ts`, `proxy.ts` | владелец фундамента frontend (B) или по договорённости |
 | `apps/web/src/components/ui/` | добавлять компоненты через CLI shadcn можно обоим; правки существующих — по договорённости |
-| `.github/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/` | только через PR с ревью второго |
+| `.github/`, `.claude/agents/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/` | только через PR с ревью второго |
 | `docs/STATUS.md` | меняют оба: каждый — только строки своих задач; записи журнала добавляются сверху. При конфликте слияния сохраняются **обе** записи |
 
 Регистрация модуля в `app.module.ts` — одна строка; конфликт решается простым объединением обеих строк.

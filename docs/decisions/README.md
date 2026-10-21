@@ -15,6 +15,7 @@ ADR (Architecture Decision Record) — короткая запись: какое
 | [0006](0006-openapi-generated-types.md) | Типы frontend генерируются из Swagger NestJS | ✅ Принято |
 | [0007](0007-media-storage.md) | Локальное хранилище медиа в разработке, S3-совместимое позже | ✅ Принято |
 | [0008](0008-npm-workspaces.md) | npm workspaces вместо pnpm | ✅ Принято |
+| [0009](0009-ai-subagents.md) | ИИ-агенты с разделением по моделям (Opus / Sonnet / Haiku) | ✅ Принято |
 
 ## Как добавить ADR
 

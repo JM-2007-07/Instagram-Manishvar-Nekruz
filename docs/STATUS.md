@@ -23,6 +23,7 @@
 - ✅ Минимальная структура репозитория и корневые конфигурации. PR #1 влит в `main`.
 - ✅ Переход на npm workspaces (ADR 0008) и документация для ИИ-агентов (AGENTS.md, карта docs, STATUS, глоссарий,
   соглашения о коде, сценарии работы) — в ветке `docs/npm-and-agent-docs`, ещё не влито.
+- ✅ 8 субагентов Claude Code с разделением по моделям (ADR 0009, [AI_AGENTS.md](development/AI_AGENTS.md)) — в той же ветке.
 
 ## 3. Доска задач
 
@@ -72,6 +73,8 @@
 |---|---|---|
 | 2026-10-20 | Новый REST API `/api/v1` с полным покрытием исходного Swagger | ADR 0002 |
 | 2026-10-21 | pnpm → npm workspaces | ADR 0008 |
+| 2026-10-21 | Субагенты: Opus — план/контракт/ревью, Sonnet — код/тесты, Haiku — проверки/STATUS | ADR 0009 |
+| 2026-10-21 | Шаги фиксируются коммитами в текущей ветке; новая ветка не создаётся на каждое изменение | AGENTS.md §5 |
 
 ## 6. Известные проблемы и риски
 
@@ -88,5 +91,6 @@
 
 | Дата | Кто | Что сделано | Что дальше |
 |---|---|---|---|
+| 2026-10-21 | Claude Code | Добавлены 8 субагентов в `.claude/agents/` (planner, contract-designer, backend-dev, frontend-dev, test-writer, verifier, reviewer, docs-keeper), руководство AI_AGENTS.md, ADR 0009; CLAUDE.md описывает роль оркестратора; правило «коммиты вместо новых веток». Закоммичено в `docs/npm-and-agent-docs`, не отправлено на GitHub. | Push и PR в `main`; ответы на Q26, Q2–Q4; старт Phase 0 |
 | 2026-10-21 | Claude Code | Переход на npm workspaces (ADR 0008, удалён `pnpm-workspace.yaml`, обновлены команды во всех документах). Добавлены AGENTS.md, docs/README.md, STATUS.md, GLOSSARY.md, CODING_CONVENTIONS.md, AGENT_PLAYBOOKS.md; задачи плана получили ID и «готово, когда». Изменения в ветке `docs/npm-and-agent-docs`, **не закоммичены**. | Ревью и коммит; ответы на Q26, Q2–Q4; старт Phase 0 |
 | 2026-10-20 | Claude Code | Анализ исходного Swagger, вся начальная документация, минимальная структура; ветка `docs/initial-setup`, PR #1 влит в `main`. | Одобрение, переход к Phase 0 |

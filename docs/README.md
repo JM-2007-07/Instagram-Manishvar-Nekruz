@@ -62,6 +62,7 @@
 | Документ | Назначение |
 |---|---|
 | [AGENT_PLAYBOOKS.md](development/AGENT_PLAYBOOKS.md) | пошаговые сценарии работы, Definition of Ready / Done, передача дел |
+| [AI_AGENTS.md](development/AI_AGENTS.md) | субагенты Claude Code: роли, модели (Opus/Sonnet/Haiku), конвейер задачи |
 | [CODING_CONVENTIONS.md](development/CODING_CONVENTIONS.md) | как писать код: шаблоны модулей, имена, ошибки, тесты |
 | [CHANGE_PROCESS.md](development/CHANGE_PROCESS.md) | изменение API-контракта и `schema.prisma` |
 | [TESTING.md](development/TESTING.md) | стратегия тестирования |
