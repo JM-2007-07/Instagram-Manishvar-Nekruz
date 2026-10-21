@@ -10,16 +10,17 @@
 ## Контракт и база данных
 
 - [ ] API-контракт не менялся
-- [ ] API-контракт изменён: обновлены `docs/api/API_CONTRACT.md`, `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts` (`pnpm contract`)
+- [ ] API-контракт изменён: обновлены `docs/api/API_CONTRACT.md`, `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts` (`npm run contract`)
 - [ ] `schema.prisma` не менялся
 - [ ] `schema.prisma` изменён: одна миграция, создана после rebase на свежий `main`, второй разработчик предупреждён
 
 ## Проверка
 
-- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test` проходят локально
+- [ ] `npm run lint`, `npm run typecheck`, `npm run test` проходят локально
 - [ ] Проверены права доступа (чужие ресурсы недоступны)
 - [ ] Проверены состояния загрузки, пустые состояния и ошибки в UI
 - [ ] Пройден [чек-лист качества](../docs/QUALITY_CHECKLIST.md)
+- [ ] Добавлена история в [docs/stories/](../docs/stories/README.md); обновлён [STATUS.md](../docs/STATUS.md): статус задачи `Tx.y`, ветка/PR, строка в оглавлении историй
 
 ## Как проверить вручную
 

@@ -25,7 +25,6 @@ playwright-report/
 # Logs
 *.log
 npm-debug.log*
-pnpm-debug.log*
 
 # OS / editors
 .DS_Store
@@ -36,3 +35,6 @@ Thumbs.db
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Only the root lockfile is used (npm workspaces)
+apps/*/package-lock.json

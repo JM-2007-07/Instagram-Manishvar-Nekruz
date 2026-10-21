@@ -15,7 +15,7 @@
 | e2e API | Jest + supertest, реальная БД `instagram_test` | полный путь запроса: guard → DTO → сервис → БД → формат ответа/ошибки | `apps/api/test/*.e2e-spec.ts` |
 | Юнит/компоненты (frontend) | Vitest + React Testing Library | компоненты с логикой: формы, оптимистичные обновления, разбор ошибок API | `apps/web/src/**/*.test.tsx` |
 | Сквозные сценарии | Playwright (Phase 5) | 3–5 ключевых потоков: регистрация → пост → лайк → комментарий; чат | `apps/web/e2e/` |
-| Контракт | `pnpm contract` + `typecheck` в CI | frontend соответствует Swagger backend | CI |
+| Контракт | `npm run contract` + `typecheck` в CI | frontend соответствует Swagger backend | CI |
 
 ## Минимум для каждого endpoint'а (e2e)
 1. Успешный сценарий: статус и форма ответа.
@@ -29,7 +29,7 @@
 - Не используются реальные email и пароли.
 
 ## CI
-`pnpm lint` → `pnpm typecheck` → `pnpm test` (юнит) → e2e API с PostgreSQL как service container
+`npm run lint` → `npm run typecheck` → `npm run test` (юнит) → e2e API с PostgreSQL как service container
 GitHub Actions → проверка контракта. PR не вливается при красном CI.
 
 ## Покрытие

@@ -17,7 +17,7 @@
 | Аутентификация | серверные сессии в PostgreSQL, HttpOnly cookie, Argon2id |
 | Медиа | локальный диск в разработке → Cloudflare R2 / Amazon S3 |
 | Позже, при обосновании | Socket.IO, Redis, BullMQ, Docker |
-| Инструменты | pnpm workspaces, ESLint, Prettier, Jest, Vitest, Playwright, GitHub Actions |
+| Инструменты | npm workspaces, ESLint, Prettier, Jest, Vitest, Playwright, GitHub Actions |
 
 ## Структура
 
@@ -32,13 +32,13 @@ infrastructure/ Docker — когда понадобится
 
 ## Требования к окружению
 
-Node.js 24, pnpm 12.8.2 (через `corepack enable`), PostgreSQL 16+, Git. Docker и облачные аккаунты не нужны.
+Node.js 24 (вместе с ним npm 11), PostgreSQL 16+, Git. Docker и облачные аккаунты не нужны.
 
 ## Запуск (после Phase 0)
 
 ```bash
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 Полная инструкция: [LOCAL_SETUP.md](docs/development/LOCAL_SETUP.md).
@@ -60,4 +60,6 @@ pnpm dev
 | Архитектурные решения | [docs/decisions/](docs/decisions/README.md) |
 | Тестирование | [docs/development/TESTING.md](docs/development/TESTING.md) |
 | Работа в команде | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Инструкции для Claude Code | [CLAUDE.md](CLAUDE.md) |
+| Текущее состояние: что сделано и что дальше | [docs/STATUS.md](docs/STATUS.md) |
+| Карта всей документации | [docs/README.md](docs/README.md) |
+| Инструкции для ИИ-агентов | [AGENTS.md](AGENTS.md) (общие), [CLAUDE.md](CLAUDE.md) (Claude Code) |

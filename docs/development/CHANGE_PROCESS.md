@@ -18,15 +18,15 @@
 ### Шаги
 1. Обновить [API_CONTRACT.md](../api/API_CONTRACT.md) (таблица модуля, при необходимости — черновые модели).
 2. Реализовать изменения в DTO/контроллере NestJS.
-3. `pnpm contract` — обновит `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts`.
-4. `pnpm typecheck` — исправить места во frontend, которые сломались (если это ваш модуль) или
+3. `npm run contract` — обновит `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts`.
+4. `npm run typecheck` — исправить места во frontend, которые сломались (если это ваш модуль) или
    договориться с владельцем модуля.
 5. Всё это — **в одном PR**, с отметкой в шаблоне PR «контракт изменён».
 6. Никогда не редактировать `openapi.json` и `schema.d.ts` вручную.
 
 ### Конфликты в сгенерированных файлах
 При конфликте слияния в `openapi.json` или `schema.d.ts` — не править вручную: взять версию `main`,
-затем заново выполнить `pnpm contract` на своей ветке.
+затем заново выполнить `npm run contract` на своей ветке.
 
 ## Изменение `schema.prisma` и миграции
 
@@ -42,7 +42,7 @@
 ### Если `main` ушёл вперёд с новой миграцией
 1. `git fetch && git rebase origin/main`.
 2. Удалить **свою невлитую** папку миграции.
-3. `pnpm --filter api prisma migrate dev --name <то же имя>` — Prisma создаст миграцию поверх свежих.
+3. `npm exec -w api -- prisma migrate dev --name <то же имя>` — Prisma создаст миграцию поверх свежих.
 4. Проверить SQL, запустить тесты, обновить PR.
 
 ### Запрещено
