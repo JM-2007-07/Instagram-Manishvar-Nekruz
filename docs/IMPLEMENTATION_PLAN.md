@@ -109,6 +109,21 @@ flowchart TD
 | `ChatsService.sendSystemMessage()` для ответов на истории (A) | T2.A4 | — | T2.A4; B подключает в T2.B2 |
 | Тестовые помощники `createUser()`, `loginAs()` (A) | T0.3 | e2e-тесты B создают пользователя и cookie без страниц входа | — |
 
+**Сигнатуры заглушек (зафиксированы в T0.3, после C0 не меняются):**
+
+| Сервис | Метод | До реализации |
+|---|---|---|
+| `VisibilityService` (`src/privacy`) | `canViewProfile(viewerId, ownerId): Promise<boolean>`, `canViewContent(viewerId, ownerId): Promise<boolean>` | `true` |
+| | `assertCanViewProfile(viewerId, ownerId)` — бросает 404; `assertCanViewContent(viewerId, ownerId)` — 404 или 403 `PRIVATE_ACCOUNT` | не бросают |
+| | `getHiddenUserIds(viewerId): Promise<string[]>`; `visibleUserWhere(viewerId): Prisma.UserWhereInput` (для `where` в своих запросах) | `[]`, `{}` |
+| `NotificationsService` (`src/notifications`) | `create({ recipientId, actorId, type, postId?, commentId?, storyId? }): Promise<void>` | запись в лог |
+| `RealtimeService` (`src/realtime`) | `emitToUsers(userIds, event, payload): void` | ничего |
+| `SessionService` (`src/common/session`) | `@CurrentUser()` → `SessionUser { id, role, sessionId }` | настоящая |
+| `UsersService` (`src/users`) | `toSummary(row)` + `userSummarySelect` → `UserSummaryDto` | `avatarUrl = null`, `hasActiveStory = false` |
+| тесты (`test/helpers`) | `createTestApp()`, `resetDb(app)`, `createUser(app, overrides?)`, `loginAs(app, user)` → `'sid=…'`, `ORIGIN` | настоящие |
+
+Модули этих сервисов глобальные (`@Global`): импортировать их в свой модуль не нужно.
+
 Пока реальной реализации нет, e2e-тесты владельца вызывающего модуля проверяют **свою** логику; проверки приватности
 своих выдач он добавляет после влития T1.A5 (это часть его Definition of Done).
 

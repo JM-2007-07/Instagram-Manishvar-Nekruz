@@ -1,16 +1,35 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { OriginGuard } from './common/guards/origin.guard';
+import { SessionGuard } from './common/session/session.guard';
+import { SessionModule } from './common/session/session.module';
 import { AppConfigModule } from './config/app-config.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { PrivacyModule } from './privacy/privacy.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { UsersModule } from './users/users.module';
 
+// Модули общих сервисов (Session, Users, Privacy, Notifications, Realtime) глобальные: их сервисы
+// доступны везде без импорта, как PrismaService.
 @Module({
-  imports: [AppConfigModule, PrismaModule, MailModule, HealthModule],
+  imports: [
+    AppConfigModule,
+    PrismaModule,
+    MailModule,
+    SessionModule,
+    UsersModule,
+    PrivacyModule,
+    NotificationsModule,
+    RealtimeModule,
+    HealthModule,
+  ],
   providers: [
-    // Порядок глобальных guard'ов: Origin -> Session -> Throttler (SessionGuard — T0.3, Throttler — T1.A1).
+    // Порядок глобальных guard'ов: Origin -> Session -> Throttler (Throttler — T1.A1).
     { provide: APP_GUARD, useClass: OriginGuard },
+    { provide: APP_GUARD, useClass: SessionGuard },
   ],
 })
 export class AppModule {}

@@ -77,6 +77,14 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   if (env.NODE_ENV === 'production' && env.MAIL_DRIVER === 'log') {
     problems.push('MAIL_DRIVER: "log" is not allowed in production');
   }
+  // В production cookie обязана иметь префикс __Host- (AUTHENTICATION.md §2).
+  if (env.NODE_ENV === 'production' && !env.SESSION_COOKIE_NAME.startsWith('__Host-')) {
+    problems.push('SESSION_COOKIE_NAME: must start with "__Host-" in production');
+  }
+  // Иначе cookie проживёт дольше самой сессии.
+  if (env.SESSION_IDLE_TTL_DAYS > env.SESSION_ABSOLUTE_TTL_DAYS) {
+    problems.push('SESSION_IDLE_TTL_DAYS: must not exceed SESSION_ABSOLUTE_TTL_DAYS');
+  }
   if (problems.length > 0) {
     throw new Error(`Invalid environment configuration:\n${problems.join('\n')}`);
   }

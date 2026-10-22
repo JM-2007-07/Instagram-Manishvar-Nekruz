@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import { IsInt, IsString, Min } from 'class-validator';
 import request from 'supertest';
 import { AppModule } from '@/app.module';
+import { Public } from '@/common/decorators/public.decorator';
 import { setupApp } from '@/app.setup';
 import type { Env } from '@/config/env';
 import { Prisma } from '@/generated/prisma/client';
@@ -18,6 +19,7 @@ class TestDto {
 }
 
 // Контроллер существует только в этом e2e-файле: проверяет общие pipe/guard/filter без реальных модулей.
+@Public()
 @Controller('test-foundation')
 class TestFoundationController {
   @Post('validate')

@@ -65,4 +65,25 @@ describe('validateEnv', () => {
       }),
     ).toThrow(/MAIL_DRIVER/);
   });
+
+  it('в production имя cookie без __Host- -> ошибка', () => {
+    expect(() =>
+      validateEnv({
+        DATABASE_URL: VALID_DB_URL,
+        NODE_ENV: 'production',
+        MAIL_DRIVER: 'smtp',
+        SESSION_COOKIE_NAME: 'sid',
+      }),
+    ).toThrow(/SESSION_COOKIE_NAME/);
+  });
+
+  it('idle-срок больше absolute -> ошибка', () => {
+    expect(() =>
+      validateEnv({
+        DATABASE_URL: VALID_DB_URL,
+        SESSION_IDLE_TTL_DAYS: '40',
+        SESSION_ABSOLUTE_TTL_DAYS: '30',
+      }),
+    ).toThrow(/SESSION_IDLE_TTL_DAYS/);
+  });
 });

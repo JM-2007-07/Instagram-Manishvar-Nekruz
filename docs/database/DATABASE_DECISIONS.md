@@ -28,6 +28,10 @@
 [DATA_MODEL.md §1](DATA_MODEL.md#1-общие-правила). Обратные связи на `User` добавляются по правилу CHANGE_PROCESS.md.
 Устанавливать `prisma@7` и `@prisma/client@7` явно: метка `latest` в npm указывает на предварительную версию 8.
 
+**Имена в БД (T0.3):** модели и поля в схеме — `PascalCase` / `camelCase`; таблицы — `snake_case` во множественном числе
+через `@@map` (`User` → `users`, `UserSettings` → `user_settings`); колонки не переименовываются (`createdAt`). Так же
+поступают все модули, включая модули Студента B.
+
 ## Профиль внутри `User`
 
 📝 Поля профиля (`bio`, `pronouns`, `gender`, `avatarMediaId`, `isPrivate`) хранятся в `User`, без отдельной таблицы
