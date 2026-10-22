@@ -105,10 +105,16 @@ export class MediaService {
       throw validationError('mediaIds', 'Media file was uploaded for another purpose');
     }
     if (rows.some((r) => r.attachedTo !== null)) {
-      throw new ConflictException({ code: 'MEDIA_ALREADY_USED', message: 'Media file is already attached' });
+      throw new ConflictException({
+        code: 'MEDIA_ALREADY_USED',
+        message: 'Media file is already attached',
+      });
     }
     if (rows.some((r) => r.status !== 'READY')) {
-      throw new ConflictException({ code: 'MEDIA_NOT_READY', message: 'Media file is not ready yet' });
+      throw new ConflictException({
+        code: 'MEDIA_NOT_READY',
+        message: 'Media file is not ready yet',
+      });
     }
     // Условие attachedTo: null защищает от гонки: два запроса не привяжут один файл дважды.
     const { count } = await db.mediaFile.updateMany({
@@ -116,7 +122,10 @@ export class MediaService {
       data: { attachedTo: options.target, attachedAt: new Date() },
     });
     if (count !== mediaIds.length) {
-      throw new ConflictException({ code: 'MEDIA_ALREADY_USED', message: 'Media file is already attached' });
+      throw new ConflictException({
+        code: 'MEDIA_ALREADY_USED',
+        message: 'Media file is already attached',
+      });
     }
   }
 
@@ -134,8 +143,16 @@ export class MediaService {
   // ---------- Загрузка ----------
 
   /** POST /media: tmpPath — файл, уже принятый multer (удаляет вызывающий). */
-  async upload(ownerId: string, tmpPath: string, size: number, purposeRaw: unknown): Promise<MediaItemDto> {
-    if (typeof purposeRaw !== 'string' || !(MEDIA_PURPOSES as readonly string[]).includes(purposeRaw)) {
+  async upload(
+    ownerId: string,
+    tmpPath: string,
+    size: number,
+    purposeRaw: unknown,
+  ): Promise<MediaItemDto> {
+    if (
+      typeof purposeRaw !== 'string' ||
+      !(MEDIA_PURPOSES as readonly string[]).includes(purposeRaw)
+    ) {
       throw validationError('purpose', `purpose must be one of: ${MEDIA_PURPOSES.join(', ')}`);
     }
     const purpose = purposeRaw as MediaPurpose;
@@ -172,7 +189,8 @@ export class MediaService {
       throw new UnsupportedMediaTypeException('This file type is not allowed here');
     }
     const maxBytes = rule.maxBytes[kind];
-    if (maxBytes !== undefined && size > maxBytes) throw new PayloadTooLargeException('File is too large');
+    if (maxBytes !== undefined && size > maxBytes)
+      throw new PayloadTooLargeException('File is too large');
     if (rule.maxDurationSec !== undefined && (info?.durationSec ?? 0) > rule.maxDurationSec) {
       throw new PayloadTooLargeException('Media is too long');
     }
@@ -281,11 +299,14 @@ export class MediaService {
     const key = variant === 'thumb' ? row.thumbnailKey : row.storageKey;
     if (!key) throw new NotFoundException();
     const ext = key.split('.').pop() ?? '';
-    return { key, mimeType: variant === 'thumb' ? (MIME_BY_EXT[ext] ?? 'image/jpeg') : row.mimeType };
+    return {
+      key,
+      mimeType: variant === 'thumb' ? (MIME_BY_EXT[ext] ?? 'image/jpeg') : row.mimeType,
+    };
   }
 
   // Доступ к файлу = доступ к объекту, к которому он привязан (media.md). Владелец видит свои файлы всегда.
-  // Точка расширения: история (T2.B1) добавит сюда аудиторию «близкие друзья» и «скрыть от».
+  // История: аудитория «близкие друзья», «скрыть от» и срок 24 часа (кроме историй из «Актуального»).
   private async canView(
     viewerId: string,
     row: { id: string; ownerId: string; attachedTo: MediaTarget | null },
@@ -294,8 +315,9 @@ export class MediaService {
     switch (row.attachedTo) {
       case null:
         return false; // не привязанный файл видит только владелец
-      case 'POST':
       case 'STORY':
+        return this.canViewStoryMedia(viewerId, row);
+      case 'POST':
       case 'HIGHLIGHT_COVER':
         return this.visibility.canViewContent(viewerId, row.ownerId);
       case 'AVATAR':
@@ -323,6 +345,30 @@ export class MediaService {
     }
   }
 
+  private async canViewStoryMedia(
+    viewerId: string,
+    row: { id: string; ownerId: string },
+  ): Promise<boolean> {
+    const story = await this.prisma.story.findUnique({
+      where: { mediaId: row.id },
+      select: {
+        audience: true,
+        expiresAt: true,
+        highlightItems: { select: { storyId: true }, take: 1 },
+      },
+    });
+    if (!story) return false;
+    if (!(await this.visibility.canViewContent(viewerId, row.ownerId))) return false;
+    if (story.expiresAt.getTime() <= Date.now() && story.highlightItems.length === 0) return false;
+    if (
+      story.audience === 'CLOSE_FRIENDS' &&
+      !(await this.visibility.isCloseFriend(row.ownerId, viewerId))
+    ) {
+      return false;
+    }
+    return !(await this.visibility.getStoryHiddenFromIds(row.ownerId)).includes(viewerId);
+  }
+
   /** DELETE /media/{id} — владелец, только не привязанный файл (иначе 409). */
   async remove(ownerId: string, mediaId: string): Promise<void> {
     const row = await this.prisma.mediaFile.findFirst({ where: { id: mediaId, ownerId } });
@@ -332,7 +378,10 @@ export class MediaService {
       where: { id: mediaId, ownerId, attachedTo: null },
     });
     if (count === 0) {
-      throw new ConflictException({ code: 'CONFLICT', message: 'Media file is attached to an object' });
+      throw new ConflictException({
+        code: 'CONFLICT',
+        message: 'Media file is attached to an object',
+      });
     }
     await this.deleteStored(row);
   }
@@ -357,7 +406,10 @@ export class MediaService {
     return removed;
   }
 
-  private async deleteStored(row: { storageKey: string; thumbnailKey: string | null }): Promise<void> {
+  private async deleteStored(row: {
+    storageKey: string;
+    thumbnailKey: string | null;
+  }): Promise<void> {
     await this.storage.delete(row.storageKey).catch(() => undefined);
     if (row.thumbnailKey) await this.storage.delete(row.thumbnailKey).catch(() => undefined);
   }

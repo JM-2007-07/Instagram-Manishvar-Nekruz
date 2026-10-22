@@ -1,0 +1,40 @@
+// Комментарии к публикациям (владелец — Студент B, T1.B5).
+// Ответ — только на комментарий верхнего уровня (проверяет сервис). Число лайков и ответов вычисляется (_count).
+
+model Comment {
+  id                String    @id @default(uuid()) @db.Uuid
+  postId            String    @db.Uuid
+  authorId          String    @db.Uuid
+  parentId          String?   @db.Uuid
+  text              String
+  pinnedAt          DateTime?
+  editedAt          DateTime?
+  isPendingApproval Boolean   @default(false) // комментарий ограниченного пользователя ждёт одобрения автора поста
+  createdAt         DateTime  @default(now())
+
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+
+  likes    CommentLike[]
+  mentions CommentMention[]
+
+  @@index([postId, parentId, createdAt])
+  @@index([parentId, createdAt])
+  @@index([authorId])
+  @@map("comments")
+}
+
+model CommentLike {
+  userId    String   @db.Uuid
+  commentId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user    User    @relation("CommentLikes", fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, commentId])
+  @@index([commentId, createdAt])
+  @@map("comment_likes")
+}

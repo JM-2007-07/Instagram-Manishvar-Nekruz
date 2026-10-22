@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CallsModule } from './calls/calls.module';
 import { ChatsModule } from './chats/chats.module';
+import { CommentsModule } from './comments/comments.module';
 import { OriginGuard } from './common/guards/origin.guard';
 import { SessionGuard } from './common/session/session.guard';
 import { SessionModule } from './common/session/session.module';
@@ -21,6 +23,7 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { SearchModule } from './search/search.module';
 import { SettingsModule } from './settings/settings.module';
 import { StorageModule } from './storage/storage.module';
+import { StoriesModule } from './stories/stories.module';
 import { TagsModule } from './tags/tags.module';
 import { UsersModule } from './users/users.module';
 
@@ -51,6 +54,9 @@ import { UsersModule } from './users/users.module';
     TagsModule,
     LocationsModule,
     PostsModule,
+    CommentsModule,
+    StoriesModule,
+    AdminModule,
   ],
   providers: [
     // Порядок глобальных guard'ов: Origin -> Session -> Throttler.

@@ -45,6 +45,12 @@ model Post {
   hashtags      PostHashtag[]
   mentions      PostMention[]
 
+  // --- comments (B) ---
+  comments        Comment[]
+  // --- stories (B) ---
+  sharedInStories Story[]
+  // --- admin (B) ---
+
   @@index([authorId, createdAt])
   @@index([createdAt])
   @@index([type, createdAt])

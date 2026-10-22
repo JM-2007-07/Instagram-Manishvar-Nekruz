@@ -15,6 +15,7 @@ import type { Page } from '@/common/pagination/cursor';
 import type { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import type { SessionUser } from '@/common/session/session-user';
 import { validationError } from '@/common/validation';
+import { CommentsService } from '@/comments/comments.service';
 import { FollowsService } from '@/follows/follows.service';
 import type { AudienceSetting, Prisma } from '@/generated/prisma/client';
 import { toLocationDto } from '@/locations/locations.service';
@@ -58,6 +59,7 @@ export class PostsService {
     private readonly media: MediaService,
     private readonly tags: TagsService,
     private readonly notifications: NotificationsService,
+    private readonly comments: CommentsService,
   ) {}
 
   // ---------- Публичное API для других модулей (collections, chats, users, comments) ----------
@@ -89,7 +91,7 @@ export class PostsService {
       caption: row.caption,
       location: row.location ? toLocationDto(row.location) : null,
       likeCount: row.hideLikeCount && !isAuthor ? null : row._count.likes,
-      commentCount: 0, // TODO(T1.B5): число комментариев
+      commentCount: row._count.comments,
       playCount: hasVideo ? row.playCount : null,
       isLikedByMe: row.likes.length > 0,
       isSavedByMe: false, // TODO(collections, A): SavedPost текущего зрителя
@@ -99,7 +101,7 @@ export class PostsService {
       isArchived: row.isArchived,
       editedAt: row.editedAt ? row.editedAt.toISOString() : null,
       publishedAt: row.publishedAt.toISOString(),
-      previewComments: [], // TODO(T1.B5): до 2 комментариев
+      previewComments: row.comments.map((c) => this.comments.toCommentDto(c)),
     };
   }
 

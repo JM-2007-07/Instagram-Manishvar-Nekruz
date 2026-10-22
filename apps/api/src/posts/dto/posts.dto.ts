@@ -16,6 +16,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { CommentDto } from '@/comments/dto/comments.dto';
 import { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import { LocationDto } from '@/locations/dto/locations.dto';
 import { MediaItemDto } from '@/media/dto/media.dto';
@@ -279,12 +280,8 @@ export class PostDto {
   @ApiProperty({ format: 'date-time' })
   publishedAt!: string;
 
-  @ApiProperty({
-    type: 'array',
-    items: { type: 'object' },
-    description: 'Появятся с модулем comments',
-  })
-  previewComments!: unknown[];
+  @ApiProperty({ type: [CommentDto], description: 'До 2 комментариев для карточки' })
+  previewComments!: CommentDto[];
 }
 
 export class PostPageDto {

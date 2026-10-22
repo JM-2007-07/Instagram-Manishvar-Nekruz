@@ -1,3 +1,4 @@
+import { commentSelect, visibleCommentWhere } from '@/comments/comment.select';
 import type { Prisma } from '@/generated/prisma/client';
 import { locationSelect } from '@/locations/locations.service';
 import { mediaItemSelect } from '@/media/media.service';
@@ -41,7 +42,14 @@ export function postSelect(viewerId: string) {
       select: { user: { select: userSummarySelect(viewerId) } },
     },
     likes: { where: { userId: viewerId }, select: { userId: true }, take: 1 },
-    _count: { select: { likes: true } },
+    // До 2 комментариев верхнего уровня для карточки (закреплённые первыми).
+    comments: {
+      where: { parentId: null, ...visibleCommentWhere(viewerId) },
+      orderBy: [{ pinnedAt: { sort: 'desc', nulls: 'last' } }, { createdAt: 'desc' }],
+      take: 2,
+      select: commentSelect(viewerId),
+    },
+    _count: { select: { likes: true, comments: { where: visibleCommentWhere(viewerId) } } },
   } satisfies Prisma.PostSelect;
 }
 

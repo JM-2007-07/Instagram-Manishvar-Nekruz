@@ -52,8 +52,11 @@ model MediaFile {
   attachedAt   DateTime?
   createdAt    DateTime     @default(now())
 
-  owner User @relation("MediaOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  postMedia PostMedia? // привязка к публикации (T1.B4)
+  owner          User       @relation("MediaOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  postMedia      PostMedia? // привязка к публикации (T1.B4)
+  // --- stories (B) ---
+  story          Story?
+  highlightCover Highlight?
 
   @@index([ownerId, createdAt])
   @@index([attachedTo, createdAt]) // фоновая очистка непривязанных (attachedTo = null)

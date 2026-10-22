@@ -109,18 +109,29 @@ model User {
   callParticipations CallParticipant[] @relation("CallParticipation")
 
   // --- media (B) ---
-  mediaFiles MediaFile[] @relation("MediaOwner")
+  mediaFiles            MediaFile[]            @relation("MediaOwner")
   // --- tags (B) ---
   // --- locations (B) ---
   // --- posts (B) ---
-  posts              Post[]             @relation("PostAuthor")
-  postLikes          PostLike[]         @relation("PostLikes")
-  postPlays          PostPlay[]         @relation("PostPlays")
-  postTagged         PostUserTag[]      @relation("PostTagged")
-  postCollaborations PostCollaborator[] @relation("PostCollaborations")
-  postMentions       PostMention[]      @relation("PostMentions")
+  posts                 Post[]                 @relation("PostAuthor")
+  postLikes             PostLike[]             @relation("PostLikes")
+  postPlays             PostPlay[]             @relation("PostPlays")
+  postTagged            PostUserTag[]          @relation("PostTagged")
+  postCollaborations    PostCollaborator[]     @relation("PostCollaborations")
+  postMentions          PostMention[]          @relation("PostMentions")
   // --- stories (B) ---
+  stories               Story[]                @relation("StoryAuthor")
+  storyViews            StoryView[]            @relation("StoryViewer")
+  storyLikes            StoryLike[]            @relation("StoryLiker")
+  storyStickerResponses StoryStickerResponse[] @relation("StoryStickerResponder")
+  highlights            Highlight[]            @relation("HighlightOwner")
   // --- comments (B) ---
+  commentsWritten       Comment[]              @relation("CommentAuthor")
+  commentLikes          CommentLike[]          @relation("CommentLikes")
+  commentMentions       CommentMention[]       @relation("CommentMentions")
+  // --- admin (B) ---
+  reportsFiled          Report[]               @relation("ReportReporter")
+  reportsResolved       Report[]               @relation("ReportResolver")
 
   @@map("users")
 }

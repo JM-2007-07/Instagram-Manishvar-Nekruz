@@ -1,0 +1,135 @@
+// Истории и «Актуальное» (владелец — Студент B, T2.B1).
+// История живёт 24 часа (expiresAt), потом уходит в архив автора; удаляет её только автор. Опубликованную историю не редактируют (Q30).
+
+enum StoryAudience {
+  EVERYONE
+  CLOSE_FRIENDS
+}
+
+enum StoryStickerType {
+  MENTION
+  LOCATION
+  HASHTAG
+  LINK
+  POLL
+  QUESTION
+  SLIDER
+  QUIZ
+  COUNTDOWN
+}
+
+// Ровно одно из mediaId / sharedPostId (проверяет сервис). Если исходный пост удалён, sharedPostId становится null.
+model Story {
+  id           String        @id @default(uuid()) @db.Uuid
+  authorId     String        @db.Uuid
+  mediaId      String?       @unique @db.Uuid
+  sharedPostId String?       @db.Uuid
+  audience     StoryAudience @default(EVERYONE)
+  durationSec  Int           @default(5)
+  createdAt    DateTime      @default(now())
+  expiresAt    DateTime
+
+  author     User       @relation("StoryAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  media      MediaFile? @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sharedPost Post?      @relation(fields: [sharedPostId], references: [id], onDelete: SetNull)
+
+  stickers       StorySticker[]
+  views          StoryView[]
+  likes          StoryLike[]
+  highlightItems HighlightItem[]
+
+  @@index([authorId, expiresAt])
+  @@index([authorId, createdAt])
+  @@index([sharedPostId])
+  @@map("stories")
+}
+
+// Стикер на истории; x, y, width, height — доли размера кадра (0..1), rotation — градусы. data зависит от type.
+model StorySticker {
+  id       String           @id @default(uuid()) @db.Uuid
+  storyId  String           @db.Uuid
+  type     StoryStickerType
+  x        Float
+  y        Float
+  width    Float
+  height   Float
+  rotation Float            @default(0)
+  data     Json             @default("{}")
+
+  story     Story                  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  responses StoryStickerResponse[]
+
+  @@index([storyId])
+  @@map("story_stickers")
+}
+
+// Ответ зрителя на интерактивный стикер (опрос, вопрос, шкала, викторина): один ответ на пользователя, можно изменить.
+model StoryStickerResponse {
+  stickerId String   @db.Uuid
+  userId    String   @db.Uuid
+  value     Json
+  createdAt DateTime @default(now())
+
+  sticker StorySticker @relation(fields: [stickerId], references: [id], onDelete: Cascade)
+  user    User         @relation("StoryStickerResponder", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([stickerId, userId])
+  @@index([stickerId, createdAt])
+  @@map("story_sticker_responses")
+}
+
+model StoryView {
+  storyId  String   @db.Uuid
+  viewerId String   @db.Uuid
+  viewedAt DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewer User  @relation("StoryViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, viewerId])
+  @@index([viewerId])
+  @@index([storyId, viewedAt])
+  @@map("story_views")
+}
+
+model StoryLike {
+  storyId   String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation("StoryLiker", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, userId])
+  @@index([userId])
+  @@map("story_likes")
+}
+
+model Highlight {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerId      String   @db.Uuid
+  title        String
+  coverMediaId String?  @unique @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  owner      User            @relation("HighlightOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  coverMedia MediaFile?      @relation(fields: [coverMediaId], references: [id], onDelete: SetNull)
+  items      HighlightItem[]
+
+  @@index([ownerId, createdAt])
+  @@map("highlights")
+}
+
+model HighlightItem {
+  highlightId String @db.Uuid
+  storyId     String @db.Uuid
+  position    Int
+
+  highlight Highlight @relation(fields: [highlightId], references: [id], onDelete: Cascade)
+  story     Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@id([highlightId, storyId])
+  @@index([storyId])
+  @@map("highlight_items")
+}
