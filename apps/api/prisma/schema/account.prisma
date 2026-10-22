@@ -46,7 +46,8 @@ model User {
   status              UserStatus @default(ACTIVE)
   deletionScheduledAt DateTime?
 
-  // Профиль (F-PRF-*). avatarMediaId появится после MediaFile (T1.B1).
+  // Профиль (F-PRF-*).
+  avatarMediaId String? @unique @db.Uuid
   bio          String?
   pronouns     String?
   gender       Gender?
@@ -56,8 +57,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions Session[]
-  settings UserSettings?
+  sessions    Session[]
+  settings    UserSettings?
+  avatarMedia MediaFile?    @relation("UserAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
 
   // --- users / settings (A) ---
   links                   UserLink[]
@@ -107,6 +109,10 @@ model User {
   // --- calls (A) ---
   callsInitiated     Call[]            @relation("CallInitiator")
   callParticipations CallParticipant[] @relation("CallParticipation")
+
+  // --- collections (A) ---
+  savedPosts  SavedPost[]  @relation("SavedPostOwner")
+  collections Collection[] @relation("CollectionOwner")
 
   // --- media (B) ---
   mediaFiles            MediaFile[]            @relation("MediaOwner")

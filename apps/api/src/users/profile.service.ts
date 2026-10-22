@@ -15,6 +15,7 @@ import { validationError } from '@/common/validation';
 import { Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
+import { MediaService } from '@/media/media.service';
 import { FollowsService } from '@/follows/follows.service';
 import { SuggestionsService } from '@/follows/suggestions.service';
 import { MeDto, ProfileDto } from './dto/me.dto';
@@ -34,7 +35,7 @@ export class UserNameRateLimitedException extends HttpException {
   }
 }
 
-// Профиль: чтение чужого, редактирование своего, имя, ссылки. Аватар — после T1.B1; email — EmailChangeService.
+// Профиль: чтение чужого, редактирование своего, имя, ссылки. Аватар — MediaService; email — EmailChangeService.
 @Injectable()
 export class ProfileService {
   constructor(
@@ -43,6 +44,7 @@ export class ProfileService {
     private readonly visibility: VisibilityService,
     private readonly follows: FollowsService,
     private readonly suggestions: SuggestionsService,
+    private readonly media: MediaService,
   ) {}
 
   // --- Чтение ------------------------------------------------------------------------------------
@@ -97,6 +99,41 @@ export class ProfileService {
     await this.follows.notifyAccepted(userId, accepted);
     // Q-new-1: лимит смены fullName (2 раза за 14 дней) не реализован.
     return this.users.getMe(userId);
+  }
+
+  // PUT /me/avatar: своё изображение READY с purpose AVATAR (проверяет MediaService.attach). Прежний файл удаляется.
+  async setAvatar(userId: string, mediaId: string): Promise<MeDto> {
+    const oldId = await this.prisma.$transaction(async (tx) => {
+      const current = await tx.user.findUnique({
+        where: { id: userId },
+        select: { avatarMediaId: true },
+      });
+      if (!current) throw new NotFoundException();
+      if (current.avatarMediaId === mediaId) return null;
+      await this.media.attach(userId, [mediaId], {
+        target: 'AVATAR',
+        purposes: ['AVATAR'],
+        tx,
+      });
+      await tx.user.update({ where: { id: userId }, data: { avatarMediaId: mediaId } });
+      return current.avatarMediaId;
+    });
+    if (oldId) await this.media.removeFiles([oldId]);
+    return this.users.getMe(userId);
+  }
+
+  // DELETE /me/avatar: повторный вызов безопасен.
+  async removeAvatar(userId: string): Promise<void> {
+    const current = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarMediaId: true },
+    });
+    if (!current?.avatarMediaId) return;
+    await this.prisma.user.updateMany({
+      where: { id: userId, avatarMediaId: current.avatarMediaId },
+      data: { avatarMediaId: null },
+    });
+    await this.media.removeFiles([current.avatarMediaId]);
   }
 
   async changeUserName(userId: string, dto: ChangeUserNameDto): Promise<MeDto> {

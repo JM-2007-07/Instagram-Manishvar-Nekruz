@@ -16,7 +16,9 @@ import {
   ClearSearchHistoryQueryDto,
   SearchHistoryEntryDto,
   SearchHistoryPageDto,
+  SearchHashtagsPageDto,
   SearchHistoryQueryDto,
+  SearchLocationsPageDto,
   SearchQueryDto,
   SearchResultDto,
   SearchUsersPageDto,
@@ -49,6 +51,20 @@ export class SearchController {
     return this.search.searchUsers(user.id, query);
   }
 
+  @Get('search/hashtags')
+  @ApiOkResponse({ type: SearchHashtagsPageDto })
+  @ApiBadRequestResponse()
+  searchHashtags(@Query() query: SearchUsersQueryDto): Promise<SearchHashtagsPageDto> {
+    return this.search.searchHashtags(query);
+  }
+
+  @Get('search/locations')
+  @ApiOkResponse({ type: SearchLocationsPageDto })
+  @ApiBadRequestResponse()
+  searchLocations(@Query() query: SearchUsersQueryDto): Promise<SearchLocationsPageDto> {
+    return this.search.searchLocations(query);
+  }
+
   @Get('search/mentions')
   @ApiOkResponse({ type: [UserSummaryDto], description: 'До 10 аккаунтов для подсказки после @' })
   @ApiBadRequestResponse()
@@ -71,7 +87,7 @@ export class SearchController {
   @Post('me/search-history')
   @ApiCreatedResponse({ type: SearchHistoryEntryDto, description: 'Повтор поднимает запись' })
   @ApiBadRequestResponse({ description: 'Тип не поддерживается или нет нужного поля' })
-  @ApiNotFoundResponse({ description: 'Пользователь не найден или недоступен' })
+  @ApiNotFoundResponse({ description: 'Пользователь, хэштег или место не найдены' })
   addHistory(
     @CurrentUser() user: SessionUser,
     @Body() dto: AddSearchHistoryDto,

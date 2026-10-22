@@ -38,6 +38,12 @@ model Story {
   likes          StoryLike[]
   highlightItems HighlightItem[]
 
+  // --- chats (A) ---
+  messages Message[] @relation("MessageStory")
+
+  // --- notifications (A) ---
+  notifications Notification[] @relation("NotificationStory")
+
   @@index([authorId, expiresAt])
   @@index([authorId, createdAt])
   @@index([sharedPostId])

@@ -15,7 +15,7 @@ enum CallStatus {
 
 model Call {
   id          String     @id @default(uuid()) @db.Uuid
-  chatId      String     @db.Uuid // FK на Chat — после T2.A4 (модель chats ещё не создана)
+  chatId      String     @db.Uuid
   initiatorId String     @db.Uuid
   type        CallType
   status      CallStatus @default(RINGING)
@@ -23,6 +23,8 @@ model Call {
   answeredAt  DateTime?
   endedAt     DateTime?
 
+  chat         Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  message      Message?          @relation("MessageCall")
   initiator    User              @relation("CallInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
   participants CallParticipant[]
 

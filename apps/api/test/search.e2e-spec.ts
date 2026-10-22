@@ -7,6 +7,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { createUser, loginAs, resetDb, withOrigin } from './helpers';
 import type { TestUser } from './helpers';
 import { resetThrottler } from './helpers/throttler';
+import { createPost } from './helpers/posts';
 
 interface UserItem {
   id: string;
@@ -185,7 +186,7 @@ describe('Search: аккаунты, общий поиск, подсказки @,
   });
 
   describe('GET /search', () => {
-    it('возвращает users, hashtags: [], locations: []', async () => {
+    it('возвращает users (хэштеги и места пустые)', async () => {
       await createUser(app, { userName: 'findme' });
       const res = await get('/search?q=findme').expect(200);
       expect(res.body.users.map((u: UserItem) => u.userName)).toEqual(['findme']);
@@ -352,6 +353,51 @@ describe('Search: аккаунты, общий поиск, подсказки @,
       await send('delete', '/me/search-history?type=QUERY').expect(204);
       const left = await history();
       expect(left.items.map((i) => i.type)).toEqual(['USER']);
+    });
+  });
+
+  describe('хэштеги и места', () => {
+    let locationId: string;
+    beforeEach(async () => {
+      const post = await createPost(app, me);
+      const tag = await prisma.hashtag.create({ data: { name: 'sunset' } });
+      await prisma.postHashtag.create({ data: { postId: post.id, hashtagId: tag.id } });
+      const loc = await prisma.location.create({
+        data: { name: 'Sunset Park', slug: 'sunset-park', city: 'Paris', country: 'FR' },
+      });
+      locationId = loc.id;
+    });
+
+    it('GET /search/hashtags и /search/locations: страницы', async () => {
+      const h = await get('/search/hashtags?q=sun').expect(200);
+      expect(h.body).toEqual({ items: [{ name: 'sunset', postCount: 1 }], nextCursor: null });
+      const l = await get('/search/locations?q=sunset').expect(200);
+      expect(l.body.items.map((i: { id: string }) => i.id)).toEqual([locationId]);
+      await get('/search/hashtags').expect(400);
+    });
+
+    it('GET /search возвращает hashtags и locations', async () => {
+      const res = await get('/search?q=sun').expect(200);
+      expect(res.body.hashtags).toEqual([{ name: 'sunset', postCount: 1 }]);
+      expect(res.body.locations).toHaveLength(1);
+    });
+
+    it('история HASHTAG и LOCATION: 201, повтор без дубля, 404 и 400', async () => {
+      const add = (body: object) => send('post', '/me/search-history').send(body);
+      await add({ type: 'HASHTAG', hashtagName: '#Sunset' }).expect(201);
+      await add({ type: 'HASHTAG', hashtagName: 'sunset' }).expect(201);
+      await add({ type: 'LOCATION', locationId }).expect(201);
+      await add({ type: 'HASHTAG', hashtagName: 'nope' }).expect(404);
+      await add({ type: 'LOCATION', locationId: '00000000-0000-4000-8000-000000000000' }).expect(
+        404,
+      );
+      await add({ type: 'HASHTAG' }).expect(400);
+      const res = await history();
+      expect(res.items).toHaveLength(2);
+      const tag = res.items.find((i) => i.type === 'HASHTAG') as unknown as {
+        hashtag: { name: string; postCount: number };
+      };
+      expect(tag.hashtag).toEqual({ name: 'sunset', postCount: 1 });
     });
   });
 });

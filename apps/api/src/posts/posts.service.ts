@@ -94,7 +94,7 @@ export class PostsService {
       commentCount: row._count.comments,
       playCount: hasVideo ? row.playCount : null,
       isLikedByMe: row.likes.length > 0,
-      isSavedByMe: false, // TODO(collections, A): SavedPost текущего зрителя
+      isSavedByMe: row.savedBy.length > 0,
       commentsDisabled: row.commentsDisabled,
       hideLikeCount: row.hideLikeCount,
       isPinned: row.pinnedAt !== null,

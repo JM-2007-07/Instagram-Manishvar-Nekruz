@@ -4,6 +4,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CallsModule } from './calls/calls.module';
 import { ChatsModule } from './chats/chats.module';
+import { CollectionsModule } from './collections/collections.module';
 import { CommentsModule } from './comments/comments.module';
 import { OriginGuard } from './common/guards/origin.guard';
 import { SessionGuard } from './common/session/session.guard';
@@ -48,6 +49,7 @@ import { UsersModule } from './users/users.module';
     SearchModule,
     CallsModule,
     ChatsModule,
+    CollectionsModule,
     // --- модули B ---
     StorageModule,
     MediaModule,

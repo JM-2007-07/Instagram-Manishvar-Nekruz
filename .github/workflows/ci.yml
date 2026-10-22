@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: format, lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+
+  e2e:
+    name: e2e (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: instagram_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      # имя БД обязано оканчиваться на _test (apps/api/test/global-setup.ts)
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/instagram_test?schema=public
+      WEB_ORIGIN: http://localhost:3000
+      MAIL_DRIVER: log
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: ./storage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install ffmpeg (media tests)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm ci
+      - run: npm run test:e2e -w api
+
+  contract:
+    name: API contract is up to date
+    runs-on: ubuntu-latest
+    env:
+      # openapi:export собирает приложение без подключения к БД, но env валидируется
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/instagram?schema=public
+      WEB_ORIGIN: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run contract
+      - name: Fail if generated files changed
+        run: git diff --exit-code docs/api/openapi.json apps/web/src/lib/api/schema.d.ts
+
+  docs-links:
+    name: docs links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm run docs:links

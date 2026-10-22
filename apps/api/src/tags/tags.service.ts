@@ -50,12 +50,13 @@ export class TagsService {
   }
 
   // Для /search/hashtags (модуль search): префиксный поиск по имени.
-  async searchHashtags(query: string, limit: number): Promise<HashtagInfo[]> {
+  async searchHashtags(query: string, limit: number, skip = 0): Promise<HashtagInfo[]> {
     const q = query.trim().replace(/^#/, '').toLowerCase();
     if (!q) return [];
     const rows = await this.prisma.hashtag.findMany({
       where: { name: { startsWith: q } },
       orderBy: { name: 'asc' },
+      skip,
       take: limit,
       select: { name: true },
     });

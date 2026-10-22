@@ -8,12 +8,13 @@ import { decodeCursor, encodeCursor, type Page } from '@/common/pagination/curso
 import type { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import { validationError } from '@/common/validation';
 import type { MessageType, Prisma } from '@/generated/prisma/client';
+import { MediaService } from '@/media/media.service';
+import { PostsService } from '@/posts/posts.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
 import { RealtimeService } from '@/realtime/realtime.service';
 import { ChatAccessService } from './chat-access.service';
 import { ChatPresenter, messageSelect } from './chat.presenter';
-import { notImplemented } from './chats.errors';
 import type { MessageDto, SendMessageDto, ShareMessageDto } from './dto/chats.dto';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -25,6 +26,8 @@ interface NewMessage {
   replyToId?: string;
   sharedUserId?: string;
   storyId?: string;
+  sharedPostId?: string;
+  mediaIds?: string[];
 }
 
 @Injectable()
@@ -35,6 +38,8 @@ export class MessagesService {
     private readonly presenter: ChatPresenter,
     private readonly visibility: VisibilityService,
     private readonly realtime: RealtimeService,
+    private readonly media: MediaService,
+    private readonly posts: PostsService,
   ) {}
 
   async list(chatId: string, userId: string, query: CursorQueryDto): Promise<Page<MessageDto>> {
@@ -60,24 +65,37 @@ export class MessagesService {
     const page = rows.slice(0, query.limit);
     const last = page[page.length - 1];
     return {
-      items: page.map((row) => this.presenter.toMessage(row)),
+      items: await this.presenter.toMessages(page, userId),
       nextCursor: rows.length > query.limit && last ? encodeCursor(last) : null,
     };
   }
 
   async send(chatId: string, userId: string, dto: SendMessageDto): Promise<MessageDto> {
     await this.access.assertMember(chatId, userId);
-    if (dto.type === 'MEDIA' || dto.type === 'VOICE') {
-      throw notImplemented('Media messages', 'T1.B1');
-    }
-    if (dto.type === 'SHARE_POST') throw notImplemented('Sharing a post', 'T1.B4');
-    if (dto.type === 'SHARE_STORY') throw notImplemented('Sharing a story', 'T2.B1');
 
     const message: NewMessage = { type: dto.type, clientId: dto.clientId };
     if (dto.type === 'TEXT') {
       const text = dto.text?.trim();
       if (!text) throw validationError('text', 'text must not be empty');
       message.text = text;
+    } else if (dto.type === 'MEDIA' || dto.type === 'VOICE') {
+      const ids = dto.mediaIds ?? [];
+      if (ids.length === 0) throw validationError('mediaIds', 'mediaIds is required');
+      if (dto.type === 'VOICE' && ids.length !== 1) {
+        throw validationError('mediaIds', 'A voice message has exactly one file');
+      }
+      message.mediaIds = ids;
+      message.text = dto.text?.trim() || null;
+    } else if (dto.type === 'SHARE_POST') {
+      if (!dto.sharedPostId) throw validationError('sharedPostId', 'sharedPostId is required');
+      await this.assertPostVisible(userId, dto.sharedPostId);
+      message.sharedPostId = dto.sharedPostId;
+      message.text = dto.text?.trim() || null;
+    } else if (dto.type === 'SHARE_STORY') {
+      if (!dto.storyId) throw validationError('storyId', 'storyId is required');
+      await this.presenter.assertStoryVisible(userId, dto.storyId);
+      message.storyId = dto.storyId;
+      message.text = dto.text?.trim() || null;
     } else {
       if (!dto.sharedUserId) throw validationError('sharedUserId', 'sharedUserId is required');
       await this.visibility.assertCanViewProfile(userId, dto.sharedUserId);
@@ -95,15 +113,26 @@ export class MessagesService {
     return this.post(chatId, userId, message);
   }
 
-  // Поделиться профилем сразу в несколько чатов (F-INT-11). Публикация и история — после модулей B.
+  // Поделиться профилем, публикацией или историей сразу в несколько чатов (F-INT-11): ровно одно из userId / postId / storyId.
   async share(userId: string, dto: ShareMessageDto): Promise<{ messages: MessageDto[] }> {
-    if (dto.postId) throw notImplemented('Sharing a post', 'T1.B4');
-    if (dto.storyId) throw notImplemented('Sharing a story', 'T2.B1');
-    if (!dto.userId) throw validationError('userId', 'userId is required');
+    const targets = [dto.userId, dto.postId, dto.storyId].filter(Boolean);
+    if (targets.length !== 1) {
+      throw validationError('userId', 'Exactly one of userId, postId, storyId is required');
+    }
     if (!dto.userIds?.length && !dto.chatIds?.length) {
       throw validationError('userIds', 'userIds or chatIds is required');
     }
-    await this.visibility.assertCanViewProfile(userId, dto.userId);
+    let content: NewMessage;
+    if (dto.userId) {
+      await this.visibility.assertCanViewProfile(userId, dto.userId);
+      content = { type: 'SHARE_PROFILE', sharedUserId: dto.userId };
+    } else if (dto.postId) {
+      await this.assertPostVisible(userId, dto.postId);
+      content = { type: 'SHARE_POST', sharedPostId: dto.postId };
+    } else {
+      await this.presenter.assertStoryVisible(userId, dto.storyId as string);
+      content = { type: 'SHARE_STORY', storyId: dto.storyId };
+    }
     const chatIds = new Set<string>();
     for (const chatId of dto.chatIds ?? []) {
       await this.access.assertMember(chatId, userId);
@@ -115,11 +144,7 @@ export class MessagesService {
     const messages: MessageDto[] = [];
     for (const chatId of chatIds) {
       messages.push(
-        await this.post(chatId, userId, {
-          type: 'SHARE_PROFILE',
-          sharedUserId: dto.userId,
-          text: dto.text?.trim() || null,
-        }),
+        await this.post(chatId, userId, { ...content, text: dto.text?.trim() || null }),
       );
     }
     return { messages };
@@ -155,11 +180,13 @@ export class MessagesService {
       where: { id: messageId },
       data: { text, editedAt: new Date() },
     });
-    const dto = await this.presenter.loadMessage(messageId);
+    const dto = await this.presenter.loadMessage(messageId, userId);
     if (!dto) throw new NotFoundException();
-    this.realtime.emitToUsers(await this.access.activeUserIds(chatId), 'message:updated', {
-      message: dto,
-    });
+    await this.presenter.emitMessage(
+      'message:updated',
+      messageId,
+      await this.access.activeUserIds(chatId),
+    );
     return dto;
   }
 
@@ -167,6 +194,10 @@ export class MessagesService {
   async unsend(chatId: string, messageId: string, userId: string): Promise<void> {
     await this.access.assertMember(chatId, userId);
     await this.ownMessage(chatId, messageId, userId);
+    const files = await this.prisma.messageMedia.findMany({
+      where: { messageId },
+      select: { mediaId: true },
+    });
     await this.prisma.$transaction([
       this.prisma.messageReaction.deleteMany({ where: { messageId } }),
       this.prisma.messageMedia.deleteMany({ where: { messageId } }),
@@ -175,6 +206,8 @@ export class MessagesService {
         data: { unsentAt: new Date(), text: null },
       }),
     ]);
+    // Файлы удалённого сообщения больше никому не нужны.
+    await this.media.removeFiles(files.map((f) => f.mediaId));
     this.realtime.emitToUsers(await this.access.activeUserIds(chatId), 'message:unsent', {
       chatId,
       messageId,
@@ -216,12 +249,36 @@ export class MessagesService {
   }
 
   async announce(messageId: string, chatId: string): Promise<void> {
-    const dto = await this.presenter.loadMessage(messageId);
-    if (dto) {
-      this.realtime.emitToUsers(await this.access.activeUserIds(chatId), 'message:new', {
-        message: dto,
+    await this.presenter.emitMessage(
+      'message:new',
+      messageId,
+      await this.access.activeUserIds(chatId),
+    );
+  }
+
+  // Сообщение о звонке (CALL) в чате: создаётся при завершении, отклонении или пропуске звонка (вызывает calls).
+  async createCallMessage(chatId: string, initiatorId: string, callId: string): Promise<void> {
+    const exists = await this.prisma.message.findUnique({
+      where: { callId },
+      select: { id: true },
+    });
+    if (exists) return;
+    const now = new Date();
+    const created = await this.prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data: { chatId, senderId: initiatorId, type: 'CALL', callId, createdAt: now },
+        select: { id: true },
       });
-    }
+      await tx.chat.update({ where: { id: chatId }, data: { lastMessageAt: now } });
+      await tx.chatParticipant.updateMany({ where: { chatId }, data: { hidden: false } });
+      return message.id;
+    });
+    await this.announce(created, chatId);
+  }
+
+  // SHARE_POST: публикация должна быть видна отправителю, иначе 404.
+  private async assertPostVisible(viewerId: string, postId: string): Promise<void> {
+    if (!(await this.posts.findVisibleById(viewerId, postId))) throw new NotFoundException();
   }
 
   // --- внутренние --------------------------------------------------------------------------------
@@ -232,13 +289,30 @@ export class MessagesService {
         where: { chatId, senderId, clientId: data.clientId },
         select: { id: true },
       });
-      const dupDto = dup ? await this.presenter.loadMessage(dup.id) : null;
+      const dupDto = dup ? await this.presenter.loadMessage(dup.id, senderId) : null;
       if (dupDto) return dupDto;
     }
     const now = new Date();
+    const { mediaIds, ...fields } = data;
     const { id, accepted } = await this.prisma.$transaction(async (tx) => {
+      if (mediaIds?.length) {
+        // Файл должен быть загружен отправителем, готов и не привязан (иначе 400 / 409).
+        await this.media.attach(senderId, mediaIds, {
+          target: 'MESSAGE',
+          purposes: data.type === 'VOICE' ? ['VOICE'] : ['MESSAGE'],
+          tx,
+        });
+      }
       const created = await tx.message.create({
-        data: { chatId, senderId, ...data, createdAt: now },
+        data: {
+          chatId,
+          senderId,
+          ...fields,
+          createdAt: now,
+          ...(mediaIds?.length
+            ? { media: { create: mediaIds.map((mediaId, position) => ({ mediaId, position })) } }
+            : {}),
+        },
         select: { id: true },
       });
       await tx.chat.update({ where: { id: chatId }, data: { lastMessageAt: now } });
@@ -250,10 +324,10 @@ export class MessagesService {
       });
       return { id: created.id, accepted: promoted.count > 0 };
     });
-    const dto = await this.presenter.loadMessage(id);
+    const dto = await this.presenter.loadMessage(id, senderId);
     if (!dto) throw new NotFoundException();
     const userIds = await this.access.activeUserIds(chatId);
-    this.realtime.emitToUsers(userIds, 'message:new', { message: dto });
+    await this.presenter.emitMessage('message:new', id, userIds);
     if (accepted) await this.presenter.emitChatUpdated(chatId, userIds);
     return dto;
   }
@@ -274,12 +348,14 @@ export class MessagesService {
     return message;
   }
 
+  // Реакции собираются для каждого участника отдельно: сводка пользователя зависит от зрителя.
   private async emitReactions(chatId: string, messageId: string): Promise<void> {
-    const dto = await this.presenter.loadMessage(messageId);
-    this.realtime.emitToUsers(await this.access.activeUserIds(chatId), 'message:reaction', {
-      chatId,
-      messageId,
-      reactions: dto?.reactions ?? [],
-    });
+    const userIds = await this.access.activeUserIds(chatId);
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const reactions = await this.presenter.loadReactions(messageId, userId);
+        this.realtime.emitToUsers([userId], 'message:reaction', { chatId, messageId, reactions });
+      }),
+    );
   }
 }

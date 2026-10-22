@@ -8,6 +8,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   IsUrl,
   Length,
   Matches,
@@ -135,4 +136,13 @@ export class SetLinksDto {
   @ValidateNested({ each: true })
   @Type(() => LinkInputDto)
   links!: LinkInputDto[];
+}
+
+export class SetAvatarDto {
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Файл, загруженный через POST /media (purpose AVATAR)',
+  })
+  @IsUUID()
+  mediaId!: string;
 }

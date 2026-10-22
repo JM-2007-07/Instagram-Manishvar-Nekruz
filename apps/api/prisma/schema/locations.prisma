@@ -13,6 +13,9 @@ model Location {
 
   posts Post[]
 
+  // --- search (A) ---
+  searchHistory SearchHistoryEntry[]
+
   @@index([name])
   @@index([city])
   @@map("locations")

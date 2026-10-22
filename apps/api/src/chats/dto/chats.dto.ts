@@ -14,6 +14,10 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { CallDto } from '@/calls/calls.dto';
+import { MediaItemDto } from '@/media/dto/media.dto';
+import { PostDto } from '@/posts/dto/posts.dto';
+import { StoryDto } from '@/stories/dto/stories.dto';
 import { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import { UserSummaryDto } from '@/users/dto/user-summary.dto';
 
@@ -57,7 +61,10 @@ export class UpdateChatDto {
   @MaxLength(MAX_TITLE_LENGTH)
   title?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Не реализовано до T1.B1 (MediaService)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Фото группы: файл purpose AVATAR, загруженный через POST /media',
+  })
   @IsOptional()
   @IsUUID()
   avatarMediaId?: string;
@@ -111,7 +118,10 @@ export class SendMessageDto {
   @MaxLength(MAX_TEXT_LENGTH)
   text?: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Не реализовано до T1.B1' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'MEDIA: 1-10 файлов (purpose MESSAGE); VOICE: один аудиофайл (purpose VOICE)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(10)
@@ -123,7 +133,7 @@ export class SendMessageDto {
   @IsUUID()
   replyToId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Не реализовано до T1.B4' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'Публикация (SHARE_POST / share)' })
   @IsOptional()
   @IsUUID()
   sharedPostId?: string;
@@ -133,7 +143,7 @@ export class SendMessageDto {
   @IsUUID()
   sharedUserId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Не реализовано до T2.B1' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'История (SHARE_STORY)' })
   @IsOptional()
   @IsUUID()
   storyId?: string;
@@ -180,7 +190,7 @@ export class ShareMessageDto {
   @IsUUID('all', { each: true })
   chatIds?: string[];
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Не реализовано до T1.B4' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'Публикация, которой делятся' })
   @IsOptional()
   @IsUUID()
   postId?: string;
@@ -190,7 +200,7 @@ export class ShareMessageDto {
   @IsUUID()
   userId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Не реализовано до T2.B1' })
+  @ApiPropertyOptional({ format: 'uuid', description: 'История, которой делятся' })
   @IsOptional()
   @IsUUID()
   storyId?: string;
@@ -266,14 +276,18 @@ export class MessageDto {
   @ApiProperty({ type: String, nullable: true, description: 'clientId отправителя' })
   clientId!: string | null;
 
-  @ApiProperty({ type: [Object], description: 'Пока всегда пусто (до T1.B1)' })
-  media!: unknown[];
+  @ApiProperty({ type: [MediaItemDto] })
+  media!: MediaItemDto[];
 
   @ApiProperty({ type: MessageReplyDto, nullable: true })
   replyTo!: MessageReplyDto | null;
 
-  @ApiProperty({ type: Object, nullable: true, description: 'До T1.B4 всегда null' })
-  sharedPost!: unknown;
+  @ApiProperty({
+    type: () => PostDto,
+    nullable: true,
+    description: 'null, если публикация удалена или недоступна зрителю',
+  })
+  sharedPost!: PostDto | null;
 
   @ApiProperty({ type: UserSummaryDto, nullable: true })
   sharedUser!: UserSummaryDto | null;
@@ -281,8 +295,15 @@ export class MessageDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, description: 'id истории' })
   storyId!: string | null;
 
-  @ApiProperty({ type: Object, nullable: true, description: 'До звонков всегда null' })
-  call!: unknown;
+  @ApiProperty({
+    type: () => StoryDto,
+    nullable: true,
+    description: 'null, если история истекла или недоступна зрителю',
+  })
+  story!: StoryDto | null;
+
+  @ApiProperty({ type: () => CallDto, nullable: true })
+  call!: CallDto | null;
 
   @ApiProperty({ type: Object, nullable: true, description: 'Данные системного сообщения' })
   systemData!: Record<string, unknown> | null;

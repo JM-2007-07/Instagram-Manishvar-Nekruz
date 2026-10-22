@@ -8,6 +8,9 @@ model Hashtag {
 
   posts PostHashtag[]
 
+  // --- search (A) ---
+  searchHistory SearchHistoryEntry[]
+
   @@map("hashtags")
 }
 

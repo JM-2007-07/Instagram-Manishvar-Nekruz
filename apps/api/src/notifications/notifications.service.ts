@@ -26,6 +26,11 @@ interface Row {
   readAt: Date | null;
   createdAt: Date;
   actor: UserSummaryRow;
+  post: {
+    shortcode: string;
+    media: { media: { id: string; thumbnailKey: string | null } }[];
+  } | null;
+  comment: { text: string } | null;
 }
 
 const GROUP_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -202,7 +207,29 @@ export class NotificationsService {
       readAt: true,
       createdAt: true,
       actor: { select: userSummarySelect(viewerId) },
+      post: {
+        select: {
+          shortcode: true,
+          media: {
+            orderBy: { position: 'asc' },
+            take: 1,
+            select: { media: { select: { id: true, thumbnailKey: true } } },
+          },
+        },
+      },
+      comment: { select: { text: true } },
     } as const;
+  }
+
+  private toPostPreview(id: string, post: NonNullable<Row['post']>) {
+    const cover = post.media[0]?.media;
+    return {
+      id,
+      shortcode: post.shortcode,
+      thumbnailUrl: cover
+        ? `/api/v1/media/${cover.id}${cover.thumbnailKey ? '?variant=thumb' : ''}`
+        : null,
+    };
   }
 
   // Группировка в пределах страницы: одинаковые type + объект (post/comment) в окне 24 часа.
@@ -232,9 +259,9 @@ export class NotificationsService {
           .slice(0, MAX_GROUP_ACTORS)
           .map((actor) => this.users.toSummary(actor)),
         actorCount: actorRows.size,
-        // TODO(T1.B4/T1.B5): shortcode, миниатюра и текст появятся, когда будут модели Post и Comment.
-        post: head.postId ? { id: head.postId, shortcode: '', thumbnailUrl: null } : null,
-        comment: head.commentId ? { id: head.commentId, text: '' } : null,
+        post: head.postId && head.post ? this.toPostPreview(head.postId, head.post) : null,
+        comment:
+          head.commentId && head.comment ? { id: head.commentId, text: head.comment.text } : null,
         isRead: members.every((m) => m.readAt !== null),
         createdAt: head.createdAt.toISOString(),
       };

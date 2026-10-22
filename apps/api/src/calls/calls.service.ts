@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHmac } from 'node:crypto';
 import type { Env } from '@/config/env';
 import type { Prisma } from '@/generated/prisma/client';
+import { MessagesService } from '@/chats/messages.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
 import { RealtimeService } from '@/realtime/realtime.service';
@@ -46,6 +47,7 @@ export class CallsService implements OnModuleDestroy {
     private readonly visibility: VisibilityService,
     private readonly realtime: RealtimeService,
     private readonly users: UsersService,
+    private readonly messages: MessagesService,
     config: ConfigService<Env, true>,
   ) {
     this.stunUrls = splitList(config.get('STUN_URLS', { infer: true }));
@@ -161,6 +163,7 @@ export class CallsService implements OnModuleDestroy {
     const fresh = await this.findForParticipant(userId, callId);
     this.realtime.emitToUsers(participantIds(fresh), 'call:declined', { callId, userId });
     this.realtime.emitToUsers(participantIds(fresh), 'call:ended', { call: this.toDto(fresh) });
+    await this.recordInChat(fresh);
   }
 
   // Завершить может любой участник. Повторный вызов безопасен. Отмена звонка без ответа = MISSED.
@@ -186,6 +189,7 @@ export class CallsService implements OnModuleDestroy {
     if (ended.count + missed.count > 0) {
       this.clearTimer(callId);
       this.realtime.emitToUsers(participantIds(call), 'call:ended', { call: this.toDto(fresh) });
+      await this.recordInChat(fresh);
     }
     return this.toDto(fresh);
   }
@@ -242,6 +246,17 @@ export class CallsService implements OnModuleDestroy {
     });
     if (call) {
       this.realtime.emitToUsers(participantIds(call), 'call:ended', { call: this.toDto(call) });
+      await this.recordInChat(call);
+    }
+  }
+
+  // Сообщение о звонке в чате (CALL) — после того, как звонок завершён, отклонён или пропущен.
+  // Ошибка записи не должна ломать сам звонок.
+  private async recordInChat(call: CallRow): Promise<void> {
+    try {
+      await this.messages.createCallMessage(call.chatId, call.initiator.id, call.id);
+    } catch {
+      // сообщение о звонке второстепенно
     }
   }
 

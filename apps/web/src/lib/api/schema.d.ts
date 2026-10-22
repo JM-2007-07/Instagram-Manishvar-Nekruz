@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["UsersController_setAvatar"];
+        post?: never;
+        delete: operations["UsersController_removeAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/by-username/{userName}": {
         parameters: {
             query?: never;
@@ -932,6 +948,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/search/hashtags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SearchController_searchHashtags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/locations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SearchController_searchLocations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/search/mentions": {
         parameters: {
             query?: never;
@@ -1263,6 +1311,102 @@ export interface paths {
         put?: never;
         post: operations["MessagesController_share"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/posts/{postId}/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["CollectionsController_save"];
+        post?: never;
+        delete: operations["CollectionsController_unsave"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/saved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CollectionsController_listSaved"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CollectionsController_list"];
+        put?: never;
+        post: operations["CollectionsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/collections/{collectionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["CollectionsController_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["CollectionsController_update"];
+        trace?: never;
+    };
+    "/api/v1/me/collections/{collectionId}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CollectionsController_listPosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/collections/{collectionId}/posts/{postId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["CollectionsController_addPost"];
+        post?: never;
+        delete: operations["CollectionsController_removePost"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2348,6 +2492,13 @@ export interface components {
             /** @description Список целиком, до 5 */
             links: components["schemas"]["LinkInputDto"][];
         };
+        SetAvatarDto: {
+            /**
+             * Format: uuid
+             * @description Файл, загруженный через POST /media (purpose AVATAR)
+             */
+            mediaId: string;
+        };
         ProfileDto: {
             /** Format: uuid */
             id: string;
@@ -2609,16 +2760,42 @@ export interface components {
             type: "POST_LIKE" | "COMMENT_LIKE" | "COMMENT" | "COMMENT_REPLY" | "MENTION_POST" | "MENTION_COMMENT" | "MENTION_STORY" | "POST_TAG" | "FOLLOW" | "FOLLOW_REQUEST" | "FOLLOW_ACCEPTED" | "COLLAB_INVITE";
             enabled: boolean;
         };
+        HashtagDto: {
+            /** @description Без «#», в нижнем регистре */
+            name: string;
+            /** @description Число опубликованных публикаций с хэштегом */
+            postCount: number;
+        };
+        LocationDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            slug: string;
+            city: string;
+            state: string | null;
+            zipCode: string | null;
+            country: string;
+            latitude: number | null;
+            longitude: number | null;
+        };
         SearchResultDto: {
             /** @description До 10 аккаунтов */
             users: components["schemas"]["UserSummaryDto"][];
-            /** @description Пока всегда пустой (появится с модулем tags) */
-            hashtags: Record<string, never>[];
-            /** @description Пока всегда пустой (появится с модулем locations) */
-            locations: Record<string, never>[];
+            /** @description До 10 хэштегов */
+            hashtags: components["schemas"]["HashtagDto"][];
+            /** @description До 10 мест */
+            locations: components["schemas"]["LocationDto"][];
         };
         SearchUsersPageDto: {
             items: components["schemas"]["FollowListItemDto"][];
+            nextCursor: string | null;
+        };
+        SearchHashtagsPageDto: {
+            items: components["schemas"]["HashtagDto"][];
+            nextCursor: string | null;
+        };
+        SearchLocationsPageDto: {
+            items: components["schemas"]["LocationDto"][];
             nextCursor: string | null;
         };
         SearchHistoryEntryDto: {
@@ -2630,6 +2807,10 @@ export interface components {
             query?: string;
             /** @description Для USER */
             user?: components["schemas"]["UserSummaryDto"];
+            /** @description Для HASHTAG */
+            hashtag?: components["schemas"]["HashtagDto"];
+            /** @description Для LOCATION */
+            location?: components["schemas"]["LocationDto"];
             /** Format: date-time */
             createdAt: string;
         };
@@ -2639,7 +2820,7 @@ export interface components {
         };
         AddSearchHistoryDto: {
             /**
-             * @description Сейчас принимаются только QUERY и USER; HASHTAG и LOCATION — 400
+             * @description QUERY (нужен query), USER (userId), HASHTAG (hashtagName), LOCATION (locationId)
              * @enum {string}
              */
             type: "QUERY" | "USER" | "HASHTAG" | "LOCATION";
@@ -2650,11 +2831,11 @@ export interface components {
              * @description Обязателен для USER
              */
             userId?: string;
-            /** @description Для HASHTAG (пока не поддерживается) */
+            /** @description Обязателен для HASHTAG */
             hashtagName?: string;
             /**
              * Format: uuid
-             * @description Для LOCATION (пока не поддерживается)
+             * @description Обязателен для LOCATION
              */
             locationId?: string;
         };
@@ -2705,11 +2886,128 @@ export interface components {
             /** Format: date-time */
             lastActiveAt: string | null;
         };
+        MediaItemDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            kind: "IMAGE" | "VIDEO" | "AUDIO";
+            /** @enum {string} */
+            status: "PROCESSING" | "READY" | "FAILED";
+            /** @example /api/v1/media/6f1c0b3e-0000-4000-8000-000000000000 */
+            url: string;
+            thumbnailUrl: string | null;
+            width: number | null;
+            height: number | null;
+            durationSec: number | null;
+        };
         MessageReplyDto: {
             /** Format: uuid */
             id: string;
             text: string | null;
             senderName: string;
+        };
+        PostTagDto: {
+            user: components["schemas"]["UserSummaryDto"];
+            x: number;
+            y: number;
+        };
+        PostItemDto: {
+            position: number;
+            media: components["schemas"]["MediaItemDto"];
+            altText: string | null;
+            tags: components["schemas"]["PostTagDto"][];
+        };
+        CommentDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            postId: string;
+            /** Format: uuid */
+            parentId: string | null;
+            author: components["schemas"]["UserSummaryDto"];
+            text: string;
+            likeCount: number;
+            isLikedByMe: boolean;
+            replyCount: number;
+            isPinned: boolean;
+            isPendingApproval: boolean;
+            /** Format: date-time */
+            editedAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        PostDto: {
+            /** Format: uuid */
+            id: string;
+            shortcode: string;
+            /** @enum {string} */
+            type: "POST" | "REEL";
+            /** @enum {string} */
+            status: "PROCESSING" | "PUBLISHED";
+            author: components["schemas"]["UserSummaryDto"];
+            collaborators: components["schemas"]["UserSummaryDto"][];
+            items: components["schemas"]["PostItemDto"][];
+            caption: string | null;
+            location: components["schemas"]["LocationDto"] | null;
+            /** @description null — автор скрыл число лайков */
+            likeCount: number | null;
+            commentCount: number;
+            /** @description null — в публикации нет видео */
+            playCount: number | null;
+            isLikedByMe: boolean;
+            isSavedByMe: boolean;
+            commentsDisabled: boolean;
+            hideLikeCount: boolean;
+            isPinned: boolean;
+            isArchived: boolean;
+            /** Format: date-time */
+            editedAt: string | null;
+            /** Format: date-time */
+            publishedAt: string;
+            /** @description До 2 комментариев для карточки */
+            previewComments: components["schemas"]["CommentDto"][];
+        };
+        StorySharedPostDto: {
+            /** Format: uuid */
+            id: string;
+            shortcode: string;
+            previewUrl: string | null;
+            author: components["schemas"]["UserSummaryDto"];
+        };
+        StoryStickerDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            type: "MENTION" | "LOCATION" | "HASHTAG" | "LINK" | "POLL" | "QUESTION" | "SLIDER" | "QUIZ" | "COUNTDOWN";
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            rotation: number;
+            data: {
+                [key: string]: unknown;
+            };
+            /** @description Мой ответ на стикер */
+            myResponse: Record<string, never> | null;
+        };
+        StoryDto: {
+            /** Format: uuid */
+            id: string;
+            author: components["schemas"]["UserSummaryDto"];
+            media: components["schemas"]["MediaItemDto"] | null;
+            sharedPost: components["schemas"]["StorySharedPostDto"] | null;
+            /** @enum {string} */
+            audience: "EVERYONE" | "CLOSE_FRIENDS";
+            stickers: components["schemas"]["StoryStickerDto"][];
+            durationSec: number;
+            createdAt: string;
+            expiresAt: string;
+            isViewedByMe: boolean;
+            isLikedByMe: boolean;
+            /** @description Только автору */
+            viewerCount: number | null;
+            /** @description Только автору */
+            likeCount: number | null;
         };
         MessageReactionGroupDto: {
             emoji: string;
@@ -2726,19 +3024,19 @@ export interface components {
             text: string | null;
             /** @description clientId отправителя */
             clientId: string | null;
-            /** @description Пока всегда пусто (до T1.B1) */
-            media: Record<string, never>[];
+            media: components["schemas"]["MediaItemDto"][];
             replyTo: components["schemas"]["MessageReplyDto"] | null;
-            /** @description До T1.B4 всегда null */
-            sharedPost: Record<string, never> | null;
+            /** @description null, если публикация удалена или недоступна зрителю */
+            sharedPost: components["schemas"]["PostDto"] | null;
             sharedUser: components["schemas"]["UserSummaryDto"] | null;
             /**
              * Format: uuid
              * @description id истории
              */
             storyId: string | null;
-            /** @description До звонков всегда null */
-            call: Record<string, never> | null;
+            /** @description null, если история истекла или недоступна зрителю */
+            story: components["schemas"]["StoryDto"] | null;
+            call: components["schemas"]["CallDto"] | null;
             /** @description Данные системного сообщения */
             systemData: {
                 [key: string]: unknown;
@@ -2779,7 +3077,7 @@ export interface components {
             title?: string;
             /**
              * Format: uuid
-             * @description Не реализовано до T1.B1 (MediaService)
+             * @description Фото группы: файл purpose AVATAR, загруженный через POST /media
              */
             avatarMediaId?: string;
         };
@@ -2805,20 +3103,20 @@ export interface components {
             /** @enum {string} */
             type: "TEXT" | "MEDIA" | "VOICE" | "SHARE_POST" | "SHARE_PROFILE" | "SHARE_STORY";
             text?: string;
-            /** @description Не реализовано до T1.B1 */
+            /** @description MEDIA: 1-10 файлов (purpose MESSAGE); VOICE: один аудиофайл (purpose VOICE) */
             mediaIds?: string[];
             /** Format: uuid */
             replyToId?: string;
             /**
              * Format: uuid
-             * @description Не реализовано до T1.B4
+             * @description Публикация (SHARE_POST / share)
              */
             sharedPostId?: string;
             /** Format: uuid */
             sharedUserId?: string;
             /**
              * Format: uuid
-             * @description Не реализовано до T2.B1
+             * @description История (SHARE_STORY)
              */
             storyId?: string;
             /** @description id, созданный клиентом (защита от дубля при повторе) */
@@ -2836,7 +3134,7 @@ export interface components {
             chatIds?: string[];
             /**
              * Format: uuid
-             * @description Не реализовано до T1.B4
+             * @description Публикация, которой делятся
              */
             postId?: string;
             /**
@@ -2846,7 +3144,7 @@ export interface components {
             userId?: string;
             /**
              * Format: uuid
-             * @description Не реализовано до T2.B1
+             * @description История, которой делятся
              */
             storyId?: string;
             text?: string;
@@ -2854,43 +3152,37 @@ export interface components {
         ShareResultDto: {
             messages: components["schemas"]["MessageDto"][];
         };
+        PostPageDto: {
+            items: components["schemas"]["PostDto"][];
+            nextCursor: string | null;
+        };
+        CollectionDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Обложка: выбранный или последний добавленный пост */
+            coverUrl: string | null;
+            /** @description Только посты, которые владелец сейчас может видеть */
+            postCount: number;
+        };
+        CreateCollectionDto: {
+            name: string;
+            /** @description Посты для добавления сразу (сохраняются автоматически) */
+            postIds?: string[];
+        };
+        UpdateCollectionDto: {
+            name?: string;
+            /**
+             * Format: uuid
+             * @description Пост из этой подборки; null — сбросить обложку
+             */
+            coverPostId?: string | null;
+        };
         UploadMediaBodyDto: {
             /** Format: binary */
             file: string;
             /** @enum {string} */
             purpose: "POST" | "REEL" | "STORY" | "AVATAR" | "MESSAGE" | "VOICE" | "HIGHLIGHT_COVER";
-        };
-        MediaItemDto: {
-            /** Format: uuid */
-            id: string;
-            /** @enum {string} */
-            kind: "IMAGE" | "VIDEO" | "AUDIO";
-            /** @enum {string} */
-            status: "PROCESSING" | "READY" | "FAILED";
-            /** @example /api/v1/media/6f1c0b3e-0000-4000-8000-000000000000 */
-            url: string;
-            thumbnailUrl: string | null;
-            width: number | null;
-            height: number | null;
-            durationSec: number | null;
-        };
-        HashtagDto: {
-            /** @description Без «#», в нижнем регистре */
-            name: string;
-            /** @description Число опубликованных публикаций с хэштегом */
-            postCount: number;
-        };
-        LocationDto: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            slug: string;
-            city: string;
-            state: string | null;
-            zipCode: string | null;
-            country: string;
-            latitude: number | null;
-            longitude: number | null;
         };
         LocationPageDto: {
             items: components["schemas"]["LocationDto"][];
@@ -2959,67 +3251,6 @@ export interface components {
             /** @description Формат обрезки (только для клиента), например 1:1 */
             cropAspect?: string;
         };
-        PostTagDto: {
-            user: components["schemas"]["UserSummaryDto"];
-            x: number;
-            y: number;
-        };
-        PostItemDto: {
-            position: number;
-            media: components["schemas"]["MediaItemDto"];
-            altText: string | null;
-            tags: components["schemas"]["PostTagDto"][];
-        };
-        CommentDto: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            postId: string;
-            /** Format: uuid */
-            parentId: string | null;
-            author: components["schemas"]["UserSummaryDto"];
-            text: string;
-            likeCount: number;
-            isLikedByMe: boolean;
-            replyCount: number;
-            isPinned: boolean;
-            isPendingApproval: boolean;
-            /** Format: date-time */
-            editedAt: string | null;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        PostDto: {
-            /** Format: uuid */
-            id: string;
-            shortcode: string;
-            /** @enum {string} */
-            type: "POST" | "REEL";
-            /** @enum {string} */
-            status: "PROCESSING" | "PUBLISHED";
-            author: components["schemas"]["UserSummaryDto"];
-            collaborators: components["schemas"]["UserSummaryDto"][];
-            items: components["schemas"]["PostItemDto"][];
-            caption: string | null;
-            location: components["schemas"]["LocationDto"] | null;
-            /** @description null — автор скрыл число лайков */
-            likeCount: number | null;
-            commentCount: number;
-            /** @description null — в публикации нет видео */
-            playCount: number | null;
-            isLikedByMe: boolean;
-            isSavedByMe: boolean;
-            commentsDisabled: boolean;
-            hideLikeCount: boolean;
-            isPinned: boolean;
-            isArchived: boolean;
-            /** Format: date-time */
-            editedAt: string | null;
-            /** Format: date-time */
-            publishedAt: string;
-            /** @description До 2 комментариев для карточки */
-            previewComments: components["schemas"]["CommentDto"][];
-        };
         UpdatePostItemDto: {
             position: number;
             altText?: string | null;
@@ -3056,10 +3287,6 @@ export interface components {
             items: components["schemas"]["LikerDto"][];
             nextCursor: string | null;
         };
-        PostPageDto: {
-            items: components["schemas"]["PostDto"][];
-            nextCursor: string | null;
-        };
         CommentPageDto: {
             items: components["schemas"]["CommentDto"][];
             nextCursor: string | null;
@@ -3088,48 +3315,6 @@ export interface components {
             /** @description Есть история для близких друзей */
             isCloseFriends: boolean;
             latestAt: string;
-        };
-        StorySharedPostDto: {
-            /** Format: uuid */
-            id: string;
-            shortcode: string;
-            previewUrl: string | null;
-            author: components["schemas"]["UserSummaryDto"];
-        };
-        StoryStickerDto: {
-            /** Format: uuid */
-            id: string;
-            /** @enum {string} */
-            type: "MENTION" | "LOCATION" | "HASHTAG" | "LINK" | "POLL" | "QUESTION" | "SLIDER" | "QUIZ" | "COUNTDOWN";
-            x: number;
-            y: number;
-            width: number;
-            height: number;
-            rotation: number;
-            data: {
-                [key: string]: unknown;
-            };
-            /** @description Мой ответ на стикер */
-            myResponse: Record<string, never> | null;
-        };
-        StoryDto: {
-            /** Format: uuid */
-            id: string;
-            author: components["schemas"]["UserSummaryDto"];
-            media: components["schemas"]["MediaItemDto"] | null;
-            sharedPost: components["schemas"]["StorySharedPostDto"] | null;
-            /** @enum {string} */
-            audience: "EVERYONE" | "CLOSE_FRIENDS";
-            stickers: components["schemas"]["StoryStickerDto"][];
-            durationSec: number;
-            createdAt: string;
-            expiresAt: string;
-            isViewedByMe: boolean;
-            isLikedByMe: boolean;
-            /** @description Только автору */
-            viewerCount: number | null;
-            /** @description Только автору */
-            likeCount: number | null;
         };
         StoryPageDto: {
             items: components["schemas"]["StoryDto"][];
@@ -4016,6 +4201,60 @@ export interface operations {
             };
             /** @description LIMIT_REACHED: больше 5 ссылок */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_setAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetAvatarDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeDto"];
+                };
+            };
+            /** @description Файл не найден, чужой или загружен для другой цели */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description MEDIA_NOT_READY или MEDIA_ALREADY_USED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UsersController_removeAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5326,6 +5565,66 @@ export interface operations {
             };
         };
     };
+    SearchController_searchHashtags: {
+        parameters: {
+            query: {
+                /** @description Opaque cursor from the previous page */
+                cursor?: string;
+                limit?: number;
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchHashtagsPageDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SearchController_searchLocations: {
+        parameters: {
+            query: {
+                /** @description Opaque cursor from the previous page */
+                cursor?: string;
+                limit?: number;
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchLocationsPageDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     SearchController_mentions: {
         parameters: {
             query: {
@@ -5408,7 +5707,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Пользователь не найден или недоступен */
+            /** @description Пользователь, хэштег или место не найдены */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -6298,6 +6597,277 @@ export interface operations {
             };
         };
     };
+    CollectionsController_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Пост недоступен */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_unsave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Пост убран из «Сохранённого» и из всех подборок */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_listSaved: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostPageDto"];
+                };
+            };
+        };
+    };
+    CollectionsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionDto"][];
+                };
+            };
+        };
+    };
+    CollectionsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCollectionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Один из postIds недоступен */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Посты остаются в «Сохранённом» */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCollectionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionDto"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_listPosts: {
+        parameters: {
+            query?: {
+                /** @description Opaque cursor from the previous page */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                collectionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostPageDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_addPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: string;
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Пост сохраняется, если ещё не сохранён */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CollectionsController_removePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                collectionId: string;
+                postId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     MediaController_upload: {
         parameters: {
             query?: never;
@@ -6334,7 +6904,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Больше 200 загрузок в час */
+            /** @description Больше 100 загрузок в час */
             429: {
                 headers: {
                     [name: string]: unknown;

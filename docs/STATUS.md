@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-22 16:44.
+> Последнее обновление: 2026-10-22 22:42.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -55,23 +55,23 @@
 | T0.3 | Общие контракты и заглушки (C0) | A | ✔ | 🟦 | в `main` через [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T0.4 | Каркас Next.js + токены | B | ✔ | ✅ | влита в `main` ([PR #8](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/8)) | — |
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | 🟦 | `chore/contract-pipeline` (PR — будет) | — |
-| T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
+| T0.6 | CI, защита `main`, harness | A | ✔ | 🟨 | `feat/a-integrations` (CI готов; защита `main` — вручную) | — |
 | T0.7 | Оболочка `(main)` | B | ✔ | ✅ | влита в `main` ([PR #8](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/8)) | — |
 | T1.A1 | `auth` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | C0 в `main` |
 | T1.A2 | Frontend входа | A | ✔ | ⬜ | — | T1.A1, T0.4 |
-| T1.A3 | `users` + `settings` | A | ✔ | 🟨 | `feat/backend-a` (коммит без аватара) | аватар — T1.B1 |
+| T1.A3 | `users` + `settings` | A | ✔ | 🟨 | в `main` (PR #9) + аватар в `feat/a-integrations` | — |
 | T1.A4 | `follows` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
 | T1.A5 | `privacy`, `VisibilityService` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
-| T1.A6 | `search` + история | A | ✔ | 🟨 | `feat/backend-a` (коммит: аккаунты и история) | хэштеги/места — T1.B2/T1.B3 |
+| T1.A6 | `search` + история | A | ✔ | 🟨 | в `main` (PR #9) + хэштеги и места в `feat/a-integrations` | — |
 | T1.B1 | `media` + `storage` | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T1.B2 | `tags` | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T1.B3 | `locations` | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T1.B4 | `posts` | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T1.B5 | `comments` | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T2.A1 | `realtime` | A | ✔ | 🟨 | `feat/backend-a` (API готов; `lib/realtime.ts` — после T0.4) | T0.4 |
-| T2.A2 | `notifications` | A | ✔ | 🟨 | `feat/backend-a` (готово; превью постов — после T1.B4/T1.B5) | — |
-| T2.A3 | `collections` (сохранение) | A | ✔ | ⬜ | — | T1.B4 |
-| T2.A4 | `chats` | A | ✔ | 🟨 | `feat/backend-a` (текст, группы, реакции, запросы; медиа — после T1.B1) | T1.B1 |
+| T2.A2 | `notifications` | A | ✔ | 🟨 | в `main` (PR #9) + превью и FK в `feat/a-integrations` | — |
+| T2.A3 | `collections` (сохранение) | A | ✔ | 🟨 | `feat/a-integrations` | — |
+| T2.A4 | `chats` | A | ✔ | 🟨 | в `main` (PR #9) + медиа, голосовые, «поделиться» в `feat/a-integrations` | — |
 | T2.B1 | `stories` + актуальное | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T2.B2 | Ответы на истории → Direct | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T3.A1 | UI профиля и настроек | A | ✔ | ⬜ | — | MA-1 |
@@ -89,7 +89,7 @@
 | T4.A2 | Звонки 1:1 | A | — | 🟨 | `feat/backend-a` (backend и сигнализация; UI — T3.A5) | T3.A5 |
 | T4.A3 | Ограничение, скрытие, близкие друзья | A | — | 🟨 | `feat/backend-a` (backend) | — |
 | T4.A4 | Удаление аккаунта, сессии в UI, 2FA | A | — | 🟨 | `feat/backend-a` (backend) | UI — T3.A1 |
-| T4.A5 | Подборки | A | — | ⬜ | — | T3.A4 |
+| T4.A5 | Подборки | A | — | 🟨 | `feat/a-integrations` (backend) | UI — T3.A4 |
 | T4.A6 | Direct P1/P2 в UI | A | — | ⬜ | — | T3.A5 |
 | T4.B1 | Правка, архив, закрепление публикаций | B | — | ⬜ | — | T3.B1 |
 | T4.B2 | Комментарии P1 | B | — | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
@@ -158,6 +158,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 22:42 | [a-integrations](stories/2026-10-22_2242_a-integrations.md) | стыки A с модулями B (аватар, медиа в Direct, превью уведомлений, поиск хэштегов и мест), «Сохранённое», CI; 566 e2e |
 | 2026-10-22 19:45 | [backend-b](stories/2026-10-22_1945_backend-b.md) | быстрый режим: backend B — media, tags, locations, posts, comments, stories, admin (e2e B 152); T0.5 в отдельной ветке |
 | 2026-10-22 16:44 | [backend-a-batch1](stories/2026-10-22_1644_backend-a-batch1.md) | быстрый режим: Direct, уведомления, соцвход, звонки, ограничения, 2FA, удаление аккаунта (backend A); 390 e2e |
 | 2026-10-22 16:11 | [web-shell](stories/2026-10-22_1611_web-shell.md) | T0.7: оболочка `(main)` — прокси по cookie, layout с проверкой сессии, боковое меню и «Ещё», тема в cookie; ветка от T0.4 |

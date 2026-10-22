@@ -45,10 +45,20 @@ model Post {
   hashtags      PostHashtag[]
   mentions      PostMention[]
 
+  // --- collections (A) ---
+  savedBy         SavedPost[]      @relation("SavedPostTarget")
+  collectionItems CollectionItem[] @relation("CollectionItemPost")
+
   // --- comments (B) ---
   comments        Comment[]
   // --- stories (B) ---
   sharedInStories Story[]
+
+  // --- chats (A) ---
+  sharedInMessages Message[] @relation("MessageSharedPost")
+
+  // --- notifications (A) ---
+  notifications Notification[] @relation("NotificationPost")
   // --- admin (B) ---
 
   @@index([authorId, createdAt])
