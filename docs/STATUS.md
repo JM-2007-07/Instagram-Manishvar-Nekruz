@@ -19,8 +19,8 @@
 
 | Студент | Задача | Ветка | Блокер |
 |---|---|---|---|
-| A (`JM-2007-07`) | **T0.1** (в работе) → T0.2 → T0.3 | `chore/root-tooling` | — |
-| B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md) → **T0.4** (после влития T0.1) | `feat/web-foundation` | T0.1 в `main` |
+| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2 → T0.3 | `chore/root-tooling` | ревью B |
+| B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md), ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) → **T0.4** (после влития T0.1) | `feat/web-foundation` | T0.1 в `main` |
 
 ### Контрольные точки
 
@@ -41,7 +41,7 @@
 - ✅ 2026-10-22: план перестроен под backend-first: два потока, карточки модулей, заглушки общих сервисов,
   многофайловая схема Prisma, контрольные точки, у каждой задачи один владелец.
 - ✅ 2026-10-22: PR #4 влит в `main` — Phase −1 полностью завершена.
-- 🟨 T0.1: корневые инструменты (Prettier, `concurrently`) в ветке `chore/root-tooling`. Кода приложений ещё нет.
+- 🟦 T0.1: корневые инструменты (Prettier, `concurrently`) — [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) на ревью. Кода приложений ещё нет.
 
 ## 3. Доска задач
 
@@ -50,7 +50,7 @@
 
 | ID | Задача (кратко) | Владелец | Обяз. | Статус | Ветка / PR | Блокер |
 |---|---|---|---|---|---|---|
-| T0.1 | Корневые инструменты | A | ✔ | 🟨 | `chore/root-tooling` | — |
+| T0.1 | Корневые инструменты | A | ✔ | 🟦 | `chore/root-tooling` → [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) | ревью B |
 | T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | ⬜ | — | T0.1 |
 | T0.3 | Общие контракты и заглушки (C0) | A | ✔ | ⬜ | — | T0.2 |
 | T0.4 | Каркас Next.js + токены | B | ✔ | ⬜ | — | T0.1 |
@@ -108,7 +108,7 @@
 
 | Что | Зачем |
 |---|---|
-| Ревью PR T0.1 Студентом B (после открытия) | после влития B начинает T0.4 |
+| Ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) (T0.1) Студентом B и слияние Студентом A | после влития B начинает T0.4 |
 | Установить **ffmpeg** обоим | T1.B1 (видео, голосовые) |
 | **Q1** — сроки и требования преподавателя | что из «опционально» войдёт в демонстрацию |
 | **Q31** — название и логотип | T1.A2, T0.7 |
