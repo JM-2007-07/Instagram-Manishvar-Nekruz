@@ -63,17 +63,17 @@
 | T1.A4 | `follows` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
 | T1.A5 | `privacy`, `VisibilityService` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
 | T1.A6 | `search` + история | A | ✔ | 🟨 | `feat/backend-a` (коммит: аккаунты и история) | хэштеги/места — T1.B2/T1.B3 |
-| T1.B1 | `media` + `storage` | B | ✔ | ⬜ | — | C0; ffmpeg |
-| T1.B2 | `tags` | B | ✔ | ⬜ | — | C0 |
-| T1.B3 | `locations` | B | ✔ | ⬜ | — | C0 |
-| T1.B4 | `posts` | B | ✔ | ⬜ | — | T1.B1–T1.B3 |
-| T1.B5 | `comments` | B | ✔ | ⬜ | — | T1.B4 |
+| T1.B1 | `media` + `storage` | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T1.B2 | `tags` | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T1.B3 | `locations` | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T1.B4 | `posts` | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T1.B5 | `comments` | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
 | T2.A1 | `realtime` | A | ✔ | 🟨 | `feat/backend-a` (API готов; `lib/realtime.ts` — после T0.4) | T0.4 |
 | T2.A2 | `notifications` | A | ✔ | 🟨 | `feat/backend-a` (готово; превью постов — после T1.B4/T1.B5) | — |
 | T2.A3 | `collections` (сохранение) | A | ✔ | ⬜ | — | T1.B4 |
 | T2.A4 | `chats` | A | ✔ | 🟨 | `feat/backend-a` (текст, группы, реакции, запросы; медиа — после T1.B1) | T1.B1 |
-| T2.B1 | `stories` + актуальное | B | ✔ | ⬜ | — | T1.B4, T1.A4 |
-| T2.B2 | Ответы на истории → Direct | B | ✔ | ⬜ | — | T2.B1, T2.A4 |
+| T2.B1 | `stories` + актуальное | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T2.B2 | Ответы на истории → Direct | B | ✔ | 🟦 | `feat/backend-b` (PR — будет) | — |
 | T3.A1 | UI профиля и настроек | A | ✔ | ⬜ | — | MA-1 |
 | T3.A2 | UI подписок, блокировки, поиска | A | ✔ | ⬜ | — | MA-1 |
 | T3.A3 | UI уведомлений | A | ✔ | ⬜ | — | T2.A2 |
@@ -92,9 +92,9 @@
 | T4.A5 | Подборки | A | — | ⬜ | — | T3.A4 |
 | T4.A6 | Direct P1/P2 в UI | A | — | ⬜ | — | T3.A5 |
 | T4.B1 | Правка, архив, закрепление публикаций | B | — | ⬜ | — | T3.B1 |
-| T4.B2 | Комментарии P1 | B | — | ⬜ | — | T3.B5 |
-| T4.B3 | Редактор историй, стикеры P2 | B | — | ⬜ | — | T3.B6 |
-| T4.B4 | Жалобы и админ-панель | B | — | ⬜ | — | T1.B4 |
+| T4.B2 | Комментарии P1 | B | — | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T4.B3 | Редактор историй, стикеры P2 | B | — | 🟦 | `feat/backend-b` (PR — будет) | — |
+| T4.B4 | Жалобы и админ-панель | B | — | 🟦 | `feat/backend-b` (PR — будет) | — |
 | T4.B5 | Обрезка и фильтры | B | — | ⬜ | — | T3.B2 |
 | T5.A1 | Почта, TURN, деплой | A | — | ⬜ | — | Q23, Q24, Q34 |
 | T5.A2 | Дизайн-сверка экранов A | A | ✔ | ⬜ | — | M-FE |
@@ -158,6 +158,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 19:45 | [backend-b](stories/2026-10-22_1945_backend-b.md) | быстрый режим: backend B — media, tags, locations, posts, comments, stories, admin (e2e B 152); T0.5 в отдельной ветке |
 | 2026-10-22 16:44 | [backend-a-batch1](stories/2026-10-22_1644_backend-a-batch1.md) | быстрый режим: Direct, уведомления, соцвход, звонки, ограничения, 2FA, удаление аккаунта (backend A); 390 e2e |
 | 2026-10-22 16:00 | [realtime](stories/2026-10-22_1600_realtime.md) | T2.A1: Socket.IO в API, комнаты пользователей, закрытие сокетов при выходе и смене пароля |
 | 2026-10-22 15:52 | [search](stories/2026-10-22_1552_search.md) | T1.A6: поиск аккаунтов, подсказки `@`, история поиска; исправления по ревью T1.A4+T1.A5 |
