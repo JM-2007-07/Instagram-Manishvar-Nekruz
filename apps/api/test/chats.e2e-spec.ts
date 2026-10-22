@@ -9,6 +9,7 @@ import { RealtimeService } from '@/realtime/realtime.service';
 import { createTestApp, createUser, loginAs, ORIGIN, resetDb, withOrigin } from './helpers';
 import type { TestUser } from './helpers';
 import { resetThrottler } from './helpers/throttler';
+import { createPost } from './helpers/posts';
 
 interface ChatBody {
   id: string;
@@ -87,6 +88,26 @@ describe('Chats: Direct', () => {
     return res.body as MessageBody;
   }
 
+  async function readyMedia(
+    ownerId: string,
+    purpose: 'MESSAGE' | 'VOICE' | 'AVATAR',
+    status: 'READY' | 'PROCESSING' = 'READY',
+  ): Promise<string> {
+    const row = await prisma.mediaFile.create({
+      data: {
+        ownerId,
+        purpose,
+        kind: purpose === 'VOICE' ? 'AUDIO' : 'IMAGE',
+        status,
+        storageKey: `${Math.random().toString(36).slice(2)}.webp`,
+        mimeType: 'image/webp',
+        sizeBytes: 1000,
+      },
+      select: { id: true },
+    });
+    return row.id;
+  }
+
   const events = (name: string) => emit.mock.calls.filter((call) => call[1] === name);
 
   describe('личный чат', () => {
@@ -135,9 +156,17 @@ describe('Chats: Direct', () => {
       await say(b, chat.id, 'two');
       const m3 = await say(a, chat.id, 'three');
 
+      // Событие шлётся каждому участнику отдельно: на каждое сообщение — по одному получателю.
       const sent = events('message:new');
-      expect(sent).toHaveLength(3);
-      expect([...(sent[0][0] as string[])].sort()).toEqual([alice.id, bob.id].sort());
+      const receivers = new Map<string, string[]>();
+      for (const call of sent) {
+        const id = (call[2] as { message: { id: string } }).message.id;
+        receivers.set(id, [...(receivers.get(id) ?? []), ...(call[0] as string[])]);
+      }
+      expect(receivers.size).toBe(3);
+      for (const users of receivers.values()) {
+        expect([...users].sort()).toEqual([alice.id, bob.id].sort());
+      }
 
       const page1 = await api('get', `/chats/${chat.id}/messages?limit=2`, b).expect(200);
       const body1 = page1.body as { items: MessageBody[]; nextCursor: string | null };
@@ -169,7 +198,7 @@ describe('Chats: Direct', () => {
         .expect(400);
     });
 
-    it('ответ на сообщение другого чата — 404; медиа пока 400 NOT_IMPLEMENTED', async () => {
+    it('ответ на сообщение другого чата — 404', async () => {
       const chat = await directChat(a, bob.id);
       const other = await directChat(a, carol.id);
       const foreign = await say(a, other.id, 'x');
@@ -179,10 +208,115 @@ describe('Chats: Direct', () => {
       const mine = await say(a, chat.id, 'q');
       const reply = await say(b, chat.id, 'a', { replyToId: mine.id });
       expect(reply.replyTo?.id).toBe(mine.id);
-      const media = await api('post', `/chats/${chat.id}/messages`, a)
-        .send({ type: 'MEDIA', clientId: 'm1' })
+    });
+
+    it('медиа и голосовые: привязка файла, media[] в ответе, ошибки', async () => {
+      const chat = await directChat(a, bob.id);
+      const photo = await readyMedia(alice.id, 'MESSAGE');
+      const res = await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'MEDIA', mediaIds: [photo], clientId: 'm1' })
+        .expect(201);
+      const body = res.body as { media: { id: string; kind: string }[]; type: string };
+      expect(body.type).toBe('MEDIA');
+      expect(body.media.map((m) => m.id)).toEqual([photo]);
+      expect(events('message:new')).toHaveLength(2); // alice и bob
+
+      // тот же файл второй раз; чужой файл; без mediaIds; не READY
+      await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'MEDIA', mediaIds: [photo], clientId: 'm2' })
+        .expect(409);
+      const foreign = await readyMedia(bob.id, 'MESSAGE');
+      await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'MEDIA', mediaIds: [foreign], clientId: 'm3' })
         .expect(400);
-      expect((media.body as { code: string }).code).toBe('NOT_IMPLEMENTED');
+      await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'MEDIA', clientId: 'm4' })
+        .expect(400);
+      const processing = await readyMedia(alice.id, 'MESSAGE', 'PROCESSING');
+      const notReady = await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'MEDIA', mediaIds: [processing], clientId: 'm5' })
+        .expect(409);
+      expect((notReady.body as { code: string }).code).toBe('MEDIA_NOT_READY');
+
+      const voice = await readyMedia(alice.id, 'VOICE');
+      const v = await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'VOICE', mediaIds: [voice], clientId: 'v1' })
+        .expect(201);
+      expect((v.body as { media: { kind: string }[] }).media[0].kind).toBe('AUDIO');
+      // файл для фото не годится как голосовое
+      const photo2 = await readyMedia(alice.id, 'MESSAGE');
+      await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'VOICE', mediaIds: [photo2], clientId: 'v2' })
+        .expect(400);
+    });
+
+    it('файл сообщения видит участник чата, посторонний — 404; после отмены отправки файл удалён', async () => {
+      const chat = await directChat(a, bob.id);
+      const photo = await readyMedia(alice.id, 'MESSAGE');
+      const res = await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'MEDIA', mediaIds: [photo], clientId: 'm1' })
+        .expect(201);
+      // доступ проверяет раздача: посторонний (carol) получает 404 ещё до чтения файла
+      await api('get', `/media/${photo}`, c).expect(404);
+      const id = (res.body as { id: string }).id;
+      await api('delete', `/chats/${chat.id}/messages/${id}`, a).expect(204);
+      expect(await prisma.mediaFile.findUnique({ where: { id: photo } })).toBeNull();
+    });
+
+    it('поделиться публикацией: SHARE_POST с sharedPost; закрытый автор — 404', async () => {
+      const chat = await directChat(a, bob.id);
+      const post = await createPost(app, carol);
+      const res = await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'SHARE_POST', sharedPostId: post.id, clientId: 's1' })
+        .expect(201);
+      expect((res.body as { sharedPost: { id: string } }).sharedPost.id).toBe(post.id);
+      await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'SHARE_POST', clientId: 's2' })
+        .expect(400);
+
+      await prisma.user.update({ where: { id: carol.id }, data: { isPrivate: true } });
+      await api('post', `/chats/${chat.id}/messages`, a)
+        .send({ type: 'SHARE_POST', sharedPostId: post.id, clientId: 's3' })
+        .expect((r) => expect([403, 404]).toContain(r.status));
+      // уже отправленное: получатель без доступа к закрытому аккаунту видит sharedPost = null
+      const list = await api('get', `/chats/${chat.id}/messages`, b).expect(200);
+      const items = (list.body as { items: { type: string; sharedPost: unknown }[] }).items;
+      expect(items.find((m) => m.type === 'SHARE_POST')?.sharedPost).toBeNull();
+    });
+
+    it('фото группы: avatarMediaId даёт avatarUrl; чужой файл — 400', async () => {
+      const group = (
+        await api('post', '/chats', a)
+          .send({ userIds: [bob.id, carol.id], title: 'G' })
+          .expect(201)
+      ).body as { id: string };
+      const file = await readyMedia(alice.id, 'AVATAR');
+      const res = await api('patch', `/chats/${group.id}`, a)
+        .send({ avatarMediaId: file })
+        .expect(200);
+      expect((res.body as { avatarUrl: string }).avatarUrl).toBe(
+        `/api/v1/media/${file}?variant=thumb`,
+      );
+      const foreign = await readyMedia(bob.id, 'AVATAR');
+      await api('patch', `/chats/${group.id}`, a).send({ avatarMediaId: foreign }).expect(400);
+    });
+
+    it('сообщение о звонке: decline создаёт CALL в чате с call в ответе', async () => {
+      const chat = await directChat(a, bob.id);
+      await api('post', `/chats/${chat.id}/accept`, b).expect(204);
+      const call = await api('post', `/chats/${chat.id}/calls`, a)
+        .send({ type: 'AUDIO' })
+        .expect(201);
+      const callId = (call.body as { id: string }).id;
+      await api('post', `/calls/${callId}/decline`, b).expect((r) =>
+        expect([200, 204]).toContain(r.status),
+      );
+      const list = await api('get', `/chats/${chat.id}/messages`, a).expect(200);
+      const items = (
+        list.body as { items: { type: string; call: { id: string; status: string } | null }[] }
+      ).items;
+      const msg = items.find((m) => m.type === 'CALL');
+      expect(msg?.call).toMatchObject({ id: callId, status: 'DECLINED' });
     });
 
     it('правка: только автор (403), в течение 15 минут (409), событие message:updated', async () => {
@@ -196,7 +330,13 @@ describe('Chats: Direct', () => {
         .expect(200);
       expect((ok.body as MessageBody).text).toBe('new');
       expect((ok.body as MessageBody).editedAt).not.toBeNull();
-      expect(events('message:updated')).toHaveLength(1);
+      const updated = events('message:updated');
+      expect(
+        new Set(updated.map((call) => (call[2] as { message: { id: string } }).message.id)),
+      ).toEqual(new Set([msg.id]));
+      expect(updated.flatMap((call) => call[0] as string[]).sort()).toEqual(
+        [alice.id, bob.id].sort(),
+      );
 
       await prisma.message.update({
         where: { id: msg.id },
@@ -229,7 +369,8 @@ describe('Chats: Direct', () => {
       let list = await api('get', `/chats/${chat.id}/messages`, a).expect(200);
       let first = (list.body as { items: MessageBody[] }).items[0];
       expect(first.reactions.map((r) => r.emoji)).toEqual(['🔥']);
-      expect(events('message:reaction')).toHaveLength(2);
+      // Две реакции, каждая — по событию каждому из двух участников (сводка зависит от зрителя).
+      expect(events('message:reaction')).toHaveLength(4);
       await api('delete', path, b).expect(204);
       list = await api('get', `/chats/${chat.id}/messages`, a).expect(200);
       first = (list.body as { items: MessageBody[] }).items[0];
@@ -415,7 +556,11 @@ describe('Chats: Direct', () => {
 
   describe('ChatsService для историй и /messages/share', () => {
     it('sendSystemMessage создаёт STORY_REPLY в личном чате', async () => {
-      const storyId = '11111111-1111-4111-8111-111111111111';
+      const story = await prisma.story.create({
+        data: { authorId: bob.id, expiresAt: new Date(Date.now() + 3_600_000) },
+        select: { id: true },
+      });
+      const storyId = story.id;
       const dto = await app.get(ChatsService).sendSystemMessage({
         senderId: alice.id,
         recipientId: bob.id,
@@ -429,14 +574,22 @@ describe('Chats: Direct', () => {
       expect(chat.lastMessage?.id).toBe(dto.id);
     });
 
-    it('поделиться профилем в чат и пользователю; публикация — 400 NOT_IMPLEMENTED', async () => {
+    it('поделиться профилем, публикацией и историей; нужно ровно одно из userId/postId/storyId', async () => {
       const chat = await directChat(a, bob.id);
       const res = await api('post', '/messages/share', a)
         .send({ chatIds: [chat.id], userIds: [carol.id], userId: bob.id })
         .expect(201);
       expect((res.body as { messages: unknown[] }).messages).toHaveLength(2);
+      const post = await createPost(app, carol);
+      const shared = await api('post', '/messages/share', a)
+        .send({ chatIds: [chat.id], postId: post.id })
+        .expect(201);
+      expect((shared.body as { messages: { type: string }[] }).messages[0].type).toBe('SHARE_POST');
       await api('post', '/messages/share', a)
         .send({ chatIds: [chat.id], postId: '11111111-1111-4111-8111-111111111111' })
+        .expect(404);
+      await api('post', '/messages/share', a)
+        .send({ chatIds: [chat.id], postId: post.id, userId: bob.id })
         .expect(400);
     });
   });

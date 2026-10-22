@@ -44,6 +44,7 @@ export function postSelect(viewerId: string) {
       select: { user: { select: userSummarySelect(viewerId) } },
     },
     likes: { where: { userId: viewerId }, select: { userId: true }, take: 1 },
+    savedBy: { where: { userId: viewerId }, select: { userId: true }, take: 1 },
     // До 2 комментариев верхнего уровня для карточки (закреплённые первыми).
     comments: {
       where: { parentId: null, ...visibleCommentWhere(viewerId) },

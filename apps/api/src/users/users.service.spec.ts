@@ -2,7 +2,15 @@ import type { PrismaService } from '@/prisma/prisma.service';
 import { UsersService } from './users.service';
 
 describe('UsersService.toSummary', () => {
-  const row = { id: 'u1', userName: 'ann', fullName: 'Ann A', isVerified: true, isPrivate: false };
+  const row = {
+    id: 'u1',
+    userName: 'ann',
+    fullName: 'Ann A',
+    isVerified: true,
+    isPrivate: false,
+    avatarMediaId: null,
+    stories: [],
+  };
 
   it('возвращает UserSummary по контракту §1.4 с заглушками аватара и историй', () => {
     expect(new UsersService({} as PrismaService).toSummary(row)).toEqual({

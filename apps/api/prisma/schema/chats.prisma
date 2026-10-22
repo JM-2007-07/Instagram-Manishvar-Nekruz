@@ -1,6 +1,5 @@
 // Direct (владелец — Студент A): чаты, участники, сообщения, реакции.
-// Note (заметки) добавится отдельной задачей. Поля-ссылки на модели Студента B (Media, Post, Story, Call)
-// сделаны обычными nullable uuid БЕЗ relation: FK — после T1.B1 / T1.B4 / T2.B1 / T5.*.
+// Note (заметки) добавится отдельной задачей.
 
 enum ChatType {
   DIRECT
@@ -35,14 +34,16 @@ model Chat {
   id            String   @id @default(uuid()) @db.Uuid
   type          ChatType
   title         String?
-  avatarMediaId String?  @db.Uuid // FK на MediaFile — после T1.B1
+  avatarMediaId String?  @unique @db.Uuid
   createdById   String   @db.Uuid
   directKey     String?  @unique // для DIRECT: "меньший id:больший id" — один чат на пару
   lastMessageAt DateTime @default(now())
   createdAt     DateTime @default(now())
 
+  avatarMedia  MediaFile?        @relation("ChatAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
   participants ChatParticipant[]
   messages     Message[]
+  calls        Call[]
 
   @@index([lastMessageAt, id])
   @@map("chats")
@@ -76,10 +77,10 @@ model Message {
   text         String?
   clientId     String? // id, созданный клиентом: повторная отправка не создаёт дубликат
   replyToId    String?     @db.Uuid
-  sharedPostId String?     @db.Uuid // FK на Post — после T1.B4
+  sharedPostId String?     @db.Uuid
   sharedUserId String?     @db.Uuid
-  storyId      String?     @db.Uuid // FK на Story — после T2.B1
-  callId       String?     @db.Uuid // FK на Call — после T5.*
+  storyId      String?     @db.Uuid
+  callId       String?     @unique @db.Uuid
   systemData   Json?
   editedAt     DateTime?
   unsentAt     DateTime?
@@ -88,6 +89,9 @@ model Message {
   chat       Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
   sender     User?             @relation("MessageSender", fields: [senderId], references: [id], onDelete: SetNull)
   sharedUser User?             @relation("MessageSharedUser", fields: [sharedUserId], references: [id], onDelete: SetNull)
+  sharedPost Post?             @relation("MessageSharedPost", fields: [sharedPostId], references: [id], onDelete: SetNull)
+  story      Story?            @relation("MessageStory", fields: [storyId], references: [id], onDelete: SetNull)
+  call       Call?             @relation("MessageCall", fields: [callId], references: [id], onDelete: SetNull)
   replyTo    Message?          @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
   replies    Message[]         @relation("MessageReply")
   media      MessageMedia[]
@@ -100,10 +104,11 @@ model Message {
 
 model MessageMedia {
   messageId String @db.Uuid
-  mediaId   String @db.Uuid // FK на MediaFile — после T1.B1
+  mediaId   String @unique @db.Uuid
   position  Int
 
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  media   MediaFile @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   @@id([messageId, position])
   @@map("message_media")

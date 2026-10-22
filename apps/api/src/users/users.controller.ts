@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Res,
+} from '@nestjs/common';
 import {
   ApiAcceptedResponse,
   ApiBadRequestResponse,
@@ -17,6 +28,7 @@ import { MeDto, ProfileDto } from './dto/me.dto';
 import {
   ChangeEmailDto,
   ChangeUserNameDto,
+  SetAvatarDto,
   SetLinksDto,
   UpdateProfileDto,
   VerifyEmailChangeDto,
@@ -98,6 +110,20 @@ export class UsersController {
   @ApiConflictResponse({ description: 'LIMIT_REACHED: больше 5 ссылок' })
   setLinks(@CurrentUser() user: SessionUser, @Body() dto: SetLinksDto): Promise<MeDto> {
     return this.profiles.setLinks(user.id, dto);
+  }
+
+  @Put('me/avatar')
+  @ApiOkResponse({ type: MeDto })
+  @ApiBadRequestResponse({ description: 'Файл не найден, чужой или загружен для другой цели' })
+  @ApiConflictResponse({ description: 'MEDIA_NOT_READY или MEDIA_ALREADY_USED' })
+  setAvatar(@CurrentUser() user: SessionUser, @Body() dto: SetAvatarDto): Promise<MeDto> {
+    return this.profiles.setAvatar(user.id, dto.mediaId);
+  }
+
+  @Delete('me/avatar')
+  @HttpCode(204)
+  async removeAvatar(@CurrentUser() user: SessionUser): Promise<void> {
+    await this.profiles.removeAvatar(user.id);
   }
 
   @Get('users/by-username/:userName')

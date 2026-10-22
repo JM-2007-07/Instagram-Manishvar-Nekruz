@@ -10,8 +10,10 @@ import { validationError } from '@/common/validation';
 import type { FollowListItemDto } from '@/follows/dto/follows.dto';
 import { FollowsService } from '@/follows/follows.service';
 import type { Prisma } from '@/generated/prisma/client';
+import { LocationsService, locationSelect, toLocationDto } from '@/locations/locations.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
+import { TagsService } from '@/tags/tags.service';
 import type { UserSummaryDto } from '@/users/dto/user-summary.dto';
 import { userSummarySelect } from '@/users/user-summary.select';
 import { UsersService } from '@/users/users.service';
@@ -19,7 +21,9 @@ import type {
   AddSearchHistoryDto,
   SearchHistoryEntryDto,
   SearchHistoryQueryDto,
+  SearchHashtagsPageDto,
   SearchHistoryTypeValue,
+  SearchLocationsPageDto,
   SearchResultDto,
   SearchUsersQueryDto,
 } from './dto/search.dto';
@@ -34,18 +38,39 @@ export class SearchService {
     private readonly users: UsersService,
     private readonly follows: FollowsService,
     private readonly visibility: VisibilityService,
+    private readonly tags: TagsService,
+    private readonly locations: LocationsService,
   ) {}
 
   // --- Поиск ---------------------------------------------------------------------------------
 
-  // Хэштеги и места появятся вместе с модулями tags и locations — пока пустые массивы.
   async searchAll(viewerId: string, q: string): Promise<SearchResultDto> {
-    const rows = await this.findUsers(viewerId, q, 0, SUGGESTION_LIMIT);
+    const [rows, hashtags, places] = await Promise.all([
+      this.findUsers(viewerId, q, 0, SUGGESTION_LIMIT),
+      this.tags.searchHashtags(q, SUGGESTION_LIMIT),
+      this.locations.search({ q, limit: SUGGESTION_LIMIT }),
+    ]);
     return {
       users: rows.map((row) => this.users.toSummary(row)),
-      hashtags: [],
-      locations: [],
+      hashtags,
+      locations: places.items,
     };
+  }
+
+  // Хэштеги и места публичны (не привязаны к аккаунту), поэтому фильтр видимости не нужен.
+  // Курсор — смещение: выдача отсортирована по имени (ADR 0017).
+  async searchHashtags(query: SearchUsersQueryDto): Promise<SearchHashtagsPageDto> {
+    const offset = query.cursor ? decodeOffsetCursor(query.cursor) : 0;
+    const rows = await this.tags.searchHashtags(query.q, query.limit + 1, offset);
+    const hasMore = rows.length > query.limit;
+    return {
+      items: hasMore ? rows.slice(0, query.limit) : rows,
+      nextCursor: hasMore ? encodeOffsetCursor(offset + query.limit) : null,
+    };
+  }
+
+  searchLocations(query: SearchUsersQueryDto): Promise<SearchLocationsPageDto> {
+    return this.locations.search({ q: query.q, cursor: query.cursor, limit: query.limit });
   }
 
   async mentions(viewerId: string, q: string): Promise<UserSummaryDto[]> {
@@ -207,8 +232,52 @@ export class SearchService {
       return this.toEntry(row);
     }
 
-    // HASHTAG и LOCATION появятся после модулей tags и locations.
-    throw validationError('type', 'Only QUERY and USER are supported');
+    if (dto.type === 'HASHTAG') {
+      if (!dto.hashtagName) {
+        throw validationError('hashtagName', 'hashtagName is required for type HASHTAG');
+      }
+      const name = dto.hashtagName.trim().replace(/^#/, '').toLowerCase();
+      const hashtag = await this.prisma.hashtag.findUnique({
+        where: { name },
+        select: { id: true },
+      });
+      if (!hashtag)
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Hashtag not found' });
+      const hashtagId = hashtag.id;
+      const row = await this.prisma.$transaction(async (tx) => {
+        const saved = await tx.searchHistoryEntry.upsert({
+          where: { userId_type_hashtagId: { userId: viewerId, type: 'HASHTAG', hashtagId } },
+          create: { userId: viewerId, type: 'HASHTAG', hashtagId },
+          update: { createdAt: now },
+          select,
+        });
+        await this.trimHistory(tx, viewerId, 'HASHTAG');
+        return saved;
+      });
+      return this.toEntry(row);
+    }
+
+    if (!dto.locationId) {
+      throw validationError('locationId', 'locationId is required for type LOCATION');
+    }
+    const locationId = dto.locationId;
+    const location = await this.prisma.location.findUnique({
+      where: { id: locationId },
+      select: { id: true },
+    });
+    if (!location)
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Location not found' });
+    const row = await this.prisma.$transaction(async (tx) => {
+      const saved = await tx.searchHistoryEntry.upsert({
+        where: { userId_type_locationId: { userId: viewerId, type: 'LOCATION', locationId } },
+        create: { userId: viewerId, type: 'LOCATION', locationId },
+        update: { createdAt: now },
+        select,
+      });
+      await this.trimHistory(tx, viewerId, 'LOCATION');
+      return saved;
+    });
+    return this.toEntry(row);
   }
 
   async removeHistoryEntry(viewerId: string, entryId: string): Promise<void> {
@@ -249,6 +318,15 @@ export class SearchService {
       query: true,
       createdAt: true,
       targetUser: { select: userSummarySelect(viewerId) },
+      hashtag: {
+        select: {
+          name: true,
+          _count: {
+            select: { posts: { where: { post: { status: 'PUBLISHED', isArchived: false } } } },
+          },
+        },
+      },
+      location: { select: locationSelect },
     } satisfies Prisma.SearchHistoryEntrySelect;
   }
 
@@ -260,6 +338,10 @@ export class SearchService {
       type: row.type,
       ...(row.query !== null ? { query: row.query } : {}),
       ...(row.targetUser ? { user: this.users.toSummary(row.targetUser) } : {}),
+      ...(row.hashtag
+        ? { hashtag: { name: row.hashtag.name, postCount: row.hashtag._count.posts } }
+        : {}),
+      ...(row.location ? { location: toLocationDto(row.location) } : {}),
       createdAt: row.createdAt,
     };
   }

@@ -1,4 +1,10 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { decodeCursor, encodeCursor } from '@/common/pagination/cursor';
 import type { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import type { SessionUser } from '@/common/session/session-user';
@@ -50,7 +56,8 @@ export class StoriesService {
     private readonly follows: FollowsService,
     private readonly media: MediaService,
     private readonly notifications: NotificationsService,
-    private readonly chats: ChatsService,
+    // forwardRef: chats и stories ссылаются друг на друга (ответы на истории ↔ «поделиться историей»).
+    @Inject(forwardRef(() => ChatsService)) private readonly chats: ChatsService,
   ) {}
 
   // ---------- Публичное API для других модулей ----------

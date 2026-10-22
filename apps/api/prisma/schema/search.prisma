@@ -1,5 +1,4 @@
 // История поиска (владелец — Студент A).
-// Колонки hashtagId и locationId добавятся после T1.B2 (Hashtag) и T1.B3 (Location) отдельной миграцией.
 
 enum SearchHistoryType {
   QUERY
@@ -17,13 +16,20 @@ model SearchHistoryEntry {
   type         SearchHistoryType
   query        String?
   targetUserId String?           @db.Uuid
+  hashtagId    String?           @db.Uuid
+  locationId   String?           @db.Uuid
   createdAt    DateTime          @default(now())
 
   user       User  @relation("SearchHistoryOwner", fields: [userId], references: [id], onDelete: Cascade)
   targetUser User? @relation("SearchHistoryTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
 
+  hashtag  Hashtag?  @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
   @@unique([userId, type, query])
   @@unique([userId, type, targetUserId])
+  @@unique([userId, type, hashtagId])
+  @@unique([userId, type, locationId])
   @@index([userId, type, createdAt])
   @@map("search_history_entries")
 }

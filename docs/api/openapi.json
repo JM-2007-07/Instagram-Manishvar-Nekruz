@@ -817,6 +817,55 @@
         ]
       }
     },
+    "/api/v1/me/avatar": {
+      "put": {
+        "operationId": "UsersController_setAvatar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAvatarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Файл не найден, чужой или загружен для другой цели"
+          },
+          "409": {
+            "description": "MEDIA_NOT_READY или MEDIA_ALREADY_USED"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_removeAvatar",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/api/v1/users/by-username/{userName}": {
       "get": {
         "operationId": "UsersController_getByUserName",
@@ -2272,6 +2321,118 @@
         ]
       }
     },
+    "/api/v1/search/hashtags": {
+      "get": {
+        "operationId": "SearchController_searchHashtags",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchHashtagsPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/search/locations": {
+      "get": {
+        "operationId": "SearchController_searchLocations",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchLocationsPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
     "/api/v1/search/mentions": {
       "get": {
         "operationId": "SearchController_mentions",
@@ -2395,7 +2556,7 @@
             "description": "Тип не поддерживается или нет нужного поля"
           },
           "404": {
-            "description": "Пользователь не найден или недоступен"
+            "description": "Пользователь, хэштег или место не найдены"
           }
         },
         "tags": [
@@ -3437,6 +3598,345 @@
         ]
       }
     },
+    "/api/v1/posts/{postId}/save": {
+      "put": {
+        "operationId": "CollectionsController_save",
+        "parameters": [
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Пост недоступен"
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      },
+      "delete": {
+        "operationId": "CollectionsController_unsave",
+        "parameters": [
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Пост убран из «Сохранённого» и из всех подборок"
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/api/v1/me/saved": {
+      "get": {
+        "operationId": "CollectionsController_listSaved",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/api/v1/me/collections": {
+      "get": {
+        "operationId": "CollectionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CollectionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      },
+      "post": {
+        "operationId": "CollectionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCollectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": "Один из postIds недоступен"
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/api/v1/me/collections/{collectionId}": {
+      "patch": {
+        "operationId": "CollectionsController_update",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCollectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      },
+      "delete": {
+        "operationId": "CollectionsController_remove",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Посты остаются в «Сохранённом»"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/api/v1/me/collections/{collectionId}/posts": {
+      "get": {
+        "operationId": "CollectionsController_listPosts",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      }
+    },
+    "/api/v1/me/collections/{collectionId}/posts/{postId}": {
+      "put": {
+        "operationId": "CollectionsController_addPost",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Пост сохраняется, если ещё не сохранён"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      },
+      "delete": {
+        "operationId": "CollectionsController_removePost",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "postId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "collections"
+        ]
+      }
+    },
     "/api/v1/media": {
       "post": {
         "operationId": "MediaController_upload",
@@ -3469,7 +3969,7 @@
             "description": "Тип по содержимому не разрешён"
           },
           "429": {
-            "description": "Больше 200 загрузок в час"
+            "description": "Больше 100 загрузок в час"
           }
         },
         "tags": [
@@ -7077,6 +7577,19 @@
           "links"
         ]
       },
+      "SetAvatarDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Файл, загруженный через POST /media (purpose AVATAR)"
+          }
+        },
+        "required": [
+          "mediaId"
+        ]
+      },
       "ProfileDto": {
         "type": "object",
         "properties": {
@@ -7959,6 +8472,71 @@
           "enabled"
         ]
       },
+      "HashtagDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Без «#», в нижнем регистре"
+          },
+          "postCount": {
+            "type": "number",
+            "description": "Число опубликованных публикаций с хэштегом"
+          }
+        },
+        "required": [
+          "name",
+          "postCount"
+        ]
+      },
+      "LocationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "zipCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "city",
+          "state",
+          "zipCode",
+          "country",
+          "latitude",
+          "longitude"
+        ]
+      },
       "SearchResultDto": {
         "type": "object",
         "properties": {
@@ -7970,17 +8548,17 @@
             }
           },
           "hashtags": {
-            "description": "Пока всегда пустой (появится с модулем tags)",
+            "description": "До 10 хэштегов",
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/HashtagDto"
             }
           },
           "locations": {
-            "description": "Пока всегда пустой (появится с модулем locations)",
+            "description": "До 10 мест",
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/LocationDto"
             }
           }
         },
@@ -7997,6 +8575,44 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FollowListItemDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "SearchHashtagsPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HashtagDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "SearchLocationsPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocationDto"
             }
           },
           "nextCursor": {
@@ -8034,6 +8650,22 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          },
+          "hashtag": {
+            "description": "Для HASHTAG",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HashtagDto"
+              }
+            ]
+          },
+          "location": {
+            "description": "Для LOCATION",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocationDto"
               }
             ]
           },
@@ -8078,7 +8710,7 @@
               "LOCATION"
             ],
             "type": "string",
-            "description": "Сейчас принимаются только QUERY и USER; HASHTAG и LOCATION — 400"
+            "description": "QUERY (нужен query), USER (userId), HASHTAG (hashtagName), LOCATION (locationId)"
           },
           "query": {
             "type": "string",
@@ -8094,12 +8726,12 @@
           "hashtagName": {
             "type": "string",
             "maxLength": 100,
-            "description": "Для HASHTAG (пока не поддерживается)"
+            "description": "Обязателен для HASHTAG"
           },
           "locationId": {
             "type": "string",
             "format": "uuid",
-            "description": "Для LOCATION (пока не поддерживается)"
+            "description": "Обязателен для LOCATION"
           }
         },
         "required": [
@@ -8273,6 +8905,61 @@
           "lastActiveAt"
         ]
       },
+      "MediaItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              "IMAGE",
+              "VIDEO",
+              "AUDIO"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PROCESSING",
+              "READY",
+              "FAILED"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "example": "/api/v1/media/6f1c0b3e-0000-4000-8000-000000000000"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "width": {
+            "type": "number",
+            "nullable": true
+          },
+          "height": {
+            "type": "number",
+            "nullable": true
+          },
+          "durationSec": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "url",
+          "thumbnailUrl",
+          "width",
+          "height",
+          "durationSec"
+        ]
+      },
       "MessageReplyDto": {
         "type": "object",
         "properties": {
@@ -8292,6 +8979,404 @@
           "id",
           "text",
           "senderName"
+        ]
+      },
+      "PostTagDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "user",
+          "x",
+          "y"
+        ]
+      },
+      "PostItemDto": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "number"
+          },
+          "media": {
+            "$ref": "#/components/schemas/MediaItemDto"
+          },
+          "altText": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostTagDto"
+            }
+          }
+        },
+        "required": [
+          "position",
+          "media",
+          "altText",
+          "tags"
+        ]
+      },
+      "CommentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "postId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          },
+          "text": {
+            "type": "string"
+          },
+          "likeCount": {
+            "type": "number"
+          },
+          "isLikedByMe": {
+            "type": "boolean"
+          },
+          "replyCount": {
+            "type": "number"
+          },
+          "isPinned": {
+            "type": "boolean"
+          },
+          "isPendingApproval": {
+            "type": "boolean"
+          },
+          "editedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "postId",
+          "parentId",
+          "author",
+          "text",
+          "likeCount",
+          "isLikedByMe",
+          "replyCount",
+          "isPinned",
+          "isPendingApproval",
+          "editedAt",
+          "createdAt"
+        ]
+      },
+      "PostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shortcode": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "POST",
+              "REEL"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PROCESSING",
+              "PUBLISHED"
+            ],
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          },
+          "collaborators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummaryDto"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostItemDto"
+            }
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocationDto"
+              }
+            ]
+          },
+          "likeCount": {
+            "type": "number",
+            "nullable": true,
+            "description": "null — автор скрыл число лайков"
+          },
+          "commentCount": {
+            "type": "number"
+          },
+          "playCount": {
+            "type": "number",
+            "nullable": true,
+            "description": "null — в публикации нет видео"
+          },
+          "isLikedByMe": {
+            "type": "boolean"
+          },
+          "isSavedByMe": {
+            "type": "boolean"
+          },
+          "commentsDisabled": {
+            "type": "boolean"
+          },
+          "hideLikeCount": {
+            "type": "boolean"
+          },
+          "isPinned": {
+            "type": "boolean"
+          },
+          "isArchived": {
+            "type": "boolean"
+          },
+          "editedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previewComments": {
+            "description": "До 2 комментариев для карточки",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommentDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "shortcode",
+          "type",
+          "status",
+          "author",
+          "collaborators",
+          "items",
+          "caption",
+          "location",
+          "likeCount",
+          "commentCount",
+          "playCount",
+          "isLikedByMe",
+          "isSavedByMe",
+          "commentsDisabled",
+          "hideLikeCount",
+          "isPinned",
+          "isArchived",
+          "editedAt",
+          "publishedAt",
+          "previewComments"
+        ]
+      },
+      "StorySharedPostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shortcode": {
+            "type": "string"
+          },
+          "previewUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          }
+        },
+        "required": [
+          "id",
+          "shortcode",
+          "previewUrl",
+          "author"
+        ]
+      },
+      "StoryStickerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "enum": [
+              "MENTION",
+              "LOCATION",
+              "HASHTAG",
+              "LINK",
+              "POLL",
+              "QUESTION",
+              "SLIDER",
+              "QUIZ",
+              "COUNTDOWN"
+            ],
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
+          },
+          "rotation": {
+            "type": "number"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "myResponse": {
+            "type": "object",
+            "nullable": true,
+            "description": "Мой ответ на стикер"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "x",
+          "y",
+          "width",
+          "height",
+          "rotation",
+          "data",
+          "myResponse"
+        ]
+      },
+      "StoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          },
+          "media": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaItemDto"
+              }
+            ]
+          },
+          "sharedPost": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StorySharedPostDto"
+              }
+            ]
+          },
+          "audience": {
+            "enum": [
+              "EVERYONE",
+              "CLOSE_FRIENDS"
+            ],
+            "type": "string"
+          },
+          "stickers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryStickerDto"
+            }
+          },
+          "durationSec": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "isViewedByMe": {
+            "type": "boolean"
+          },
+          "isLikedByMe": {
+            "type": "boolean"
+          },
+          "viewerCount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Только автору"
+          },
+          "likeCount": {
+            "type": "number",
+            "nullable": true,
+            "description": "Только автору"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "media",
+          "sharedPost",
+          "audience",
+          "stickers",
+          "durationSec",
+          "createdAt",
+          "expiresAt",
+          "isViewedByMe",
+          "isLikedByMe",
+          "viewerCount",
+          "likeCount"
         ]
       },
       "MessageReactionGroupDto": {
@@ -8357,10 +9442,9 @@
             "description": "clientId отправителя"
           },
           "media": {
-            "description": "Пока всегда пусто (до T1.B1)",
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/MediaItemDto"
             }
           },
           "replyTo": {
@@ -8373,9 +9457,14 @@
             ]
           },
           "sharedPost": {
-            "type": "object",
             "nullable": true,
-            "description": "До T1.B4 всегда null"
+            "description": "null, если публикация удалена или недоступна зрителю",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostDto"
+              }
+            ]
           },
           "sharedUser": {
             "nullable": true,
@@ -8392,10 +9481,24 @@
             "format": "uuid",
             "description": "id истории"
           },
-          "call": {
-            "type": "object",
+          "story": {
             "nullable": true,
-            "description": "До звонков всегда null"
+            "description": "null, если история истекла или недоступна зрителю",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoryDto"
+              }
+            ]
+          },
+          "call": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CallDto"
+              }
+            ]
           },
           "systemData": {
             "type": "object",
@@ -8431,6 +9534,7 @@
           "sharedPost",
           "sharedUser",
           "storyId",
+          "story",
           "call",
           "systemData",
           "reactions",
@@ -8557,7 +9661,7 @@
           "avatarMediaId": {
             "type": "string",
             "format": "uuid",
-            "description": "Не реализовано до T1.B1 (MediaService)"
+            "description": "Фото группы: файл purpose AVATAR, загруженный через POST /media"
           }
         }
       },
@@ -8640,7 +9744,7 @@
           },
           "mediaIds": {
             "maxItems": 10,
-            "description": "Не реализовано до T1.B1",
+            "description": "MEDIA: 1-10 файлов (purpose MESSAGE); VOICE: один аудиофайл (purpose VOICE)",
             "type": "array",
             "items": {
               "type": "string",
@@ -8654,7 +9758,7 @@
           "sharedPostId": {
             "type": "string",
             "format": "uuid",
-            "description": "Не реализовано до T1.B4"
+            "description": "Публикация (SHARE_POST / share)"
           },
           "sharedUserId": {
             "type": "string",
@@ -8663,7 +9767,7 @@
           "storyId": {
             "type": "string",
             "format": "uuid",
-            "description": "Не реализовано до T2.B1"
+            "description": "История (SHARE_STORY)"
           },
           "clientId": {
             "type": "string",
@@ -8727,7 +9831,7 @@
           "postId": {
             "type": "string",
             "format": "uuid",
-            "description": "Не реализовано до T1.B4"
+            "description": "Публикация, которой делятся"
           },
           "userId": {
             "type": "string",
@@ -8737,7 +9841,7 @@
           "storyId": {
             "type": "string",
             "format": "uuid",
-            "description": "Не реализовано до T2.B1"
+            "description": "История, которой делятся"
           },
           "text": {
             "type": "string",
@@ -8758,6 +9862,89 @@
         "required": [
           "messages"
         ]
+      },
+      "PostPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "CollectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Обложка: выбранный или последний добавленный пост"
+          },
+          "postCount": {
+            "type": "number",
+            "description": "Только посты, которые владелец сейчас может видеть"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "coverUrl",
+          "postCount"
+        ]
+      },
+      "CreateCollectionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "postIds": {
+            "description": "Посты для добавления сразу (сохраняются автоматически)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateCollectionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "coverPostId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "Пост из этой подборки; null — сбросить обложку"
+          }
+        }
       },
       "UploadMediaBodyDto": {
         "type": "object",
@@ -8782,126 +9969,6 @@
         "required": [
           "file",
           "purpose"
-        ]
-      },
-      "MediaItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "kind": {
-            "enum": [
-              "IMAGE",
-              "VIDEO",
-              "AUDIO"
-            ],
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "PROCESSING",
-              "READY",
-              "FAILED"
-            ],
-            "type": "string"
-          },
-          "url": {
-            "type": "string",
-            "example": "/api/v1/media/6f1c0b3e-0000-4000-8000-000000000000"
-          },
-          "thumbnailUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "width": {
-            "type": "number",
-            "nullable": true
-          },
-          "height": {
-            "type": "number",
-            "nullable": true
-          },
-          "durationSec": {
-            "type": "number",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "kind",
-          "status",
-          "url",
-          "thumbnailUrl",
-          "width",
-          "height",
-          "durationSec"
-        ]
-      },
-      "HashtagDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Без «#», в нижнем регистре"
-          },
-          "postCount": {
-            "type": "number",
-            "description": "Число опубликованных публикаций с хэштегом"
-          }
-        },
-        "required": [
-          "name",
-          "postCount"
-        ]
-      },
-      "LocationDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "city": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string",
-            "nullable": true
-          },
-          "zipCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "country": {
-            "type": "string"
-          },
-          "latitude": {
-            "type": "number",
-            "nullable": true
-          },
-          "longitude": {
-            "type": "number",
-            "nullable": true
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "slug",
-          "city",
-          "state",
-          "zipCode",
-          "country",
-          "latitude",
-          "longitude"
         ]
       },
       "LocationPageDto": {
@@ -9160,238 +10227,6 @@
           "items"
         ]
       },
-      "PostTagDto": {
-        "type": "object",
-        "properties": {
-          "user": {
-            "$ref": "#/components/schemas/UserSummaryDto"
-          },
-          "x": {
-            "type": "number"
-          },
-          "y": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "user",
-          "x",
-          "y"
-        ]
-      },
-      "PostItemDto": {
-        "type": "object",
-        "properties": {
-          "position": {
-            "type": "number"
-          },
-          "media": {
-            "$ref": "#/components/schemas/MediaItemDto"
-          },
-          "altText": {
-            "type": "string",
-            "nullable": true
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PostTagDto"
-            }
-          }
-        },
-        "required": [
-          "position",
-          "media",
-          "altText",
-          "tags"
-        ]
-      },
-      "CommentDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "postId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "parentId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
-          },
-          "author": {
-            "$ref": "#/components/schemas/UserSummaryDto"
-          },
-          "text": {
-            "type": "string"
-          },
-          "likeCount": {
-            "type": "number"
-          },
-          "isLikedByMe": {
-            "type": "boolean"
-          },
-          "replyCount": {
-            "type": "number"
-          },
-          "isPinned": {
-            "type": "boolean"
-          },
-          "isPendingApproval": {
-            "type": "boolean"
-          },
-          "editedAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "postId",
-          "parentId",
-          "author",
-          "text",
-          "likeCount",
-          "isLikedByMe",
-          "replyCount",
-          "isPinned",
-          "isPendingApproval",
-          "editedAt",
-          "createdAt"
-        ]
-      },
-      "PostDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "shortcode": {
-            "type": "string"
-          },
-          "type": {
-            "enum": [
-              "POST",
-              "REEL"
-            ],
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "PROCESSING",
-              "PUBLISHED"
-            ],
-            "type": "string"
-          },
-          "author": {
-            "$ref": "#/components/schemas/UserSummaryDto"
-          },
-          "collaborators": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserSummaryDto"
-            }
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PostItemDto"
-            }
-          },
-          "caption": {
-            "type": "string",
-            "nullable": true
-          },
-          "location": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/LocationDto"
-              }
-            ]
-          },
-          "likeCount": {
-            "type": "number",
-            "nullable": true,
-            "description": "null — автор скрыл число лайков"
-          },
-          "commentCount": {
-            "type": "number"
-          },
-          "playCount": {
-            "type": "number",
-            "nullable": true,
-            "description": "null — в публикации нет видео"
-          },
-          "isLikedByMe": {
-            "type": "boolean"
-          },
-          "isSavedByMe": {
-            "type": "boolean"
-          },
-          "commentsDisabled": {
-            "type": "boolean"
-          },
-          "hideLikeCount": {
-            "type": "boolean"
-          },
-          "isPinned": {
-            "type": "boolean"
-          },
-          "isArchived": {
-            "type": "boolean"
-          },
-          "editedAt": {
-            "type": "string",
-            "nullable": true,
-            "format": "date-time"
-          },
-          "publishedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "previewComments": {
-            "description": "До 2 комментариев для карточки",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CommentDto"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "shortcode",
-          "type",
-          "status",
-          "author",
-          "collaborators",
-          "items",
-          "caption",
-          "location",
-          "likeCount",
-          "commentCount",
-          "playCount",
-          "isLikedByMe",
-          "isSavedByMe",
-          "commentsDisabled",
-          "hideLikeCount",
-          "isPinned",
-          "isArchived",
-          "editedAt",
-          "publishedAt",
-          "previewComments"
-        ]
-      },
       "UpdatePostItemDto": {
         "type": "object",
         "properties": {
@@ -9514,25 +10349,6 @@
           "nextCursor"
         ]
       },
-      "PostPageDto": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PostDto"
-            }
-          },
-          "nextCursor": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "items",
-          "nextCursor"
-        ]
-      },
       "CommentPageDto": {
         "type": "object",
         "properties": {
@@ -9634,172 +10450,6 @@
           "hasUnseen",
           "isCloseFriends",
           "latestAt"
-        ]
-      },
-      "StorySharedPostDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "shortcode": {
-            "type": "string"
-          },
-          "previewUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "author": {
-            "$ref": "#/components/schemas/UserSummaryDto"
-          }
-        },
-        "required": [
-          "id",
-          "shortcode",
-          "previewUrl",
-          "author"
-        ]
-      },
-      "StoryStickerDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "enum": [
-              "MENTION",
-              "LOCATION",
-              "HASHTAG",
-              "LINK",
-              "POLL",
-              "QUESTION",
-              "SLIDER",
-              "QUIZ",
-              "COUNTDOWN"
-            ],
-            "type": "string"
-          },
-          "x": {
-            "type": "number"
-          },
-          "y": {
-            "type": "number"
-          },
-          "width": {
-            "type": "number"
-          },
-          "height": {
-            "type": "number"
-          },
-          "rotation": {
-            "type": "number"
-          },
-          "data": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "myResponse": {
-            "type": "object",
-            "nullable": true,
-            "description": "Мой ответ на стикер"
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "x",
-          "y",
-          "width",
-          "height",
-          "rotation",
-          "data",
-          "myResponse"
-        ]
-      },
-      "StoryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "author": {
-            "$ref": "#/components/schemas/UserSummaryDto"
-          },
-          "media": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaItemDto"
-              }
-            ]
-          },
-          "sharedPost": {
-            "nullable": true,
-            "type": "object",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/StorySharedPostDto"
-              }
-            ]
-          },
-          "audience": {
-            "enum": [
-              "EVERYONE",
-              "CLOSE_FRIENDS"
-            ],
-            "type": "string"
-          },
-          "stickers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StoryStickerDto"
-            }
-          },
-          "durationSec": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string"
-          },
-          "isViewedByMe": {
-            "type": "boolean"
-          },
-          "isLikedByMe": {
-            "type": "boolean"
-          },
-          "viewerCount": {
-            "type": "number",
-            "nullable": true,
-            "description": "Только автору"
-          },
-          "likeCount": {
-            "type": "number",
-            "nullable": true,
-            "description": "Только автору"
-          }
-        },
-        "required": [
-          "id",
-          "author",
-          "media",
-          "sharedPost",
-          "audience",
-          "stickers",
-          "durationSec",
-          "createdAt",
-          "expiresAt",
-          "isViewedByMe",
-          "isLikedByMe",
-          "viewerCount",
-          "likeCount"
         ]
       },
       "StoryPageDto": {

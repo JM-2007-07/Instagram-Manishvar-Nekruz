@@ -18,6 +18,8 @@ function profileSelect(viewerId: string) {
     // Подписки: счётчики (только ACCEPTED и только ACTIVE-пользователи), моя подписка на него и подписан ли он на меня.
     _count: {
       select: {
+        // Как PostsService.countByAuthor; считаем здесь же, чтобы не делать циклическую зависимость сервисов.
+        posts: { where: { status: 'PUBLISHED', isArchived: false } },
         followers: { where: { status: 'ACCEPTED', follower: { status: 'ACTIVE' } } },
         following: { where: { status: 'ACCEPTED', following: { status: 'ACTIVE' } } },
       },
@@ -33,7 +35,7 @@ type ProfileRow = Prisma.UserGetPayload<{ select: ReturnType<typeof profileSelec
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Текущий пользователь (GET /me и ответы входа). Счётчик постов — 0 до PostsService.
+  // Текущий пользователь (GET /me и ответы входа).
   async getMe(userId: string): Promise<MeDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -83,7 +85,7 @@ export class UsersService {
       bio: user.bio,
       pronouns: user.pronouns,
       links: user.links,
-      postCount: 0,
+      postCount: user._count.posts,
       followerCount: user._count.followers,
       followingCount: user._count.following,
       followStatus: this.followStatusOf(user.followers[0]?.status),
@@ -102,18 +104,17 @@ export class UsersService {
     return status === 'PENDING' ? 'REQUESTED' : 'NONE';
   }
 
-  // Заглушка до T1.A3 / T2.B1: avatarUrl = null (аватары — после MediaService), истории не учитываются
-  // (hasActiveStory = false, isCloseFriendStory = false).
+  // Кольцо вокруг аватара: stories — не более одной видимой истории (CLOSE_FRIENDS первой).
   toSummary(user: UserSummaryRow): UserSummaryDto {
     return {
       id: user.id,
       userName: user.userName,
       fullName: user.fullName,
-      avatarUrl: null,
+      avatarUrl: user.avatarMediaId ? `/api/v1/media/${user.avatarMediaId}?variant=thumb` : null,
       isVerified: user.isVerified,
       isPrivate: user.isPrivate,
-      hasActiveStory: false,
-      isCloseFriendStory: false,
+      hasActiveStory: user.stories.length > 0,
+      isCloseFriendStory: user.stories[0]?.audience === 'CLOSE_FRIENDS',
     };
   }
 }

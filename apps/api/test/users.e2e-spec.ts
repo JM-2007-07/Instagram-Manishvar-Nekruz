@@ -9,6 +9,8 @@ import type { MailMessage } from '@/mail/mail.service';
 import { createUser, loginAs, resetDb, withOrigin } from './helpers';
 import type { TestUser } from './helpers';
 import { resetThrottler } from './helpers/throttler';
+import { createPost } from './helpers/posts';
+import { createStory } from './helpers/stories';
 
 describe('Users: /me и профили', () => {
   let app: INestApplication;
@@ -44,7 +46,11 @@ describe('Users: /me и профили', () => {
     const req = request(server()).get(`/api/v1${path}`);
     return c ? req.set('Cookie', c) : req;
   };
-  const send = (method: 'patch' | 'put' | 'post', path: string, c: string | null = cookie) => {
+  const send = (
+    method: 'patch' | 'put' | 'post' | 'delete',
+    path: string,
+    c: string | null = cookie,
+  ) => {
     const req = request(server())[method](`/api/v1${path}`).set(withOrigin());
     return c ? req.set('Cookie', c) : req;
   };
@@ -101,6 +107,58 @@ describe('Users: /me и профили', () => {
       expect(typeof res.body.followerCount).toBe('number');
       expect(typeof res.body.followingCount).toBe('number');
       expect(JSON.stringify(res.body)).not.toContain('passwordHash');
+    });
+  });
+
+  describe('PUT/DELETE /me/avatar', () => {
+    async function readyMedia(ownerId: string, purpose: 'AVATAR' | 'POST', status = 'READY') {
+      const prisma = app.get(PrismaService);
+      const row = await prisma.mediaFile.create({
+        data: {
+          ownerId,
+          purpose,
+          kind: 'IMAGE',
+          status: status as 'READY' | 'PROCESSING',
+          storageKey: `${Math.random().toString(36).slice(2)}.webp`,
+          mimeType: 'image/webp',
+          sizeBytes: 1000,
+          thumbnailKey: 'thumb.webp',
+        },
+        select: { id: true },
+      });
+      return row.id;
+    }
+
+    it('ставит аватар: avatarUrl в Me и профиле; замена удаляет прежний файл; DELETE снимает', async () => {
+      const first = await readyMedia(me.id, 'AVATAR');
+      const res = await send('put', '/me/avatar', cookie).send({ mediaId: first }).expect(200);
+      expect(res.body.avatarUrl).toBe(`/api/v1/media/${first}?variant=thumb`);
+      const profile = await get(`/users/${me.id}`).expect(200);
+      expect(profile.body.avatarUrl).toBe(`/api/v1/media/${first}?variant=thumb`);
+
+      const second = await readyMedia(me.id, 'AVATAR');
+      await send('put', '/me/avatar', cookie).send({ mediaId: second }).expect(200);
+      const prisma = app.get(PrismaService);
+      expect(await prisma.mediaFile.findUnique({ where: { id: first } })).toBeNull();
+
+      await send('delete', '/me/avatar', cookie).expect(204);
+      await send('delete', '/me/avatar', cookie).expect(204);
+      expect((await get('/me').expect(200)).body.avatarUrl).toBeNull();
+    });
+
+    it('чужой файл, не тот purpose, не READY, повторное использование и без сессии', async () => {
+      const other = await createUser(app, { userName: 'zed' });
+      const foreign = await readyMedia(other.id, 'AVATAR');
+      await send('put', '/me/avatar', cookie).send({ mediaId: foreign }).expect(400);
+      const post = await readyMedia(me.id, 'POST');
+      await send('put', '/me/avatar', cookie).send({ mediaId: post }).expect(400);
+      const processing = await readyMedia(me.id, 'AVATAR', 'PROCESSING');
+      const notReady = await send('put', '/me/avatar', cookie)
+        .send({ mediaId: processing })
+        .expect(409);
+      expect(notReady.body.code).toBe('MEDIA_NOT_READY');
+      await send('put', '/me/avatar', cookie).send({ mediaId: 'bad' }).expect(400);
+      await send('put', '/me/avatar', null).send({ mediaId: post }).expect(401);
     });
   });
 
@@ -422,6 +480,63 @@ describe('Users: /me и профили', () => {
 
     it('не-UUID -> 400', async () => {
       await get('/users/not-a-uuid').expect(400);
+    });
+  });
+
+  describe('Users: postCount и кольцо историй', () => {
+    let app: INestApplication;
+    let prisma: PrismaService;
+
+    beforeAll(async () => {
+      const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+      app = moduleRef.createNestApplication();
+      setupApp(app);
+      await app.init();
+      prisma = app.get(PrismaService);
+    });
+
+    beforeEach(async () => {
+      await resetDb(app);
+      resetThrottler(app);
+    });
+
+    afterAll(async () => {
+      await app.close();
+    });
+
+    it('postCount считает опубликованные не архивные; hasActiveStory/isCloseFriendStory по аудитории', async () => {
+      const alice = await createUser(app, { userName: 'alice' });
+      const bob = await createUser(app, { userName: 'bob' });
+      const aliceCookie = await loginAs(app, alice);
+      const bobCookie = await loginAs(app, bob);
+      await createPost(app, alice);
+      await createPost(app, alice);
+      await createPost(app, alice, { isArchived: true });
+      const profile = () =>
+        request(app.getHttpServer()).get(`/api/v1/users/${alice.id}`).set('Cookie', bobCookie);
+      let body = (await profile().expect(200)).body;
+      expect(body.postCount).toBe(2);
+      expect(body.hasActiveStory).toBe(false);
+
+      await createStory(app, alice);
+      body = (await profile().expect(200)).body;
+      expect(body).toMatchObject({ hasActiveStory: true, isCloseFriendStory: false });
+
+      await prisma.story.deleteMany({});
+      await createStory(app, alice, { audience: 'CLOSE_FRIENDS' });
+      body = (await profile().expect(200)).body;
+      expect(body.hasActiveStory).toBe(false); // bob не в близких друзьях
+
+      await prisma.closeFriend.create({ data: { ownerId: alice.id, friendId: bob.id } });
+      body = (await profile().expect(200)).body;
+      expect(body).toMatchObject({ hasActiveStory: true, isCloseFriendStory: true });
+
+      await prisma.storyHiddenFrom.create({ data: { ownerId: alice.id, viewerId: bob.id } });
+      body = (await profile().expect(200)).body;
+      expect(body.hasActiveStory).toBe(false);
+
+      const own = await request(app.getHttpServer()).get('/api/v1/me').set('Cookie', aliceCookie);
+      expect(own.body.hasActiveStory).toBe(true);
     });
   });
 });

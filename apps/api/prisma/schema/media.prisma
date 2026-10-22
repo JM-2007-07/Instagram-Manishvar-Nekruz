@@ -57,6 +57,10 @@ model MediaFile {
   // --- stories (B) ---
   story          Story?
   highlightCover Highlight?
+  // --- chats (A) ---
+  avatarOf      User?         @relation("UserAvatar")
+  chatAvatarOf  Chat?         @relation("ChatAvatar")
+  messageMedia  MessageMedia?
 
   @@index([ownerId, createdAt])
   @@index([attachedTo, createdAt]) // фоновая очистка непривязанных (attachedTo = null)

@@ -9,6 +9,7 @@ import { RealtimeService } from '@/realtime/realtime.service';
 import { createUser, loginAs, resetDb, withOrigin } from './helpers';
 import type { TestUser } from './helpers';
 import { resetThrottler } from './helpers/throttler';
+import { createPost } from './helpers/posts';
 
 describe('Notifications: создание, список, прочитано, значки', () => {
   let app: INestApplication;
@@ -130,7 +131,8 @@ describe('Notifications: создание, список, прочитано, з�
   });
 
   it('лайки одного поста группируются: actors до 3 и actorCount', async () => {
-    const postId = '11111111-1111-4111-8111-111111111111';
+    // Пост настоящий: у Notification.postId теперь внешний ключ на Post.
+    const postId = (await createPost(app, me)).id;
     const others = [];
     for (let i = 0; i < 4; i++) others.push(await createUser(app, { userName: `fan${i}` }));
     for (const user of [bob, ...others]) {
@@ -194,5 +196,40 @@ describe('Notifications: создание, список, прочитано, з�
       data: { followerId: bob.id, followingId: me.id, status: 'PENDING' },
     });
     expect((await get('/me/badges').expect(200)).body.followRequests).toBe(1);
+  });
+
+  it('GET /notifications: превью поста (shortcode, миниатюра) и текста комментария', async () => {
+    const p = await createPost(app, me);
+    const c = await prisma.comment.create({
+      data: { postId: p.id, authorId: me.id, text: 'hello' },
+      select: { id: true },
+    });
+    await prisma.notification.create({
+      data: { recipientId: me.id, actorId: bob.id, type: 'POST_LIKE', postId: p.id },
+    });
+    await prisma.notification.create({
+      data: {
+        recipientId: me.id,
+        actorId: bob.id,
+        type: 'COMMENT_LIKE',
+        postId: p.id,
+        commentId: c.id,
+      },
+    });
+    const res = await get('/notifications').expect(200);
+    const like = res.body.items.find((i: { type: string }) => i.type === 'POST_LIKE');
+    const cl = res.body.items.find((i: { type: string }) => i.type === 'COMMENT_LIKE');
+    expect(like.post.shortcode).toBe(p.shortcode);
+    expect(like.post.thumbnailUrl).toMatch(/^\/api\/v1\/media\//);
+    expect(cl.comment).toEqual({ id: c.id, text: 'hello' });
+  });
+
+  it('удаление поста каскадно удаляет его уведомления', async () => {
+    const p = await createPost(app, me);
+    await prisma.notification.create({
+      data: { recipientId: me.id, actorId: bob.id, type: 'POST_LIKE', postId: p.id },
+    });
+    await prisma.post.delete({ where: { id: p.id } });
+    expect(await count()).toBe(0);
   });
 });

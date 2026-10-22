@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { validationError } from '@/common/validation';
+import { MediaService } from '@/media/media.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
 import { ChatAccessService } from './chat-access.service';
 import { ChatPresenter } from './chat.presenter';
-import { limitReached, notImplemented } from './chats.errors';
+import { limitReached } from './chats.errors';
 import type { ChatDto, UpdateChatDto } from './dto/chats.dto';
 import { MAX_GROUP_SIZE } from './dto/chats.dto';
 import { MessagesService } from './messages.service';
@@ -23,6 +24,7 @@ export class GroupsService {
     private readonly presenter: ChatPresenter,
     private readonly messages: MessagesService,
     private readonly visibility: VisibilityService,
+    private readonly media: MediaService,
   ) {}
 
   async createGroup(creatorId: string, userIds: string[], title: string | null): Promise<string> {
@@ -54,15 +56,39 @@ export class GroupsService {
   // Название и фото: любой участник группы.
   async update(chatId: string, userId: string, dto: UpdateChatDto): Promise<ChatDto> {
     await this.assertGroupMember(chatId, userId);
-    if (dto.avatarMediaId) throw notImplemented('Group photo', 'T1.B1');
-    if (dto.title === undefined) throw validationError('title', 'title is required');
+    if (dto.title === undefined && !dto.avatarMediaId) {
+      throw validationError('title', 'title or avatarMediaId is required');
+    }
+    let oldAvatarId: string | null = null;
     const messageId = await this.prisma.$transaction(async (tx) => {
-      await tx.chat.update({ where: { id: chatId }, data: { title: dto.title } });
-      return this.messages.createSystemInTx(tx, chatId, userId, {
-        event: 'TITLE_CHANGED',
-        title: dto.title ?? null,
-      });
+      const data: { title?: string; avatarMediaId?: string } = {};
+      if (dto.title !== undefined) data.title = dto.title;
+      if (dto.avatarMediaId) {
+        const current = await tx.chat.findUniqueOrThrow({
+          where: { id: chatId },
+          select: { avatarMediaId: true },
+        });
+        if (current.avatarMediaId !== dto.avatarMediaId) {
+          await this.media.attach(userId, [dto.avatarMediaId], {
+            target: 'CHAT_AVATAR',
+            purposes: ['AVATAR', 'MESSAGE'],
+            tx,
+          });
+          oldAvatarId = current.avatarMediaId;
+          data.avatarMediaId = dto.avatarMediaId;
+        }
+      }
+      await tx.chat.update({ where: { id: chatId }, data });
+      return this.messages.createSystemInTx(
+        tx,
+        chatId,
+        userId,
+        dto.title !== undefined
+          ? { event: 'TITLE_CHANGED', title: dto.title }
+          : { event: 'AVATAR_CHANGED' },
+      );
     });
+    if (oldAvatarId) await this.media.removeFiles([oldAvatarId]);
     await this.finish(chatId, messageId);
     return this.presenter.loadChat(chatId, userId);
   }

@@ -20,6 +20,9 @@ model Comment {
   likes    CommentLike[]
   mentions CommentMention[]
 
+  // --- notifications (A) ---
+  notifications Notification[] @relation("NotificationComment")
+
   @@index([postId, parentId, createdAt])
   @@index([parentId, createdAt])
   @@index([authorId])

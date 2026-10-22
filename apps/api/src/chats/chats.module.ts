@@ -21,6 +21,6 @@ import { MessagesService } from './messages.service';
     ChatPresenter,
     ChatsGateway,
   ],
-  exports: [ChatsService],
+  exports: [ChatsService, MessagesService],
 })
 export class ChatsModule {}
