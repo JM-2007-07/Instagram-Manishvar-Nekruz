@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Heart, Send, User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { BOTTOM_ITEMS, MESSAGES, NOTIFICATIONS, isActivePath } from '@/components/layout/nav-items';
+import { NavBadge } from '@/features/notifications/components/nav-badge';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
 import { cn } from '@/lib/utils';
@@ -22,18 +23,17 @@ export function MobileTopBar() {
         <BrandLogo />
       </Link>
       <div className="flex items-center gap-2">
-        {/* TODO(T3.A3, Студент A): панель уведомлений и точка */}
-        <button
-          type="button"
-          aria-label={NOTIFICATIONS.label}
-          aria-disabled="true"
-          className={iconButton}
-        >
-          <Heart className="size-6" />
-        </button>
-        {/* TODO(T3.A3, Студент A): счётчик непрочитанных сообщений */}
+        <Link href="/notifications/" aria-label={NOTIFICATIONS.label} className={iconButton}>
+          <span className="relative">
+            <Heart className="size-6" />
+            <NavBadge kind="notifications" />
+          </span>
+        </Link>
         <Link href={MESSAGES.href ?? '/'} aria-label={MESSAGES.label} className={iconButton}>
-          <Send className="size-6" />
+          <span className="relative">
+            <Send className="size-6" />
+            <NavBadge kind="messages" />
+          </span>
         </Link>
       </div>
     </header>

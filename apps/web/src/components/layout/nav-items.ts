@@ -10,13 +10,8 @@ export type NavItem = {
 };
 
 export const HOME: NavItem = { key: 'home', label: 'Главная', icon: House, href: '/' };
-// «Поисковый запрос» в Instagram ведёт на /explore/ (SCREENS §1); панели поиска нет (задача A).
-export const SEARCH: NavItem = {
-  key: 'search',
-  label: 'Поисковый запрос',
-  icon: Search,
-  href: '/explore/',
-};
+// «Поисковый запрос» — кнопка без href: открывает панель поиска (features/search); на мобильном поиск — /explore/search/.
+export const SEARCH: NavItem = { key: 'search', label: 'Поисковый запрос', icon: Search };
 export const EXPLORE: NavItem = {
   key: 'explore',
   label: 'Интересное',

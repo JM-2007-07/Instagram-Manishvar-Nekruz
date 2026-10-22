@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Menu } from 'lucide-react';
 import {
   DropdownMenu,
@@ -15,6 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLogoutMutation } from '@/features/auth/api';
 import { parseTheme, setTheme, type Theme } from '@/lib/theme';
 
 const THEMES: { value: Theme; label: string }[] = [
@@ -33,7 +35,18 @@ export function MoreMenu({
   theme: Theme;
   triggerClassName?: string;
 }) {
+  const router = useRouter();
+  const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const [current, setCurrent] = useState<Theme>(theme);
+
+  async function onLogout() {
+    try {
+      await logout().unwrap();
+    } catch {
+      // Сессия могла уже закончиться — всё равно уходим на страницу входа.
+    }
+    router.replace('/accounts/login/');
+  }
 
   function changeTheme(value: string) {
     const next = parseTheme(value);
@@ -69,8 +82,9 @@ export function MoreMenu({
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSeparator />
-        {/* TODO(T1.A2, Студент A): POST /auth/logout через features/auth/api.ts */}
-        <DropdownMenuItem disabled>Выйти</DropdownMenuItem>
+        <DropdownMenuItem disabled={isLoggingOut} onSelect={onLogout}>
+          Выйти
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

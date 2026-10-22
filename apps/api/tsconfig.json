@@ -4,7 +4,6 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
     "declaration": false,
     "removeComments": true,
     "emitDecoratorMetadata": true,
