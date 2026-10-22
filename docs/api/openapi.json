@@ -1239,6 +1239,282 @@
           "settings"
         ]
       }
+    },
+    "/api/v1/search": {
+      "get": {
+        "operationId": "SearchController_searchAll",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "q пустой или длиннее 50 символов"
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/search/users": {
+      "get": {
+        "operationId": "SearchController_searchUsers",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUsersPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/search/mentions": {
+      "get": {
+        "operationId": "SearchController_mentions",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "До 10 аккаунтов для подсказки после @",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSummaryDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/me/search-history": {
+      "get": {
+        "operationId": "SearchController_listHistory",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Без type — все типы",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "QUERY",
+                "USER",
+                "HASHTAG",
+                "LOCATION"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchHistoryPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      },
+      "post": {
+        "operationId": "SearchController_addHistory",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSearchHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Повтор поднимает запись",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchHistoryEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Тип не поддерживается или нет нужного поля"
+          },
+          "404": {
+            "description": "Пользователь не найден или недоступен"
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      },
+      "delete": {
+        "operationId": "SearchController_clearHistory",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Без type — очистить всё",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "QUERY",
+                "USER",
+                "HASHTAG",
+                "LOCATION"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Очищает записи указанного типа или все"
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/me/search-history/{entryId}": {
+      "delete": {
+        "operationId": "SearchController_removeHistoryEntry",
+        "parameters": [
+          {
+            "name": "entryId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Нет такой записи или она чужая"
+          }
+        },
+        "tags": [
+          "search"
+        ]
+      }
     }
   },
   "info": {
@@ -2336,6 +2612,153 @@
         "required": [
           "type",
           "enabled"
+        ]
+      },
+      "SearchResultDto": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "description": "До 10 аккаунтов",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummaryDto"
+            }
+          },
+          "hashtags": {
+            "description": "Пока всегда пустой (появится с модулем tags)",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "locations": {
+            "description": "Пока всегда пустой (появится с модулем locations)",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "users",
+          "hashtags",
+          "locations"
+        ]
+      },
+      "SearchUsersPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowListItemDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "SearchHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "enum": [
+              "QUERY",
+              "USER",
+              "HASHTAG",
+              "LOCATION"
+            ],
+            "type": "string"
+          },
+          "query": {
+            "type": "string",
+            "description": "Для QUERY"
+          },
+          "user": {
+            "description": "Для USER",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "createdAt"
+        ]
+      },
+      "SearchHistoryPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHistoryEntryDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "AddSearchHistoryDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "QUERY",
+              "USER",
+              "HASHTAG",
+              "LOCATION"
+            ],
+            "type": "string",
+            "description": "Сейчас принимаются только QUERY и USER; HASHTAG и LOCATION — 400"
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Обязателен для QUERY"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Обязателен для USER"
+          },
+          "hashtagName": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "Для HASHTAG (пока не поддерживается)"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Для LOCATION (пока не поддерживается)"
+          }
+        },
+        "required": [
+          "type"
         ]
       }
     }

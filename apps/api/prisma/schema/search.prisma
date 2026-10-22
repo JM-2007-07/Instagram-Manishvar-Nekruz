@@ -1,0 +1,29 @@
+// История поиска (владелец — Студент A).
+// Колонки hashtagId и locationId добавятся после T1.B2 (Hashtag) и T1.B3 (Location) отдельной миграцией.
+
+enum SearchHistoryType {
+  QUERY
+  USER
+  HASHTAG
+  LOCATION
+}
+
+// Одна запись истории. Повтор поднимает существующую запись (createdAt = now()), поэтому
+// пары (userId, type, цель) уникальны. В PostgreSQL NULL в уникальном индексе не совпадает с NULL,
+// так что два индекса не мешают друг другу: у QUERY targetUserId пуст, у USER пуст query.
+model SearchHistoryEntry {
+  id           String            @id @default(uuid()) @db.Uuid
+  userId       String            @db.Uuid
+  type         SearchHistoryType
+  query        String?
+  targetUserId String?           @db.Uuid
+  createdAt    DateTime          @default(now())
+
+  user       User  @relation("SearchHistoryOwner", fields: [userId], references: [id], onDelete: Cascade)
+  targetUser User? @relation("SearchHistoryTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, query])
+  @@unique([userId, type, targetUserId])
+  @@index([userId, type, createdAt])
+  @@map("search_history_entries")
+}
