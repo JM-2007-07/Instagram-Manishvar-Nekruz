@@ -42,7 +42,8 @@ chore(ci): add contract check
 
 ## Владельцы модулей
 
-Распределение — [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md#2-распределение-модулей).
+Студент A — **JM-2007-07**, Студент B — **nek-yt**. Распределение — [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md#2-распределение-модулей).
+Ревью второго студента обеспечивает [`.github/CODEOWNERS`](.github/CODEOWNERS) вместе с защитой `main` (T0.6).
 Владелец модуля пишет его backend и frontend и отвечает за его спецификацию. Изменения в чужом модуле —
 только по договорённости с владельцем (небольшие правки — через PR с ревью владельца).
 
@@ -57,8 +58,9 @@ chore(ci): add contract check
 | `docs/api/API_CONTRACT.md` (соглашения, модели), `docs/api/REALTIME.md`, `docs/api/openapi.json`, `apps/web/src/lib/api/schema.d.ts` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-api-контракта) |
 | `docs/api/endpoints/<module>.md` | владелец модуля; изменения, влияющие на чужой модуль, — по CHANGE_PROCESS.md |
 | корневые `package.json`, `package-lock.json` | при конфликте lockfile — взять версию `main`, затем `npm install` заново |
-| `apps/api/src/common/`, `config/`, `prisma/`, `storage/`, `mail/`, `realtime/`, `privacy/` (VisibilityService), `notifications/`, `main.ts`, `app.module.ts` | владелец модуля (IMPLEMENTATION_PLAN) + обязательное ревью второго |
-| `apps/web/src/lib/`, `app/layout.tsx`, `app/(main)/layout.tsx`, `components/layout/`, `next.config.ts`, `proxy.ts` | владелец фундамента frontend + обязательное ревью второго |
+| `apps/api/src/common/`, `config/`, `prisma/`, `mail/`, `realtime/`, `privacy/` (VisibilityService), `notifications/`, `main.ts`, `app.module.ts` | Студент A + обязательное ревью B |
+| `apps/api/src/storage/`, `media/`, `tags/` | Студент B + обязательное ревью A |
+| `apps/web/src/lib/` (кроме `realtime.ts`, `webrtc.ts` — A), `app/layout.tsx`, `app/(main)/layout.tsx`, `globals.css`, `components/layout/`, `next.config.ts`, `proxy.ts` | Студент B + обязательное ревью A |
 | `apps/web/src/components/ui/` | добавлять компоненты через CLI shadcn можно обоим; правки существующих — по договорённости |
 | `.github/`, `.claude/agents/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/`, `docs/product/`, `docs/design/` | только через PR с ревью второго |
 | `docs/STATUS.md` | меняют оба: каждый — только строки своих задач; строки оглавления историй добавляются сверху. При конфликте слияния сохраняются **обе** строки |

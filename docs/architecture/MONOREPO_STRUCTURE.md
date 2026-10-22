@@ -29,7 +29,8 @@ instagram-social-network/
 ├── infrastructure/
 │   └── docker/                   # пока пусто (Docker не нужен на старте)
 ├── .github/
-│   └── pull_request_template.md  # CI workflow добавляется в Phase 0
+│   ├── pull_request_template.md  # CI workflow добавляется в Phase 0
+│   └── CODEOWNERS                # ревью второго студента обязательно
 ├── .claude/
 │   └── agents/                   # 8 субагентов Claude Code (docs/development/AI_AGENTS.md)
 ├── .editorconfig  .gitattributes  .gitignore  .nvmrc
