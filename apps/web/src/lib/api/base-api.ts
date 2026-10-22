@@ -20,6 +20,8 @@ export const baseQueryWithAuth: BaseQueryFn<
     api.dispatch(baseApi.util.resetApiState());
     // На странице входа уже находимся — повторный переход не нужен.
     if (typeof window !== 'undefined' && !window.location.pathname.startsWith(LOGIN_PATH)) {
+      // Полная перезагрузка намеренно: сбрасывает всё состояние; useRouter вне компонента недоступен.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign(LOGIN_PATH);
     }
   }
