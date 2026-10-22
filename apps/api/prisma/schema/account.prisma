@@ -59,6 +59,55 @@ model User {
   sessions Session[]
   settings UserSettings?
 
+  // --- users / settings (A) ---
+  links                   UserLink[]
+  usernameChanges         UsernameChange[]
+  notificationPreferences NotificationPreference[]
+
+  // --- auth (A) ---
+  emailCodes          EmailVerificationCode[]
+  resetTokens         PasswordResetToken[]
+  twoFactor           TwoFactorSecret?
+  twoFactorChallenges TwoFactorChallenge[]
+  oauthAccounts       OAuthAccount[]
+
+  // --- follows (A) ---
+  following        Follow[]          @relation("FollowSource") // подписки пользователя (он — follower)
+  followers        Follow[]          @relation("FollowTarget") // подписчики пользователя (он — following)
+  closeFriends     CloseFriend[]     @relation("CloseFriendOwner") // мои близкие друзья
+  closeFriendOf    CloseFriend[]     @relation("CloseFriendTarget") // у кого я в близких
+  favoriteAccounts FavoriteAccount[] @relation("FavoriteOwner")
+  favoritedBy      FavoriteAccount[] @relation("FavoriteTarget")
+
+  // --- privacy (A) ---
+  blocksMade        Block[]           @relation("BlockSource") // кого заблокировал пользователь
+  blocksReceived    Block[]           @relation("BlockTarget") // кто заблокировал пользователя
+  restricts         Restrict[]        @relation("RestrictOwner")
+  restrictedBy      Restrict[]        @relation("RestrictTarget")
+  mutes             Mute[]            @relation("MuteOwner")
+  mutedBy           Mute[]            @relation("MuteTarget")
+  storyHiddenFrom   StoryHiddenFrom[] @relation("StoryHiddenOwner")
+  storyHiddenFromMe StoryHiddenFrom[] @relation("StoryHiddenViewer")
+  hiddenWords       HiddenWord?
+
+  // --- search (A) ---
+  searchHistory       SearchHistoryEntry[] @relation("SearchHistoryOwner") // моя история
+  searchHistoryTarget SearchHistoryEntry[] @relation("SearchHistoryTarget") // записи, где я — найденный
+
+  // --- notifications (A) ---
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+
+  // --- chats (A) ---
+  chatParticipations ChatParticipant[]
+  messagesSent       Message[]         @relation("MessageSender")
+  messagesShared     Message[]         @relation("MessageSharedUser") // сообщения, где пользователь — карточка «поделиться профилем»
+  messageReactions   MessageReaction[]
+
+  // --- calls (A) ---
+  callsInitiated     Call[]            @relation("CallInitiator")
+  callParticipations CallParticipant[] @relation("CallParticipation")
+
   // --- posts (B) ---
   // --- stories (B) ---
   // --- comments (B) ---

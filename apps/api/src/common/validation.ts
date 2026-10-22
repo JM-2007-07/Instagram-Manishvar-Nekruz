@@ -9,17 +9,30 @@ function flatten(errors: ValidationError[], parent = ''): { field: string; messa
   });
 }
 
+// Формат 400 для ошибок валидации; нужен и ParseArrayPipe (тело-массив), у которого свой внутренний pipe.
+export function validationExceptionFactory(errors: ValidationError[]): BadRequestException {
+  return new BadRequestException({
+    code: 'VALIDATION_ERROR',
+    message: 'Request validation failed',
+    details: flatten(errors),
+  });
+}
+
+// 400 VALIDATION_ERROR с одной ошибкой поля (для проверок в сервисах и pipe'ах).
+export function validationError(field: string, message: string): BadRequestException {
+  return new BadRequestException({
+    code: 'VALIDATION_ERROR',
+    message: 'Request validation failed',
+    details: [{ field, message }],
+  });
+}
+
 // Общие настройки ValidationPipe: лишние поля = ошибка, строки из query приводятся к типам DTO.
 export function createValidationPipe(): ValidationPipe {
   return new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
-    exceptionFactory: (errors) =>
-      new BadRequestException({
-        code: 'VALIDATION_ERROR',
-        message: 'Request validation failed',
-        details: flatten(errors),
-      }),
+    exceptionFactory: validationExceptionFactory,
   });
 }

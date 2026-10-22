@@ -1,5 +1,16 @@
 import { plainToInstance } from 'class-transformer';
-import { IsIn, IsInt, IsNotEmpty, IsString, IsUrl, Max, Min, validateSync } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  Min,
+  MinLength,
+  validateSync,
+} from 'class-validator';
 
 // Все переменные окружения, которые нужны приложению. Остальные из .env.example добавляют модули по мере появления.
 export class Env {
@@ -46,6 +57,42 @@ export class Env {
   @IsString()
   @IsNotEmpty()
   MAIL_FROM!: string;
+
+  // Ключ шифрования секретов 2FA (P2). Необязателен: без него 2FA выключена (эндпоинты отвечают 409).
+  // Пустая строка из .env.example считается «не задан».
+  @IsOptional()
+  @IsString()
+  @MinLength(32)
+  TWO_FACTOR_ENCRYPTION_KEY?: string;
+
+  // Соцвход (ADR 0014). Пара пуста — провайдер выключен.
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  FACEBOOK_APP_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  FACEBOOK_APP_SECRET?: string;
+
+  // Звонки (ADR 0015). Списки через запятую. TURN нужен только в production.
+  @IsString()
+  STUN_URLS!: string;
+
+  @IsOptional()
+  @IsString()
+  TURN_URLS?: string;
+
+  @IsOptional()
+  @IsString()
+  TURN_SHARED_SECRET?: string;
 }
 
 // Значения по умолчанию для разработки (совпадают с .env.example). DATABASE_URL по умолчанию нет намеренно.
@@ -60,11 +107,14 @@ const defaults = {
   MAIL_DRIVER: 'log',
   APP_NAME: 'Photogram',
   MAIL_FROM: 'no-reply@example.com',
+  STUN_URLS: 'stun:stun.l.google.com:19302',
 };
 
 // Вызывается ConfigModule при старте: неверная настройка = приложение не запускается, с понятной ошибкой.
 export function validateEnv(raw: Record<string, unknown>): Env {
-  const env = plainToInstance(Env, { ...defaults, ...raw }, { enableImplicitConversion: true });
+  const merged = { ...defaults, ...raw } as Record<string, unknown>;
+  if (merged.TWO_FACTOR_ENCRYPTION_KEY === '') delete merged.TWO_FACTOR_ENCRYPTION_KEY;
+  const env = plainToInstance(Env, merged, { enableImplicitConversion: true });
   const errors = validateSync(env);
   if (errors.length > 0) {
     const lines = errors.map(

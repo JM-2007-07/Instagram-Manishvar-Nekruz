@@ -116,9 +116,12 @@ flowchart TD
 | `VisibilityService` (`src/privacy`) | `canViewProfile(viewerId, ownerId): Promise<boolean>`, `canViewContent(viewerId, ownerId): Promise<boolean>` | `true` |
 | | `assertCanViewProfile(viewerId, ownerId)` — бросает 404; `assertCanViewContent(viewerId, ownerId)` — 404 или 403 `PRIVATE_ACCOUNT` | не бросают |
 | | `getHiddenUserIds(viewerId): Promise<string[]>`; `visibleUserWhere(viewerId): Prisma.UserWhereInput` (для `where` в своих запросах) | `[]`, `{}` |
+| | **Добавлено в T1.A5:** `visibleAuthorWhere(viewerId): Prisma.UserWhereInput` — для `where` по автору контента: нет блокировок И (сам viewer, или открытый аккаунт, или viewer — ACCEPTED-подписчик), напр. `where: { author: visibility.visibleAuthorWhere(viewerId) }`; `visibleUserWhere` теперь = ACTIVE + подтверждён + без блокировок в обе стороны | настоящая |
+| | **Добавлено в T4.A3 (сигнатуры существующих методов не менялись):** `isRestricted(ownerId, targetId): Promise<boolean>`, `getRestrictedIds(ownerId): Promise<string[]>` (ограничение: комментарии ограниченного — на одобрение, чат — в запросы), `isCloseFriend(ownerId, viewerId): Promise<boolean>`, `getStoryHiddenFromIds(ownerId): Promise<string[]>` (аудитория историй), `getMutedUserIds(viewerId, 'posts' \| 'stories'): Promise<string[]>` (скрытие в ленте), `getFavoriteIds(viewerId): Promise<string[]>` (лента «Избранное») | настоящая |
 | `NotificationsService` (`src/notifications`) | `create({ recipientId, actorId, type, postId?, commentId?, storyId? }): Promise<void>` | запись в лог |
-| `RealtimeService` (`src/realtime`) | `emitToUsers(userIds, event, payload): void` | ничего |
+| `RealtimeService` (`src/realtime`) | `emitToUsers(userIds, event, payload): void` — в комнаты `user:{id}`; **добавлено в T2.A1:** `disconnectSessions(sessionIds)`, `disconnectUser(userId, exceptSessionId?)` (закрыть сокеты при выходе/смене пароля), `isOnline(userId): boolean` (присутствие в памяти) | ничего; настоящая с T2.A1 (без запущенного сервера по-прежнему ничего не делает) |
 | `SessionService` (`src/common/session`) | `@CurrentUser()` → `SessionUser { id, role, sessionId }` | настоящая |
+| `ChatsService` (`src/chats`) | **T2.A4:** `sendSystemMessage({ senderId, recipientId, type: 'STORY_REPLY' \| 'STORY_REACTION', storyId, text? }): Promise<MessageDto>` — находит или создаёт личный чат пары (404 при блокировке) и пишет сообщение; `countUnreadChats(userId): Promise<number>` — для `unreadChats` в `GET /me/badges` | настоящая |
 | `UsersService` (`src/users`) | `toSummary(row)` + `userSummarySelect` → `UserSummaryDto` | `avatarUrl = null`, `hasActiveStory = false` |
 | тесты (`test/helpers`) | `createTestApp()`, `resetDb(app)`, `createUser(app, overrides?)`, `loginAs(app, user)` → `'sid=…'`, `ORIGIN` | настоящие |
 

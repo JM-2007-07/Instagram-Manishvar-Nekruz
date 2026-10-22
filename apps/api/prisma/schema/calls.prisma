@@ -1,0 +1,46 @@
+// Звонки 1:1 (ADR 0015). Владелец — Студент A. SDP и ICE в БД не хранятся: сигнализация идёт через Socket.IO.
+
+enum CallType {
+  AUDIO
+  VIDEO
+}
+
+enum CallStatus {
+  RINGING
+  ONGOING
+  ENDED
+  MISSED
+  DECLINED
+}
+
+model Call {
+  id          String     @id @default(uuid()) @db.Uuid
+  chatId      String     @db.Uuid // FK на Chat — после T2.A4 (модель chats ещё не создана)
+  initiatorId String     @db.Uuid
+  type        CallType
+  status      CallStatus @default(RINGING)
+  startedAt   DateTime   @default(now())
+  answeredAt  DateTime?
+  endedAt     DateTime?
+
+  initiator    User              @relation("CallInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  participants CallParticipant[]
+
+  @@index([chatId, startedAt])
+  @@index([status])
+  @@map("calls")
+}
+
+model CallParticipant {
+  callId   String    @db.Uuid
+  userId   String    @db.Uuid
+  joinedAt DateTime?
+  leftAt   DateTime?
+
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user User @relation("CallParticipation", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([callId, userId])
+  @@index([userId])
+  @@map("call_participants")
+}

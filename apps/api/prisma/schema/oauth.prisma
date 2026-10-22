@@ -1,0 +1,36 @@
+// Соцвход (ADR 0014): привязка внешнего аккаунта и незавершённый вход. Владелец — Студент A.
+
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+}
+
+// Внешний аккаунт, привязанный к пользователю. Один внешний аккаунт — один пользователь.
+model OAuthAccount {
+  provider       OAuthProvider
+  providerUserId String
+  userId         String        @db.Uuid
+  email          String?
+  createdAt      DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerUserId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+// Незавершённый вход: провайдер подтвердил личность, но аккаунта ещё нет. В cookie лежит токен,
+// в БД — его sha256. Живёт 15 минут, одноразовый.
+model OAuthPending {
+  id             String        @id @default(uuid()) @db.Uuid
+  tokenHash      String        @unique
+  provider       OAuthProvider
+  providerUserId String
+  email          String
+  fullName       String
+  expiresAt      DateTime
+  createdAt      DateTime      @default(now())
+
+  @@map("oauth_pending")
+}

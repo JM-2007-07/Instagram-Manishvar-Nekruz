@@ -1,0 +1,75 @@
+// Приватность (владелец — Студент A). Restrict, Mute, StoryHiddenFrom, HiddenWord добавятся в T4.A3.
+
+// Блокировка blocker -> blocked. Пара уникальна (PK). CHECK "blockerId" <> "blockedId" добавлен в миграции вручную.
+model Block {
+  blockerId String   @db.Uuid
+  blockedId String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlockSource", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockTarget", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+  @@index([blockedId]) // «кто заблокировал меня»
+  @@index([blockerId, createdAt]) // мой список заблокированных
+  @@map("blocks")
+}
+
+// Ограничение (F-PRV-03): owner ограничил target.
+model Restrict {
+  ownerId   String   @db.Uuid
+  targetId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  owner  User @relation("RestrictOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  target User @relation("RestrictTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, targetId])
+  @@index([targetId])
+  @@index([ownerId, createdAt])
+  @@map("restricts")
+}
+
+// Скрытие (F-PRV-04): owner не видит посты и/или истории target в ленте.
+model Mute {
+  ownerId     String   @db.Uuid
+  targetId    String   @db.Uuid
+  mutePosts   Boolean  @default(false)
+  muteStories Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  owner  User @relation("MuteOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  target User @relation("MuteTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, targetId])
+  @@index([targetId])
+  @@index([ownerId, createdAt])
+  @@map("mutes")
+}
+
+// «Скрыть историю от» (F-PRV-05): viewer не видит истории owner.
+model StoryHiddenFrom {
+  ownerId   String   @db.Uuid
+  viewerId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  owner  User @relation("StoryHiddenOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  viewer User @relation("StoryHiddenViewer", fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, viewerId])
+  @@index([viewerId])
+  @@index([ownerId, createdAt])
+  @@map("story_hidden_from")
+}
+
+// Скрытые слова (F-PRV-08, P2): одна запись на пользователя.
+model HiddenWord {
+  userId          String   @id @db.Uuid
+  words           String[]
+  filterOffensive Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("hidden_words")
+}

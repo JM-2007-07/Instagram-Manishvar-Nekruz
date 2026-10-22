@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-22 14:14.
+> Последнее обновление: 2026-10-22 16:44.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -19,14 +19,14 @@
 
 | Студент | Задача | Ветка | Блокер |
 |---|---|---|---|
-| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2 ✔ → T0.3 ✔ → PR для C0 → T1.A1… — весь backend A в одной ветке (решение A) | `chore/root-tooling`, `feat/backend-a` | ревью B |
-| B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md), ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) → **T0.4** (после влития T0.1) | `feat/web-foundation` | T0.1 в `main` |
+| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2, T0.3 на ревью ([PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6)) → T1.A1… — весь backend A в одной ветке (решение A) | `chore/root-tooling`, `feat/backend-a` | ревью B |
+| B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md), ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) и [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) → **T0.4** (после #5), Phase 1 (после #6, C0) | `feat/web-foundation` | #5 и #6 в `main` |
 
 ### Контрольные точки
 
 | Точка | Состояние |
 |---|---|
-| C0 — фундамент готов (T0.2, T0.3) | 🟨 код готов в `feat/backend-a`, ждёт PR и влития |
+| C0 — фундамент готов (T0.2, T0.3) | 🟦 [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) на ревью (поверх PR #5) |
 | MA-1 — backend A готов для frontend A | ⬜ |
 | MB-1 — backend B готов для frontend B | ⬜ |
 | MA-2 — Direct готов | ⬜ |
@@ -51,27 +51,27 @@
 | ID | Задача (кратко) | Владелец | Обяз. | Статус | Ветка / PR | Блокер |
 |---|---|---|---|---|---|---|
 | T0.1 | Корневые инструменты | A | ✔ | 🟦 | `chore/root-tooling` → [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) | ревью B |
-| T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | 🟨 | `feat/backend-a` (коммит, ждёт PR) | T0.1 в `main` |
-| T0.3 | Общие контракты и заглушки (C0) | A | ✔ | 🟨 | `feat/backend-a` (коммит, ждёт PR) | PR в `main` |
+| T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | 🟦 | `feat/api-foundation` → [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) | ревью B; сначала PR #5 |
+| T0.3 | Общие контракты и заглушки (C0) | A | ✔ | 🟦 | `feat/api-foundation` → [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) | ревью B; сначала PR #5 |
 | T0.4 | Каркас Next.js + токены | B | ✔ | ⬜ | — | T0.1 |
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | ⬜ | — | T0.2, T0.4 |
 | T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
 | T0.7 | Оболочка `(main)` | B | ✔ | ⬜ | — | T0.4 |
-| T1.A1 | `auth` | A | ✔ | ⬜ | — | C0 |
+| T1.A1 | `auth` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | C0 в `main` |
 | T1.A2 | Frontend входа | A | ✔ | ⬜ | — | T1.A1, T0.4 |
-| T1.A3 | `users` + `settings` | A | ✔ | ⬜ | — | T1.A1; аватар — T1.B1 |
-| T1.A4 | `follows` | A | ✔ | ⬜ | — | T1.A3 |
-| T1.A5 | `privacy`, `VisibilityService` | A | ✔ | ⬜ | — | T1.A4 |
-| T1.A6 | `search` + история | A | ✔ | ⬜ | — | T1.A5 |
+| T1.A3 | `users` + `settings` | A | ✔ | 🟨 | `feat/backend-a` (коммит без аватара) | аватар — T1.B1 |
+| T1.A4 | `follows` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
+| T1.A5 | `privacy`, `VisibilityService` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
+| T1.A6 | `search` + история | A | ✔ | 🟨 | `feat/backend-a` (коммит: аккаунты и история) | хэштеги/места — T1.B2/T1.B3 |
 | T1.B1 | `media` + `storage` | B | ✔ | ⬜ | — | C0; ffmpeg |
 | T1.B2 | `tags` | B | ✔ | ⬜ | — | C0 |
 | T1.B3 | `locations` | B | ✔ | ⬜ | — | C0 |
 | T1.B4 | `posts` | B | ✔ | ⬜ | — | T1.B1–T1.B3 |
 | T1.B5 | `comments` | B | ✔ | ⬜ | — | T1.B4 |
-| T2.A1 | `realtime` | A | ✔ | ⬜ | — | C0 |
-| T2.A2 | `notifications` | A | ✔ | ⬜ | — | T1.A4, T2.A1, T1.B4, T1.B5 |
+| T2.A1 | `realtime` | A | ✔ | 🟨 | `feat/backend-a` (API готов; `lib/realtime.ts` — после T0.4) | T0.4 |
+| T2.A2 | `notifications` | A | ✔ | 🟨 | `feat/backend-a` (готово; превью постов — после T1.B4/T1.B5) | — |
 | T2.A3 | `collections` (сохранение) | A | ✔ | ⬜ | — | T1.B4 |
-| T2.A4 | `chats` | A | ✔ | ⬜ | — | T2.A1, T1.A5, T1.B1 |
+| T2.A4 | `chats` | A | ✔ | 🟨 | `feat/backend-a` (текст, группы, реакции, запросы; медиа — после T1.B1) | T1.B1 |
 | T2.B1 | `stories` + актуальное | B | ✔ | ⬜ | — | T1.B4, T1.A4 |
 | T2.B2 | Ответы на истории → Direct | B | ✔ | ⬜ | — | T2.B1, T2.A4 |
 | T3.A1 | UI профиля и настроек | A | ✔ | ⬜ | — | MA-1 |
@@ -85,10 +85,10 @@
 | T3.B4 | UI Reels | B | ✔ | ⬜ | — | MB-1 |
 | T3.B5 | UI комментариев | B | ✔ | ⬜ | — | MB-1 |
 | T3.B6 | UI историй | B | ✔ | ⬜ | — | MB-2 |
-| T4.A1 | Соцвход | A | — | ⬜ | — | Q32 |
-| T4.A2 | Звонки 1:1 | A | — | ⬜ | — | T3.A5 |
-| T4.A3 | Ограничение, скрытие, близкие друзья | A | — | ⬜ | — | T1.A5 |
-| T4.A4 | Удаление аккаунта, сессии в UI, 2FA | A | — | ⬜ | — | T3.A1 |
+| T4.A1 | Соцвход | A | — | 🟨 | `feat/backend-a` (backend; ключи — Q32) | Q32 |
+| T4.A2 | Звонки 1:1 | A | — | 🟨 | `feat/backend-a` (backend и сигнализация; UI — T3.A5) | T3.A5 |
+| T4.A3 | Ограничение, скрытие, близкие друзья | A | — | 🟨 | `feat/backend-a` (backend) | — |
+| T4.A4 | Удаление аккаунта, сессии в UI, 2FA | A | — | 🟨 | `feat/backend-a` (backend) | UI — T3.A1 |
 | T4.A5 | Подборки | A | — | ⬜ | — | T3.A4 |
 | T4.A6 | Direct P1/P2 в UI | A | — | ⬜ | — | T3.A5 |
 | T4.B1 | Правка, архив, закрепление публикаций | B | — | ⬜ | — | T3.B1 |
@@ -158,6 +158,13 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 16:44 | [backend-a-batch1](stories/2026-10-22_1644_backend-a-batch1.md) | быстрый режим: Direct, уведомления, соцвход, звонки, ограничения, 2FA, удаление аккаунта (backend A); 390 e2e |
+| 2026-10-22 16:00 | [realtime](stories/2026-10-22_1600_realtime.md) | T2.A1: Socket.IO в API, комнаты пользователей, закрытие сокетов при выходе и смене пароля |
+| 2026-10-22 15:52 | [search](stories/2026-10-22_1552_search.md) | T1.A6: поиск аккаунтов, подсказки `@`, история поиска; исправления по ревью T1.A4+T1.A5 |
+| 2026-10-22 15:37 | [privacy](stories/2026-10-22_1537_privacy.md) | T1.A5: блокировки, настоящий `VisibilityService` для всех выдач A, `visibleAuthorWhere` для B |
+| 2026-10-22 15:27 | [follows](stories/2026-10-22_1527_follows.md) | T1.A4: подписки и запросы, списки с курсором, рекомендации, общие подписчики |
+| 2026-10-22 15:13 | [users-settings](stories/2026-10-22_1513_users-settings.md) | T1.A3: `/me`, профиль, имя, email, ссылки, настройки; ревью T1.A1+T1.A3, разделение сервисов auth |
+| 2026-10-22 14:33 | [auth](stories/2026-10-22_1433_auth.md) | T1.A1: регистрация с кодом, вход, выход, сброс и смена пароля, сессии, лимиты; PR #6 для C0 |
 | 2026-10-22 14:14 | [api-core-contracts](stories/2026-10-22_1414_api-core-contracts.md) | T0.3 (C0): User/Session/UserSettings, сессии, SessionGuard, заглушки общих сервисов, тестовые помощники, seed |
 | 2026-10-22 12:15 | [api-foundation](stories/2026-10-22_1215_api-foundation.md) | T0.2: каркас NestJS 11 + Prisma 7, формат ошибок, Origin-guard, курсоры, Swagger, ESLint, Jest; весь backend A — в `feat/backend-a` |
 | 2026-10-22 10:39 | [root-tooling](stories/2026-10-22_1039_root-tooling.md) | T0.1: Prettier и `concurrently` в корне; PR #4 влит, Phase −1 завершена |

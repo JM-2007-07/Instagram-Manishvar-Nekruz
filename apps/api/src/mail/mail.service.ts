@@ -14,7 +14,8 @@ export class MailService {
 
   constructor(private readonly config: ConfigService<Env, true>) {}
 
-  send(message: MailMessage): void {
+  // async: SMTP-отправка (Q23) будет асинхронной, вызывающий код уже пишет await.
+  async send(message: MailMessage): Promise<void> {
     if (this.config.get('MAIL_DRIVER', { infer: true }) === 'log') {
       // Только для разработки: письмо (с кодом или ссылкой) пишется в лог вместо отправки.
       this.logger.log(`Mail to ${message.to}: ${message.subject}\n${message.text}`);

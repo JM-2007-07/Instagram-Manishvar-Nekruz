@@ -1,9 +1,16 @@
 import { RealtimeService } from './realtime.service';
 
-// Заглушка до T2.A1: emitToUsers ничего не делает, но модули B уже могут её вызывать.
-describe('RealtimeService (заглушка)', () => {
+// Без подключённого сервера Socket.IO методы ничего не делают (юнит-тесты других модулей).
+describe('RealtimeService без сервера', () => {
+  const service = new RealtimeService();
+
   it('emitToUsers не бросает исключение', () => {
-    const service = new RealtimeService();
     expect(() => service.emitToUsers(['a', 'b'], 'notification:new', { id: 1 })).not.toThrow();
+  });
+
+  it('disconnect и isOnline безопасны', () => {
+    expect(() => service.disconnectSessions(['s'])).not.toThrow();
+    expect(() => service.disconnectUser('u', 's')).not.toThrow();
+    expect(service.isOnline('u')).toBe(false);
   });
 });
