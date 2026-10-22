@@ -15,6 +15,7 @@ import { validationError } from '@/common/validation';
 import { Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
+import { FollowsService } from '@/follows/follows.service';
 import { MeDto, ProfileDto } from './dto/me.dto';
 import type { ChangeUserNameDto, SetLinksDto, UpdateProfileDto } from './dto/profile-requests.dto';
 import { UsersService } from './users.service';
@@ -39,6 +40,7 @@ export class ProfileService {
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly visibility: VisibilityService,
+    private readonly follows: FollowsService,
   ) {}
 
   // --- Чтение ------------------------------------------------------------------------------------
@@ -52,11 +54,12 @@ export class ProfileService {
     // Блокировка в любую сторону = 404, как будто пользователя нет.
     await this.visibility.assertCanViewProfile(viewerId, profile.id);
 
-    // Правило берём из VisibilityService. Пока там заглушка («видно всем»), закрытый аккаунт
-    // дополнительно скрываем от всех, кроме владельца.
-    // TODO(T1.A4/T1.A5): убрать условие isPrivate — подписчики закрытого аккаунта должны видеть контент.
+    // Контент виден: себе, всем у открытого аккаунта, ACCEPTED-подписчикам у закрытого.
+    // TODO(T1.A5): правило переедет в VisibilityService.canViewContent; здесь останется только вызов.
     const canView = await this.visibility.canViewContent(viewerId, profile.id);
-    profile.canViewContent = canView && (profile.isMe || !profile.isPrivate);
+    profile.canViewContent =
+      canView && (profile.isMe || !profile.isPrivate || profile.followStatus === 'FOLLOWING');
+    profile.mutualFollowers = await this.follows.mutualPreview(viewerId, profile.id);
     return profile;
   }
 
@@ -77,17 +80,22 @@ export class ProfileService {
       throw validationError('genderCustom', 'genderCustom is required when gender is CUSTOM');
     }
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        fullName: dto.fullName,
-        bio: dto.bio,
-        pronouns: dto.pronouns,
-        isPrivate: dto.isPrivate,
-        gender,
-        genderCustom,
-      },
+    // Открытие аккаунта (isPrivate = false) принимает все запросы на подписку — в одной транзакции.
+    const accepted = await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          fullName: dto.fullName,
+          bio: dto.bio,
+          pronouns: dto.pronouns,
+          isPrivate: dto.isPrivate,
+          gender,
+          genderCustom,
+        },
+      });
+      return dto.isPrivate === false ? this.follows.acceptAllPending(tx, userId) : [];
     });
+    await this.follows.notifyAccepted(userId, accepted);
     // Q-new-1: лимит смены fullName (2 раза за 14 дней) не реализован.
     return this.users.getMe(userId);
   }

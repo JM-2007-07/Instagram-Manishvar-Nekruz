@@ -1,6 +1,414 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/users/suggestions": {
+      "get": {
+        "operationId": "FollowsController_suggestions",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 30,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/follow": {
+      "put": {
+        "operationId": "FollowsController_follow",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ACCEPTED — открытый аккаунт, PENDING — закрытый",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Подписка на себя"
+          },
+          "404": {
+            "description": "Нет такого пользователя или блокировка"
+          },
+          "429": {
+            "description": "Больше 60 подписок в час"
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      },
+      "delete": {
+        "operationId": "FollowsController_unfollow",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отписка или отмена запроса (повторный вызов тоже 204)"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/followers": {
+      "get": {
+        "operationId": "FollowsController_listFollowers",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Поиск по имени пользователя и полному имени",
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowListPageDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "PRIVATE_ACCOUNT"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/following": {
+      "get": {
+        "operationId": "FollowsController_listFollowing",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Поиск по имени пользователя и полному имени",
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowListPageDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "PRIVATE_ACCOUNT"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/mutual-followers": {
+      "get": {
+        "operationId": "FollowsController_listMutualFollowers",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/followers/{userId}": {
+      "delete": {
+        "operationId": "FollowsController_removeFollower",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Подписчик удалён без уведомления"
+          },
+          "404": {
+            "description": "Этот пользователь не ваш подписчик"
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/follow-requests": {
+      "get": {
+        "operationId": "FollowsController_listRequests",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowRequestPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/follow-requests/{userId}/accept": {
+      "post": {
+        "operationId": "FollowsController_acceptRequest",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Нет такого запроса"
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/follow-requests/{userId}": {
+      "delete": {
+        "operationId": "FollowsController_rejectRequest",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Нет такого запроса"
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "UsersController_getMe",
@@ -754,37 +1162,6 @@
       }
     },
     "schemas": {
-      "LinkDto": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": [
-          "url",
-          "title"
-        ]
-      },
-      "MutedDto": {
-        "type": "object",
-        "properties": {
-          "posts": {
-            "type": "boolean"
-          },
-          "stories": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "posts",
-          "stories"
-        ]
-      },
       "UserSummaryDto": {
         "type": "object",
         "properties": {
@@ -826,6 +1203,270 @@
           "isPrivate",
           "hasActiveStory",
           "isCloseFriendStory"
+        ]
+      },
+      "SuggestionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "hasActiveStory": {
+            "type": "boolean",
+            "description": "Есть активная история (кольцо вокруг аватара)"
+          },
+          "isCloseFriendStory": {
+            "type": "boolean",
+            "description": "Активная история только для близких друзей (зелёное кольцо)"
+          },
+          "reason": {
+            "enum": [
+              "FOLLOWED_BY",
+              "POPULAR"
+            ],
+            "type": "string"
+          },
+          "followedBy": {
+            "description": "Кто из ваших подписок подписан на него",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userName",
+          "fullName",
+          "avatarUrl",
+          "isVerified",
+          "isPrivate",
+          "hasActiveStory",
+          "isCloseFriendStory",
+          "reason"
+        ]
+      },
+      "FollowResultDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "ACCEPTED",
+              "PENDING"
+            ],
+            "type": "string",
+            "description": "PENDING — запрос на закрытый аккаунт"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "FollowListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "hasActiveStory": {
+            "type": "boolean",
+            "description": "Есть активная история (кольцо вокруг аватара)"
+          },
+          "isCloseFriendStory": {
+            "type": "boolean",
+            "description": "Активная история только для близких друзей (зелёное кольцо)"
+          },
+          "followStatus": {
+            "enum": [
+              "NONE",
+              "FOLLOWING",
+              "REQUESTED"
+            ],
+            "type": "string",
+            "description": "Моя подписка на этого пользователя"
+          }
+        },
+        "required": [
+          "id",
+          "userName",
+          "fullName",
+          "avatarUrl",
+          "isVerified",
+          "isPrivate",
+          "hasActiveStory",
+          "isCloseFriendStory",
+          "followStatus"
+        ]
+      },
+      "FollowListPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowListItemDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "UserSummaryPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummaryDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "FollowRequestItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "hasActiveStory": {
+            "type": "boolean",
+            "description": "Есть активная история (кольцо вокруг аватара)"
+          },
+          "isCloseFriendStory": {
+            "type": "boolean",
+            "description": "Активная история только для близких друзей (зелёное кольцо)"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userName",
+          "fullName",
+          "avatarUrl",
+          "isVerified",
+          "isPrivate",
+          "hasActiveStory",
+          "isCloseFriendStory",
+          "requestedAt"
+        ]
+      },
+      "FollowRequestPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FollowRequestItemDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "LinkDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "url",
+          "title"
+        ]
+      },
+      "MutedDto": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "type": "boolean"
+          },
+          "stories": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "posts",
+          "stories"
         ]
       },
       "MutualFollowersDto": {

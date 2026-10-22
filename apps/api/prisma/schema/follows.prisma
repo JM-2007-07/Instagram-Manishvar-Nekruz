@@ -1,0 +1,23 @@
+// Подписки (владелец — Студент A). CloseFriend и FavoriteAccount добавятся в T4.A3.
+
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+}
+
+// Подписка follower -> following. Пара уникальна (PK). CHECK "followerId" <> "followingId" добавлен в миграции вручную.
+model Follow {
+  followerId  String       @db.Uuid
+  followingId String       @db.Uuid
+  status      FollowStatus
+  createdAt   DateTime     @default(now())
+  acceptedAt  DateTime?
+
+  follower  User @relation("FollowSource", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("FollowTarget", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId, status, createdAt]) // подписчики и запросы
+  @@index([followerId, status, createdAt]) // подписки
+  @@map("follows")
+}

@@ -6,6 +6,7 @@ import { SessionGuard } from './common/session/session.guard';
 import { SessionModule } from './common/session/session.module';
 import { AppThrottlerGuard, AppThrottlerModule } from './common/throttler/app-throttler';
 import { AppConfigModule } from './config/app-config.module';
+import { FollowsModule } from './follows/follows.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -24,6 +25,8 @@ import { UsersModule } from './users/users.module';
     MailModule,
     SessionModule,
     AppThrottlerModule,
+    // FollowsModule раньше UsersModule: маршрут users/suggestions должен быть выше users/:userId.
+    FollowsModule,
     UsersModule,
     PrivacyModule,
     NotificationsModule,

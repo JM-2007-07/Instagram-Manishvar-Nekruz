@@ -68,6 +68,10 @@ model User {
   emailCodes  EmailVerificationCode[]
   resetTokens PasswordResetToken[]
 
+  // --- follows (A) ---
+  following Follow[] @relation("FollowSource") // подписки пользователя (он — follower)
+  followers Follow[] @relation("FollowTarget") // подписчики пользователя (он — following)
+
   // --- posts (B) ---
   // --- stories (B) ---
   // --- comments (B) ---

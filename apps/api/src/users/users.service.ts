@@ -15,6 +15,15 @@ function profileSelect(viewerId: string) {
       orderBy: { position: 'asc' },
       select: { url: true, title: true },
     },
+    // Подписки: счётчики (только ACCEPTED), моя подписка на него и подписан ли он на меня.
+    _count: {
+      select: {
+        followers: { where: { status: 'ACCEPTED' } },
+        following: { where: { status: 'ACCEPTED' } },
+      },
+    },
+    followers: { where: { followerId: viewerId }, select: { status: true } },
+    following: { where: { followingId: viewerId, status: 'ACCEPTED' }, select: { status: true } },
   } satisfies Prisma.UserSelect;
 }
 
@@ -24,7 +33,7 @@ type ProfileRow = Prisma.UserGetPayload<{ select: ReturnType<typeof profileSelec
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Текущий пользователь (GET /me и ответы входа). Счётчики подписок и постов — 0 до T1.A4 / PostsService.
+  // Текущий пользователь (GET /me и ответы входа). Счётчик постов — 0 до PostsService.
   async getMe(userId: string): Promise<MeDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -66,7 +75,8 @@ export class UsersService {
     return user ? this.toProfile(user, viewerId) : null;
   }
 
-  // Поля follow-связи — значения по умолчанию: T1.A4 заполнит их (счётчики, followStatus, canViewContent).
+  // followerCount/followingCount/followStatus/followsMe — из подписок. Остальное — значения по умолчанию:
+  // mutualFollowers и canViewContent заполняет ProfileService, isBlocked/isRestricted/isMuted — T1.A5.
   private toProfile(user: ProfileRow, viewerId: string): ProfileDto {
     return {
       ...this.toSummary(user),
@@ -74,10 +84,10 @@ export class UsersService {
       pronouns: user.pronouns,
       links: user.links,
       postCount: 0,
-      followerCount: 0,
-      followingCount: 0,
-      followStatus: 'NONE',
-      followsMe: false,
+      followerCount: user._count.followers,
+      followingCount: user._count.following,
+      followStatus: this.followStatusOf(user.followers[0]?.status),
+      followsMe: user.following.length > 0,
       isBlocked: false,
       isRestricted: false,
       isMuted: { posts: false, stories: false },
@@ -85,6 +95,11 @@ export class UsersService {
       canViewContent: true,
       isMe: user.id === viewerId,
     };
+  }
+
+  private followStatusOf(status: 'ACCEPTED' | 'PENDING' | undefined): ProfileDto['followStatus'] {
+    if (status === 'ACCEPTED') return 'FOLLOWING';
+    return status === 'PENDING' ? 'REQUESTED' : 'NONE';
   }
 
   // Заглушка до T1.A3 / T2.B1: avatarUrl = null (аватары — после MediaService), истории не учитываются
