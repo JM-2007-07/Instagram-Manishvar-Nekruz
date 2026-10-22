@@ -1,0 +1,172 @@
+// Аккаунт: User, Session, UserSettings (владелец — Студент A). Поля профиля (bio, isPrivate…) тоже лежат в User.
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  DEACTIVATED
+  PENDING_DELETION
+  BANNED
+}
+
+enum Gender {
+  FEMALE
+  MALE
+  CUSTOM
+  PREFER_NOT_TO_SAY
+}
+
+// Кто может совершать действие (комментировать, отмечать, упоминать).
+enum AudienceSetting {
+  EVERYONE
+  FOLLOWING
+  MUTUAL
+  NO_ONE
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+model User {
+  id                  String     @id @default(uuid()) @db.Uuid
+  userName            String     @unique // всегда в нижнем регистре
+  email               String     @unique // всегда в нижнем регистре
+  emailVerifiedAt     DateTime?
+  passwordHash        String? // пуст у аккаунтов только с соцвходом
+  fullName            String
+  birthday            DateTime   @db.Date
+  role                UserRole   @default(USER)
+  isVerified          Boolean    @default(false)
+  status              UserStatus @default(ACTIVE)
+  deletionScheduledAt DateTime?
+
+  // Профиль (F-PRF-*). avatarMediaId появится после MediaFile (T1.B1).
+  bio          String?
+  pronouns     String?
+  gender       Gender?
+  genderCustom String?
+  isPrivate    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions Session[]
+  settings UserSettings?
+
+  // --- users / settings (A) ---
+  links                   UserLink[]
+  usernameChanges         UsernameChange[]
+  notificationPreferences NotificationPreference[]
+
+  // --- auth (A) ---
+  emailCodes          EmailVerificationCode[]
+  resetTokens         PasswordResetToken[]
+  twoFactor           TwoFactorSecret?
+  twoFactorChallenges TwoFactorChallenge[]
+  oauthAccounts       OAuthAccount[]
+
+  // --- follows (A) ---
+  following        Follow[]          @relation("FollowSource") // подписки пользователя (он — follower)
+  followers        Follow[]          @relation("FollowTarget") // подписчики пользователя (он — following)
+  closeFriends     CloseFriend[]     @relation("CloseFriendOwner") // мои близкие друзья
+  closeFriendOf    CloseFriend[]     @relation("CloseFriendTarget") // у кого я в близких
+  favoriteAccounts FavoriteAccount[] @relation("FavoriteOwner")
+  favoritedBy      FavoriteAccount[] @relation("FavoriteTarget")
+
+  // --- privacy (A) ---
+  blocksMade        Block[]           @relation("BlockSource") // кого заблокировал пользователь
+  blocksReceived    Block[]           @relation("BlockTarget") // кто заблокировал пользователя
+  restricts         Restrict[]        @relation("RestrictOwner")
+  restrictedBy      Restrict[]        @relation("RestrictTarget")
+  mutes             Mute[]            @relation("MuteOwner")
+  mutedBy           Mute[]            @relation("MuteTarget")
+  storyHiddenFrom   StoryHiddenFrom[] @relation("StoryHiddenOwner")
+  storyHiddenFromMe StoryHiddenFrom[] @relation("StoryHiddenViewer")
+  hiddenWords       HiddenWord?
+
+  // --- search (A) ---
+  searchHistory       SearchHistoryEntry[] @relation("SearchHistoryOwner") // моя история
+  searchHistoryTarget SearchHistoryEntry[] @relation("SearchHistoryTarget") // записи, где я — найденный
+
+  // --- notifications (A) ---
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+
+  // --- chats (A) ---
+  chatParticipations ChatParticipant[]
+  messagesSent       Message[]         @relation("MessageSender")
+  messagesShared     Message[]         @relation("MessageSharedUser") // сообщения, где пользователь — карточка «поделиться профилем»
+  messageReactions   MessageReaction[]
+
+  // --- calls (A) ---
+  callsInitiated     Call[]            @relation("CallInitiator")
+  callParticipations CallParticipant[] @relation("CallParticipation")
+
+  // --- media (B) ---
+  mediaFiles            MediaFile[]            @relation("MediaOwner")
+  // --- tags (B) ---
+  // --- locations (B) ---
+  // --- posts (B) ---
+  posts                 Post[]                 @relation("PostAuthor")
+  postLikes             PostLike[]             @relation("PostLikes")
+  postPlays             PostPlay[]             @relation("PostPlays")
+  postTagged            PostUserTag[]          @relation("PostTagged")
+  postCollaborations    PostCollaborator[]     @relation("PostCollaborations")
+  postMentions          PostMention[]          @relation("PostMentions")
+  // --- stories (B) ---
+  stories               Story[]                @relation("StoryAuthor")
+  storyViews            StoryView[]            @relation("StoryViewer")
+  storyLikes            StoryLike[]            @relation("StoryLiker")
+  storyStickerResponses StoryStickerResponse[] @relation("StoryStickerResponder")
+  highlights            Highlight[]            @relation("HighlightOwner")
+  // --- comments (B) ---
+  commentsWritten       Comment[]              @relation("CommentAuthor")
+  commentLikes          CommentLike[]          @relation("CommentLikes")
+  commentMentions       CommentMention[]       @relation("CommentMentions")
+  // --- admin (B) ---
+  reportsFiled          Report[]               @relation("ReportReporter")
+  reportsResolved       Report[]               @relation("ReportResolver")
+
+  @@map("users")
+}
+
+model Session {
+  id                String   @id @default(uuid()) @db.Uuid
+  tokenHash         String   @unique // sha256 токена из cookie; сам токен в БД не хранится
+  userId            String   @db.Uuid
+  userAgent         String?
+  ipAddress         String?
+  createdAt         DateTime @default(now())
+  lastUsedAt        DateTime @default(now())
+  expiresAt         DateTime // idle-срок, продлевается
+  absoluteExpiresAt DateTime // абсолютный срок, не продлевается
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model UserSettings {
+  userId              String          @id @db.Uuid
+  commentsFrom        AudienceSetting @default(EVERYONE)
+  tagsFrom            AudienceSetting @default(EVERYONE)
+  mentionsFrom        AudienceSetting @default(EVERYONE)
+  showActivityStatus  Boolean         @default(true)
+  hideLikeCounts      Boolean         @default(false)
+  allowStoryResharing Boolean         @default(true)
+  theme               Theme           @default(SYSTEM)
+  language            String          @default("ru")
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}

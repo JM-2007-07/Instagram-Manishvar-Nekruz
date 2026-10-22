@@ -19,3 +19,6 @@ apps/api/prisma/migrations/
 
 # Markdown не форматируется: Prettier перестроил бы таблицы во всей документации (решение T0.1)
 *.md
+
+# Клиент Prisma генерируется командой prisma generate
+apps/api/src/generated/

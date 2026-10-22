@@ -1,0 +1,15 @@
+// Профиль: ссылки (владелец — Студент A). Остальные поля профиля лежат в User.
+
+// Ссылка в шапке профиля (F-PRF-03): до 5 штук, порядок задаёт position.
+model UserLink {
+  id       String  @id @default(uuid()) @db.Uuid
+  userId   String  @db.Uuid
+  url      String
+  title    String?
+  position Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, position])
+  @@map("user_links")
+}

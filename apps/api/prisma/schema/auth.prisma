@@ -1,0 +1,83 @@
+// Вход и подтверждения: EmailVerificationCode, PasswordResetToken (владелец — Студент A).
+// OAuthAccount, TwoFactorSecret появятся в T4.A1 / T4.A4.
+
+enum VerificationPurpose {
+  SIGNUP
+  EMAIL_CHANGE
+}
+
+// Код из письма. В БД лежит только хеш; не больше 5 попыток и 15 минут жизни (проверяет AuthService).
+model EmailVerificationCode {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @db.Uuid
+  email     String // адрес, на который отправлен код (при смене email — новый)
+  codeHash  String
+  purpose   VerificationPurpose
+  attempts  Int                 @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@map("email_verification_codes")
+}
+
+// Одноразовый токен сброса пароля. В БД лежит sha256 токена из ссылки.
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// Смена имени пользователя (F-ACC-11): по записям считаем лимит «2 раза за 14 дней»
+// и держим старое имя за владельцем 14 дней.
+model UsernameChange {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  oldUserName String
+  newUserName String
+  changedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, changedAt])
+  @@index([oldUserName])
+  @@map("username_changes")
+}
+
+// 2FA (F-ACC-15): секрет TOTP зашифрован AES-256-GCM; резервные коды — sha256-хеши. enabledAt пуст до подтверждения кодом.
+model TwoFactorSecret {
+  userId           String    @id @db.Uuid
+  secretEncrypted  String
+  backupCodeHashes String[]
+  enabledAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_secrets")
+}
+
+// Промежуточный шаг входа: пароль верен, ждём код. Живёт 5 минут, не больше 5 попыток.
+model TwoFactorChallenge {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor_challenges")
+}

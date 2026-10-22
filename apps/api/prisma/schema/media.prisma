@@ -1,0 +1,64 @@
+// Медиафайлы (владелец — Студент B). Сами файлы лежат в хранилище (StorageService), здесь только метаданные.
+// Файл привязывается к объекту (пост, история, аватар, сообщение…) ровно один раз: attachedTo + attachedAt.
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  AUDIO
+}
+
+enum MediaStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+// Для чего загружен файл (поле purpose в POST /media). Определяет лимиты (SECURITY.md «Загрузка файлов»).
+enum MediaPurpose {
+  POST
+  REEL
+  STORY
+  AVATAR
+  MESSAGE
+  VOICE
+  HIGHLIGHT_COVER
+}
+
+// К какому объекту привязан файл (нужно для проверки доступа при раздаче).
+enum MediaTarget {
+  POST
+  STORY
+  AVATAR
+  CHAT_AVATAR
+  MESSAGE
+  HIGHLIGHT_COVER
+}
+
+model MediaFile {
+  id           String       @id @default(uuid()) @db.Uuid
+  ownerId      String       @db.Uuid
+  purpose      MediaPurpose
+  kind         MediaKind
+  status       MediaStatus  @default(PROCESSING)
+  storageKey   String // ключ основного файла в хранилище (UUID + расширение)
+  mimeType     String // тип основного файла после обработки
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  durationSec  Float?
+  thumbnailKey String? // превью: уменьшенное фото или кадр видео
+  variants     Json         @default("{}") // ключи уменьшенных копий, например { "thumb": "uuid.webp" }
+  attachedTo   MediaTarget? // null — файл ещё не привязан
+  attachedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  owner          User       @relation("MediaOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  postMedia      PostMedia? // привязка к публикации (T1.B4)
+  // --- stories (B) ---
+  story          Story?
+  highlightCover Highlight?
+
+  @@index([ownerId, createdAt])
+  @@index([attachedTo, createdAt]) // фоновая очистка непривязанных (attachedTo = null)
+  @@map("media_files")
+}

@@ -1,0 +1,68 @@
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { AdminModule } from './admin/admin.module';
+import { AuthModule } from './auth/auth.module';
+import { CallsModule } from './calls/calls.module';
+import { ChatsModule } from './chats/chats.module';
+import { CommentsModule } from './comments/comments.module';
+import { OriginGuard } from './common/guards/origin.guard';
+import { SessionGuard } from './common/session/session.guard';
+import { SessionModule } from './common/session/session.module';
+import { AppThrottlerGuard, AppThrottlerModule } from './common/throttler/app-throttler';
+import { AppConfigModule } from './config/app-config.module';
+import { FollowsModule } from './follows/follows.module';
+import { HealthModule } from './health/health.module';
+import { LocationsModule } from './locations/locations.module';
+import { MediaModule } from './media/media.module';
+import { MailModule } from './mail/mail.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { PostsModule } from './posts/posts.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { PrivacyModule } from './privacy/privacy.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { SearchModule } from './search/search.module';
+import { SettingsModule } from './settings/settings.module';
+import { StorageModule } from './storage/storage.module';
+import { StoriesModule } from './stories/stories.module';
+import { TagsModule } from './tags/tags.module';
+import { UsersModule } from './users/users.module';
+
+// Модули общих сервисов (Session, Users, Privacy, Notifications, Realtime) глобальные: их сервисы
+// доступны везде без импорта, как PrismaService.
+@Module({
+  imports: [
+    AppConfigModule,
+    PrismaModule,
+    MailModule,
+    SessionModule,
+    AppThrottlerModule,
+    // FollowsModule раньше UsersModule: маршрут users/suggestions должен быть выше users/:userId.
+    FollowsModule,
+    UsersModule,
+    PrivacyModule,
+    NotificationsModule,
+    RealtimeModule,
+    HealthModule,
+    AuthModule,
+    SettingsModule,
+    SearchModule,
+    CallsModule,
+    ChatsModule,
+    // --- модули B ---
+    StorageModule,
+    MediaModule,
+    TagsModule,
+    LocationsModule,
+    PostsModule,
+    CommentsModule,
+    StoriesModule,
+    AdminModule,
+  ],
+  providers: [
+    // Порядок глобальных guard'ов: Origin -> Session -> Throttler.
+    { provide: APP_GUARD, useClass: OriginGuard },
+    { provide: APP_GUARD, useClass: SessionGuard },
+    { provide: APP_GUARD, useClass: AppThrottlerGuard },
+  ],
+})
+export class AppModule {}

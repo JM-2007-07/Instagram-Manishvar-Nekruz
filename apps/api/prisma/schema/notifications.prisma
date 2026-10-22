@@ -1,0 +1,36 @@
+// Уведомления (владелец — Студент A).
+
+enum NotificationType {
+  POST_LIKE
+  COMMENT_LIKE
+  COMMENT
+  COMMENT_REPLY
+  MENTION_POST
+  MENTION_COMMENT
+  MENTION_STORY
+  POST_TAG
+  FOLLOW
+  FOLLOW_REQUEST
+  FOLLOW_ACCEPTED
+  COLLAB_INVITE
+}
+
+// Уведомление (F-NTF-*). Группировка — при выдаче по (type, postId/commentId) за 24 часа.
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  recipientId String           @db.Uuid
+  actorId     String           @db.Uuid
+  type        NotificationType
+  // FK — после T1.B4 / T1.B5 / T2.B1 (модели Post, Comment, Story ещё не созданы).
+  postId      String?          @db.Uuid
+  commentId   String?          @db.Uuid
+  storyId     String?          @db.Uuid
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor     User @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt])
+  @@map("notifications")
+}

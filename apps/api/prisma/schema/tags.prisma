@@ -1,0 +1,48 @@
+// Хэштеги (владелец — Студент B, T1.B2).
+// PostHashtag добавит модуль posts (T1.B4), PostMention — posts, CommentMention — comments (T1.B5).
+
+model Hashtag {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique // без «#», всегда в нижнем регистре
+  createdAt DateTime @default(now())
+
+  posts PostHashtag[]
+
+  @@map("hashtags")
+}
+
+model PostHashtag {
+  postId    String @db.Uuid
+  hashtagId String @db.Uuid
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+  @@map("post_hashtags")
+}
+
+model PostMention {
+  postId String @db.Uuid
+  userId String @db.Uuid
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PostMentions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+  @@map("post_mentions")
+}
+
+model CommentMention {
+  commentId String @db.Uuid
+  userId    String @db.Uuid
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation("CommentMentions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+  @@index([userId])
+  @@map("comment_mentions")
+}

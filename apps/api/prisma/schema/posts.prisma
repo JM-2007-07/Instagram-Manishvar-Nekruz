@@ -1,0 +1,127 @@
+// Публикации и reels (владелец — Студент B, T1.B4). Сами файлы — MediaFile (media.prisma).
+// Счётчики лайков и комментариев вычисляются (_count); playCount хранится, потому что воспроизведения не уникальны.
+
+enum PostType {
+  POST
+  REEL
+}
+
+enum PostStatus {
+  PROCESSING
+  PUBLISHED
+}
+
+enum CollaboratorStatus {
+  PENDING
+  ACCEPTED
+}
+
+model Post {
+  id               String     @id @default(uuid()) @db.Uuid
+  shortcode        String     @unique // короткий код для URL /p/{shortcode}/
+  authorId         String     @db.Uuid
+  type             PostType   @default(POST)
+  status           PostStatus @default(PUBLISHED)
+  caption          String?
+  locationId       String?    @db.Uuid
+  commentsDisabled Boolean    @default(false)
+  hideLikeCount    Boolean    @default(false)
+  isArchived       Boolean    @default(false)
+  pinnedAt         DateTime?
+  playCount        Int        @default(0)
+  editedAt         DateTime?
+  publishedAt      DateTime   @default(now())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  author   User      @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  media         PostMedia[]
+  userTags      PostUserTag[]
+  collaborators PostCollaborator[]
+  likes         PostLike[]
+  plays         PostPlay[]
+  hashtags      PostHashtag[]
+  mentions      PostMention[]
+
+  // --- comments (B) ---
+  comments        Comment[]
+  // --- stories (B) ---
+  sharedInStories Story[]
+  // --- admin (B) ---
+
+  @@index([authorId, createdAt])
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([locationId, createdAt])
+  @@map("posts")
+}
+
+model PostMedia {
+  postId   String  @db.Uuid
+  position Int
+  mediaId  String  @unique @db.Uuid
+  altText  String?
+
+  post  Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  media MediaFile @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@id([postId, position])
+  @@map("post_media")
+}
+
+// Отметка человека на медиа с номером position; x и y — доли ширины и высоты (0..1).
+model PostUserTag {
+  postId       String @db.Uuid
+  position     Int
+  taggedUserId String @db.Uuid
+  x            Float
+  y            Float
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagged User @relation("PostTagged", fields: [taggedUserId], references: [id], onDelete: Cascade)
+
+  @@id([postId, position, taggedUserId])
+  @@index([taggedUserId])
+  @@map("post_user_tags")
+}
+
+model PostCollaborator {
+  postId String             @db.Uuid
+  userId String             @db.Uuid
+  status CollaboratorStatus @default(PENDING)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PostCollaborations", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+  @@map("post_collaborators")
+}
+
+model PostLike {
+  userId    String   @db.Uuid
+  postId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user User @relation("PostLikes", fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId, createdAt])
+  @@map("post_likes")
+}
+
+// Последнее засчитанное воспроизведение: playCount растёт не чаще раза в час на пользователя.
+model PostPlay {
+  userId        String   @db.Uuid
+  postId        String   @db.Uuid
+  lastCountedAt DateTime @default(now())
+
+  user User @relation("PostPlays", fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@map("post_plays")
+}

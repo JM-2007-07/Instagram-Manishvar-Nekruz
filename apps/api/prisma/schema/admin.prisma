@@ -1,0 +1,50 @@
+// Модерация: жалобы (владелец — Студент B, T4.B4).
+
+enum ReportTargetType {
+  POST
+  COMMENT
+  USER
+  MESSAGE
+  STORY
+}
+
+enum ReportReason {
+  SPAM
+  NUDITY
+  HATE
+  VIOLENCE
+  HARASSMENT
+  FALSE_INFORMATION
+  SCAM
+  INTELLECTUAL_PROPERTY
+  SELF_HARM
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  REJECTED
+}
+
+// Объект жалобы хранится парой targetType + targetId без внешнего ключа: он может быть удалён позже.
+model Report {
+  id           String           @id @default(uuid()) @db.Uuid
+  reporterId   String           @db.Uuid
+  targetType   ReportTargetType
+  targetId     String           @db.Uuid
+  reason       ReportReason
+  details      String?
+  status       ReportStatus     @default(OPEN)
+  resolvedById String?          @db.Uuid
+  resolvedAt   DateTime?
+  createdAt    DateTime         @default(now())
+
+  reporter   User  @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  resolvedBy User? @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status, createdAt])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
