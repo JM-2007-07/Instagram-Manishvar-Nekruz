@@ -75,6 +75,13 @@ describe('baseQueryWithAuth', () => {
     expect(assign).not.toHaveBeenCalled();
   });
 
+  it('401 UNAUTHENTICATED на /accounts/login без слэша: перехода нет', async () => {
+    setPath('/accounts/login');
+    respond(401, unauthenticated);
+    await makeStore().dispatch(api.endpoints.ping.initiate());
+    expect(assign).not.toHaveBeenCalled();
+  });
+
   it('401 INVALID_CREDENTIALS: перехода нет', async () => {
     respond(401, { statusCode: 401, code: 'INVALID_CREDENTIALS', message: 'x' });
     const result = await makeStore().dispatch(api.endpoints.ping.initiate());

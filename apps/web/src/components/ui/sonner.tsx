@@ -2,15 +2,15 @@
 
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
-// Обёртка shadcn без next-themes: цвета берём из наших токенов, они меняются вместе с классом .dark.
+// Обёртка shadcn без next-themes: цвета — токен --toast (DESIGN_SYSTEM §2.3), одинаковый в обеих темах.
 const Toaster = (props: ToasterProps) => (
   <Sonner
     className="toaster group"
     style={
       {
-        '--normal-bg': 'var(--popover)',
-        '--normal-text': 'var(--popover-foreground)',
-        '--normal-border': 'var(--border)',
+        '--normal-bg': 'var(--toast)',
+        '--normal-text': 'var(--toast-foreground)',
+        '--normal-border': 'var(--toast)',
       } as React.CSSProperties
     }
     {...props}

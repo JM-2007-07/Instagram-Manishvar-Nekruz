@@ -8,17 +8,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-button-primary-hover',
+        // Отключённая основная кнопка — свой цвет из DESIGN_SYSTEM §2.2, а не прозрачность.
+        default:
+          'bg-primary text-primary-foreground hover:bg-button-primary-hover disabled:bg-button-primary-disabled disabled:opacity-100',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-button-secondary-hover',
         ghost: 'text-foreground hover:bg-hover-overlay',
         link: 'text-button-borderless hover:text-button-borderless-hover',
         destructive: 'bg-destructive text-destructive-foreground hover:opacity-90',
       },
       size: {
+        // Другие размеры добавим, когда они понадобятся экранам и будут в DESIGN_SYSTEM.
         default: 'h-8 px-4 py-[7px]',
-        sm: 'h-7 px-3',
-        lg: 'h-11 px-6',
-        icon: 'size-8',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },
