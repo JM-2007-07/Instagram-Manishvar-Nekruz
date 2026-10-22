@@ -11,6 +11,11 @@ if (!apiInternalUrl) {
 }
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Тело загрузки (до 600 МБ) проходит через proxy.ts; по умолчанию Next обрезает его до 10 МБ.
+    proxyClientMaxBodySize: '700mb',
+    proxyTimeout: 10 * 60 * 1000,
+  },
   // Браузер ходит на свой origin /api/*, Next.js проксирует запрос в NestJS:
   // так cookie сессии остаётся same-origin.
   async rewrites() {
