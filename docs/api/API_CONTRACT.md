@@ -191,31 +191,33 @@ type Page<T> = { items: T[]; nextCursor: string | null };
 ## 2. Эндпоинты по модулям
 
 Каждый файл — эндпоинты одного модуля backend: метод и путь, доступ, запрос, ответ, ошибки, функции, исходная операция.
-Владелец модуля меняет свой файл по [CHANGE_PROCESS.md](../development/CHANGE_PROCESS.md#изменение-api-контракта).
+Владелец модуля меняет свой файл по [CHANGE_PROCESS.md](../development/CHANGE_PROCESS.md#изменение-api-контракта); владелец общих
+соглашений (§1) и [REALTIME.md](REALTIME.md) — A. Студенты: A — `JM-2007-07`, B — `nek-yt` ([план](../IMPLEMENTATION_PLAN.md#4-карточки-модулей)).
 
 Доступ: **Public** — без сессии; **User** — вошедший; **Owner** — владелец ресурса; **Member** — участник чата;
 **Admin** — роль `ADMIN`. «Видимость» — правила приватности REQUIREMENTS §4.8.
 
-| Модуль | Файл | Функции |
-|---|---|---|
-| `auth` | [endpoints/auth.md](endpoints/auth.md) | F-ACC-* |
-| `users` | [endpoints/users.md](endpoints/users.md) | F-PRF-*, F-ACC-11…14 |
-| `follows` | [endpoints/follows.md](endpoints/follows.md) | F-SOC-* |
-| `privacy` | [endpoints/privacy.md](endpoints/privacy.md) | F-PRV-* |
-| `settings` | [endpoints/settings.md](endpoints/settings.md) | F-SET-*, F-NTF-06 |
-| `media` | [endpoints/media.md](endpoints/media.md) | загрузка и раздача файлов |
-| `posts` | [endpoints/posts.md](endpoints/posts.md) | F-PST-*, F-FED-*, F-REL-*, F-INT-01, 02, 12 |
-| `comments` | [endpoints/comments.md](endpoints/comments.md) | F-INT-03…08, 13 |
-| `collections` | [endpoints/collections.md](endpoints/collections.md) | F-INT-09, 10 |
-| `tags` | [endpoints/tags.md](endpoints/tags.md) | F-TAG-*, F-SRC-04 |
-| `stories` | [endpoints/stories.md](endpoints/stories.md) | F-STR-* |
-| `chats` | [endpoints/chats.md](endpoints/chats.md) | F-DM-*, F-INT-11 |
-| `calls` | [endpoints/calls.md](endpoints/calls.md) | F-CAL-* |
-| `notifications` | [endpoints/notifications.md](endpoints/notifications.md) | F-NTF-* |
-| `search` | [endpoints/search.md](endpoints/search.md) | F-SRC-01…03, F-TAG-03 |
-| `locations` | [endpoints/locations.md](endpoints/locations.md) | F-SRC-05, F-MOD-03 |
-| `admin` | [endpoints/admin.md](endpoints/admin.md) | F-PRV-11, F-MOD-* |
-| служебные | `GET /health` (Public) → `{ "status": "ok" }` | Phase 0 |
+| Модуль | Файл | Функции | Владелец | Задача |
+|---|---|---|---|---|
+| `auth` | [endpoints/auth.md](endpoints/auth.md) | F-ACC-* | A | T1.A1 |
+| `users` | [endpoints/users.md](endpoints/users.md) | F-PRF-*, F-ACC-11…14 | A | T1.A3 |
+| `follows` | [endpoints/follows.md](endpoints/follows.md) | F-SOC-* | A | T1.A4 |
+| `privacy` | [endpoints/privacy.md](endpoints/privacy.md) | F-PRV-* | A | T1.A5 |
+| `settings` | [endpoints/settings.md](endpoints/settings.md) | F-SET-*, F-NTF-06 | A | T1.A3 |
+| `media` | [endpoints/media.md](endpoints/media.md) | загрузка и раздача файлов | B | T1.B1 |
+| `posts` | [endpoints/posts.md](endpoints/posts.md) | F-PST-*, F-FED-*, F-REL-*, F-INT-01, 02, 12 | B | T1.B4 |
+| `comments` | [endpoints/comments.md](endpoints/comments.md) | F-INT-03…08, 13 | B | T1.B5 |
+| `collections` | [endpoints/collections.md](endpoints/collections.md) | F-INT-09, 10 | A | T2.A3 |
+| `tags` | [endpoints/tags.md](endpoints/tags.md) | F-TAG-*, F-SRC-04 | B | T1.B2 |
+| `stories` | [endpoints/stories.md](endpoints/stories.md) | F-STR-* | B | T2.B1, T2.B2 |
+| `chats` | [endpoints/chats.md](endpoints/chats.md) | F-DM-*, F-INT-11 | A | T2.A4 |
+| `calls` | [endpoints/calls.md](endpoints/calls.md) | F-CAL-* | A | T4.A2 (опц.) |
+| `notifications` | [endpoints/notifications.md](endpoints/notifications.md) | F-NTF-* | A | T2.A2 |
+| `search` | [endpoints/search.md](endpoints/search.md) | F-SRC-01…03, F-TAG-03 | A | T1.A6 |
+| `locations` | [endpoints/locations.md](endpoints/locations.md) | F-SRC-05, F-MOD-03 | B | T1.B3 |
+| `admin` | [endpoints/admin.md](endpoints/admin.md) | F-PRV-11, F-MOD-* | B | T4.B4 (опц.; `DELETE /admin/users` — R) |
+| служебные | `GET /health` (Public) → `{ "status": "ok" }` | Phase 0 | A | T0.2 |
+| события | [REALTIME.md](REALTIME.md) | F-NTF-05, F-DM-10…12, F-CAL-* | A | T2.A1 |
 
 ---
 

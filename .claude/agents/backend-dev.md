@@ -58,7 +58,7 @@ ID задачи, модуль, конкретный шаг плана (файл�
 
 # Запрещено
 
-- Менять `schema.prisma`, миграции, `API_CONTRACT.md` (это `contract-designer`), файлы `apps/web`.
+- Менять файлы схемы `prisma/schema/*.prisma`, миграции, `API_CONTRACT.md` (это `contract-designer`), файлы `apps/web`.
 - Менять общие файлы `apps/api/src/common/`, `config/`, `main.ts`, `app.module.ts` сверх того, что указано в шаге плана
   (регистрация своего модуля в `app.module.ts` — допустима).
 - Править сгенерированные файлы вручную. git commit / push / ветки. Чтение `.env`.

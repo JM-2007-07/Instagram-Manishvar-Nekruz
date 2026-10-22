@@ -15,7 +15,7 @@
 | e2e API | Jest + supertest, реальная БД `instagram_test` | полный путь запроса: guard → DTO → сервис → БД → формат ответа/ошибки | `apps/api/test/*.e2e-spec.ts` |
 | Юнит/компоненты (frontend) | Vitest + React Testing Library | компоненты с логикой: формы, оптимистичные обновления, разбор ошибок API | `apps/web/src/**/*.test.tsx` |
 | Реальное время | Jest + `socket.io-client` против запущенного приложения в e2e | доставка событий участникам, отказ чужим и без сессии | `apps/api/test/*.realtime.e2e-spec.ts` |
-| Сквозные сценарии | Playwright (T7.1), два контекста браузера для Direct и звонков | регистрация → пост → лайк → комментарий; Direct; история | `apps/web/e2e/` |
+| Сквозные сценарии | Playwright (T5.B1), два контекста браузера для Direct и звонков | регистрация → пост → лайк → комментарий; Direct; история | `apps/web/e2e/` |
 | Звонки | ручная проверка: два профиля браузера на одной машине | звук и видео в обе стороны | чек-лист в calls.md |
 | Контракт | `npm run contract` + `typecheck` в CI | frontend соответствует Swagger backend | CI |
 

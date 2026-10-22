@@ -44,7 +44,7 @@
 | Какие задачи, в каком порядке, кто владелец | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) |
 | Endpoint'ы и события (до появления кода) | [docs/api/API_CONTRACT.md](docs/api/API_CONTRACT.md) → `docs/api/endpoints/<module>.md`, [REALTIME.md](docs/api/REALTIME.md) |
 | Endpoint'ы (после появления кода) | DTO/контроллеры NestJS → `docs/api/openapi.json` |
-| Модель данных | [docs/database/DATA_MODEL.md](docs/database/DATA_MODEL.md), затем `apps/api/prisma/schema.prisma` |
+| Модель данных | [docs/database/DATA_MODEL.md](docs/database/DATA_MODEL.md), затем `apps/api/prisma/schema/<module>.prisma` |
 | Почему принято решение | [docs/decisions/](docs/decisions/README.md) (ADR) |
 | Как писать код | [docs/development/CODING_CONVENTIONS.md](docs/development/CODING_CONVENTIONS.md) |
 | Исходный внешний API (только справка) | [docs/api/API_INVENTORY.md](docs/api/API_INVENTORY.md) |

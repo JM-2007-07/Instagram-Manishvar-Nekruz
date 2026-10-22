@@ -11,8 +11,8 @@
 
 - [ ] API-контракт не менялся
 - [ ] API-контракт изменён: обновлены `docs/api/API_CONTRACT.md`, `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts` (`npm run contract`)
-- [ ] `schema.prisma` не менялся
-- [ ] `schema.prisma` изменён: одна миграция, создана после rebase на свежий `main`, второй разработчик предупреждён
+- [ ] Схема БД (`prisma/schema/*.prisma`) не менялась
+- [ ] Изменён только файл схемы своего модуля (+ обратные связи в `User` по CHANGE_PROCESS.md): одна миграция, создана после rebase на свежий `main`, второй предупреждён
 
 ## Проверка
 

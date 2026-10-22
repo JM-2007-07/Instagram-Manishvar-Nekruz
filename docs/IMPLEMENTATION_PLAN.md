@@ -1,204 +1,310 @@
-# План реализации
+# План реализации (backend-first, два независимых потока)
 
-> Статус: ✅ утверждено 2026-10-22. **Студент A — JM-2007-07, Студент B — nek-yt** (Q26 решён).
-> Текущее состояние задач — в [STATUS.md](STATUS.md). Реализация начинается с Phase 0.
+> Статус: ✅ утверждено 2026-10-22, перестроено под backend-first. **Студент A — `JM-2007-07`, Студент B — `nek-yt`**
+> (логины проверены через GitHub API). Статусы задач — **только** в [STATUS.md](STATUS.md); правила Git и общих
+> файлов — в [CONTRIBUTING.md](../CONTRIBUTING.md). Решение о схеме и заглушках — [ADR 0018](decisions/0018-parallel-backend-workstreams.md).
 
-## 1. Зависимости модулей
+## 1. Объём: обязательное и необязательное
+
+Объём продукта не сокращается ([ADR 0011](decisions/0011-instagram-parity-scope.md)); для защиты задаётся порядок.
+
+| Класс | Что входит | Где задачи |
+|---|---|---|
+| **R — требуется исходным Swagger** | все 57 операций (таблица в [API_CONTRACT.md §3](api/API_CONTRACT.md#3-таблица-соответствия-исходная-операция--новый-endpoint)) | Phase 1–2 |
+| **N — необходимо для реализации и безопасности** | сессии и выход, подтверждение email, проверка прав и приватности (`VisibilityService`), безопасная загрузка и раздача медиа, валидация, единый формат ошибок, миграции, rate limit, Swagger | Phase 0–2 |
+| **P0 — ядро паритета с Instagram** | функции P0 каталога: карусели, лента, комментарии с ответами, хэштеги, упоминания, истории, Direct с реальным временем, уведомления | Phase 1–3 |
+| **Опционально — P1/P2** | соцвход, звонки, ограничение/скрытие/близкие друзья, подборки, правка и архив публикаций, стикеры кроме базовых, админ-панель, фильтры, 2FA, заметки, GIF | Phase 4 — **не блокирует** контрольные точки |
+
+Контрольная точка «backend завершён» (M-BE) и «frontend ядра завершён» (M-FE) требуют только R + N + P0.
+
+## 2. Потоки работ
+
+**Студент A (`JM-2007-07`) — «аккаунт, люди, общение»:** фундамент backend (единственный владелец корневой
+конфигурации и `apps/api` foundation), `auth`, `users` + `settings`, `follows`, `privacy`, `search`, `collections`,
+`realtime`, `notifications`, `chats`, `calls` (опц.). Frontend своих модулей.
+
+**Студент B (`nek-yt`) — «контент и интерфейс»:** фундамент frontend (дизайн-токены, `lib/api`, оболочка),
+цепочка контракта, `media` + `storage`, `tags`, `locations`, `posts` (лента, «Интересное», reels, лайки, воспроизведения),
+`comments`, `stories` + актуальное, `admin` (опц.). Frontend своих модулей.
+
+Изменения относительно распределения от 2026-10-22 утра (и почему):
+
+| Что | Было | Стало | Почему |
+|---|---|---|---|
+| `comments` | A | **B** | комментарии — часть публикаций; без перекрёстной зависимости posts ↔ comments |
+| `collections` (сохранённое) | B | **A** | баланс; модуль маленький и зависит только от DTO публикации |
+| страницы входа, профиля | B | **A** | backend-first: каждый делает frontend **своих** модулей |
+| лента Reels (UI) | A | **B** | тот же принцип: reels — модуль `posts` |
+| совместные задачи «A + B» | были | **нет** | у каждой задачи один владелец |
+
+### 2.1 Нагрузка (S = 1, M = 2, L = 3)
+
+| Фаза | A | B |
+|---|---|---|
+| 0 — общий фундамент | 8 | 7 |
+| 1 — независимый backend | 14 | 13 |
+| 2 — зависимый backend | 9 | 4 |
+| 3 — frontend своих модулей | 11 | 15 |
+| **Обязательное итого** | **42** | **39** |
+| 4 — опционально | 13 | 11 |
+| 5 — выпуск | 5 | 6 |
+
+## 3. Зависимости и контрольные точки
 
 ```mermaid
 flowchart TD
-    F[Фундамент: config, prisma, common, mail, storage, realtime] --> AUTH[auth]
-    AUTH --> MEDIA[media]
-    AUTH --> USERS[users + settings]
-    MEDIA --> USERS
-    USERS --> FOL[follows]
-    FOL --> PRIV[privacy: VisibilityService]
-    PRIV --> SEARCH[search]
-    PRIV --> POSTS[posts]
-    MEDIA --> POSTS
-    TAGS[tags] --> POSTS
-    POSTS --> COMM[comments]
-    POSTS --> COLL[collections]
-    PRIV --> NOTIF[notifications]
-    COMM --> NOTIF
-    FOL --> NOTIF
-    PRIV --> CHATS[chats]
-    MEDIA --> CHATS
-    CHATS --> STORIES[stories]
-    POSTS --> STORIES
-    CHATS --> CALLS[calls]
-    LOC[locations] --> POSTS
-    AUTH --> ADMIN[admin]
+    T01[T0.1 корень · A] --> T02[T0.2 каркас NestJS · A]
+    T02 --> T03[T0.3 общие контракты и заглушки · A]
+    T01 --> T04[T0.4 каркас Next.js · B]
+    T02 --> T05[T0.5 цепочка контракта · B]
+    T04 --> T05
+    T05 --> T06[T0.6 CI · A]
+    T04 --> T07[T0.7 оболочка · B]
+    T03 --> C0{{C0 фундамент готов}}
+    C0 --> A1[T1.A1 auth] --> A2[T1.A2 страницы входа] & A3[T1.A3 users+settings]
+    A3 --> A4[T1.A4 follows] --> A5[T1.A5 privacy] --> A6[T1.A6 search]
+    C0 --> B1[T1.B1 media] --> B4[T1.B4 posts]
+    C0 --> B2[T1.B2 tags] --> B4
+    C0 --> B3[T1.B3 locations] --> B4
+    B4 --> B5[T1.B5 comments]
+    A6 --> MA1{{MA-1 backend A готов}}
+    B5 --> MB1{{MB-1 backend B готов}}
+    MA1 --> A21[T2.A1 realtime] --> A22[T2.A2 notifications]
+    MA1 --> A24[T2.A4 chats]
+    A21 --> A24
+    B4 --> A23[T2.A3 saved]
+    MB1 --> SB1[T2.B1 stories]
+    A24 --> SB2[T2.B2 ответы на истории]
+    SB1 --> SB2
+    A22 & A23 & A24 & SB2 --> MBE{{M-BE backend ядра завершён}}
 ```
 
-«Нижний слой» (`privacy`, `media`, `tags`, `notifications`, `realtime`) делается раньше функций, которые его используют.
-
-## 2. Распределение модулей
-
-### 2.1 Принцип
-
-У каждого студента — **свой набор модулей целиком (backend + frontend)**, чтобы работать параллельно и не
-конфликтовать в файлах. Каждый PR ревьюит второй студент — так оба понимают всё приложение.
-
-- **Студент A (JM-2007-07) — «люди и общение»:** аккаунт, профиль (backend), подписки, приватность, настройки, поиск,
-  комментарии, уведомления, реальное время, Direct, звонки, соцвход. Фундамент backend.
-- **Студент B (nek-yt) — «контент и интерфейс»:** медиа, публикации и ленты, хэштеги, сохранённое, истории и актуальное,
-  места, модерация. Фундамент frontend, дизайн-система, оболочка, страницы входа и профиля.
-
-Почему так: в каждой фазе у обоих есть работа (A делает Direct, пока B делает истории), «нижний слой» распределён
-по зависимостям (`realtime`, `privacy`, `notifications` — A; `media`, `tags` — B), а самые объёмные экраны
-поделены поровну (A — Direct и уведомления, B — создание публикации, лента, истории).
-
-### 2.2 Владельцы модулей
-
-| Модуль backend (`apps/api/src/`) | Владелец | Папка frontend (`apps/web/src/`) | Владелец |
-|---|---|---|---|
-| `config`, `prisma`, `common`, `mail`, `health` | A | `lib/api/*`, `lib/store*`, `lib/design.ts`, `lib/utils.ts` | B |
-| `realtime` | A | `lib/realtime.ts` | A |
-| `storage`, `media` | B | `lib/api/upload.ts` | B |
-| `auth` | A | `features/auth` (страницы входа и регистрации) | B |
-| `users` | A | `features/profile` (страница профиля, редактирование) | B |
-| `settings` | A | `features/settings` | A |
-| `follows` | A | `features/follows` | A |
-| `privacy` | A | `features/privacy` | A |
-| `search` | A | `features/search` | A |
-| `tags` | B | `features/tags`, `components/rich-text.tsx` | B |
-| `posts` | B | `features/posts` (создание, лента, окно поста, «Интересное») | B |
-| — | — | `features/reels` (лента Reels) | A |
-| `comments` | A | `features/comments` | A |
-| `collections` | B | `features/collections` | B |
-| `notifications` | A | `features/notifications` | A |
-| `stories` | B | `features/stories` | B |
-| `chats` | A | `features/chat` | A |
-| `calls` | A | `features/calls`, `lib/webrtc.ts` | A |
-| `locations` | B | `features/locations` | B |
-| `admin` | B | `features/admin` | B |
-| — | — | `app/` (маршруты), `components/ui`, `components/layout`, `components/states`, `globals.css` | B (страницы своих функций создаёт владелец функции) |
-
-Исключения из «модуль целиком» — осознанные, ради параллельной работы в первых фазах: страницы входа (`features/auth`)
-и профиля (`features/profile`) делает B, пока A пишет backend `auth` и `users`; ленту Reels делает A, пока B занят
-созданием публикаций и лентой. Контракт между ними — файл эндпоинтов модуля.
-
-`schema.prisma`: модели модуля добавляет его владелец (DATA_MODEL.md, колонка «Модуль»), по очереди и по
-[CHANGE_PROCESS.md](development/CHANGE_PROCESS.md).
-
-### 2.3 Баланс нагрузки
-
-Размер задачи: **S** = 1, **M** = 2, **L** = 3 условных единицы (совместные задачи делятся пополам).
-
-| Фаза | Студент A | Студент B |
+| Точка | Условие | Что открывает |
 |---|---|---|
-| 0 Фундамент | 7 (T0.1, T0.2, T0.4½, T0.5) | 7 (T0.3, T0.4½, T0.6, T0.7) |
-| 1 Аккаунт и оболочка | 5 (T1.1, T1.2, T1.6) | 8 (T1.3, T1.4, T1.5) |
-| 2 Профили и связи | 9 (T2.1, T2.2, T2.3, T2.5) | 5 (T2.4, T3.1 — начинается в Phase 2) |
-| 3 Публикации | 8 (T3.6, T3.7, T3.8) | 11 (T3.2, T3.3, T3.4, T3.5) |
-| 4 Direct ‖ 5 Истории | 9 (T4.1–T4.3) | 12 (T5.1–T5.5) |
-| 6 Полный паритет | 11 (T6.1, T6.2, T6.3, T6.5, T6.6) | 7 (T6.4, T6.7, T6.8) |
-| 7 Продакшен и защита | 5 (T7.2½, T7.3, T7.4½) | 4 (T7.1, T7.2½, T7.4½) |
-| **Итого** | **54** | **54** |
+| **C0** — фундамент готов | T0.2 и T0.3 влиты в `main` (контракты общих сервисов зафиксированы) | оба начинают Phase 1 |
+| **MA-1** — backend A готов для frontend A | T1.A1, T1.A3–T1.A6 влиты; Swagger модулей стабилен; e2e зелёные | frontend профиля, настроек, подписок, поиска (T3.A1–T3.A3) |
+| **MB-1** — backend B готов для frontend B | T1.B1–T1.B5 влиты; Swagger стабилен; e2e зелёные; вход доступен (T1.A1 + T1.A2) | frontend ленты, публикаций, комментариев, «Интересного», reels (T3.B1–T3.B5) |
+| **MA-2** — Direct готов | T2.A1, T2.A4 влиты | UI Direct (T3.A5) |
+| **MB-2** — истории готовы | T2.B1 влита (ответы — после T2.B2) | UI историй (T3.B6) |
+| **M-BE** — backend ядра завершён | все задачи Phase 0–2 влиты + критерии §6 | — (frontend не ждёт M-BE) |
+| **M-FE** — frontend ядра завершён | все задачи Phase 3 влиты | Phase 4, 5 |
 
-P2-задачи (T6.9) делает владелец соответствующего модуля.
+**Frontend не ждёт чужого backend целиком.** Каждый начинает frontend своих модулей на своей точке MA-1 / MB-1.
+Если один студент дошёл до точки раньше, он продолжает свой следующий backend (Phase 2), а не ждёт.
 
-## 3. Задачи по фазам
+### 3.1 Как не ждать друг друга: заглушки и контракты
 
-ID `T<фаза>.<номер>`. «Готово, когда» — минимальное условие закрытия; полностью — критерии приёмки спецификации и
-[Definition of Done](development/AGENT_PLAYBOOKS.md#definition-of-done). Ветки: `<тип>/<модуль>-<кратко>` (CONTRIBUTING.md).
-Ревьюер каждой задачи — второй студент.
+Всё, что модуль одного студента вызывает у другого, существует с C0 как **настоящий класс с простейшим поведением**
+(не копия и не второй вариант). Владелец потом заменяет тело методов, сигнатура не меняется.
 
-### Phase 0 — Фундамент
+| Интерфейс (владелец) | Появляется в | Поведение до реализации | Реальная реализация |
+|---|---|---|---|
+| `SessionGuard`, `@CurrentUser()`, `SessionUser` (A) | T0.3 | настоящая проверка сессии по таблице `Session` | — |
+| `UserSummaryDto`, `UsersService.toSummary()` (A) | T0.3 | поля из `User`; `hasActiveStory = false` | T1.A3 (+ истории — T2.B1 через интерфейс) |
+| `VisibilityService` (A) | T0.3 | всё видно всем вошедшим | T1.A5 — блокировки, закрытые аккаунты, аудитория |
+| `NotificationsService.create()` (A) | T0.3 | запись в лог | T2.A2 |
+| `RealtimeService.emitToUsers()` (A) | T0.3 | ничего не делает | T2.A1 |
+| `MediaService.attach()`, `toMediaItem()` (B) | T1.B1 | — (модуль сразу настоящий) | T1.B1 |
+| `PostsService.toPostDto()` (B) | T1.B4 | — | T1.B4 |
+| `ChatsService.sendSystemMessage()` для ответов на истории (A) | T2.A4 | — | T2.A4; B подключает в T2.B2 |
+| Тестовые помощники `createUser()`, `loginAs()` (A) | T0.3 | e2e-тесты B создают пользователя и cookie без страниц входа | — |
+
+Пока реальной реализации нет, e2e-тесты владельца вызывающего модуля проверяют **свою** логику; проверки приватности
+своих выдач он добавляет после влития T1.A5 (это часть его Definition of Done).
+
+## 4. Карточки модулей
+
+Общие для всех: Definition of Done — [AGENT_PLAYBOOKS.md](development/AGENT_PLAYBOOKS.md#definition-of-done)
+(тесты по [TESTING.md](development/TESTING.md), Swagger, `npm run contract`, своя схема и миграция, история, STATUS).
+Общие файлы и их владельцы — [CONTRIBUTING.md «Общие файлы»](../CONTRIBUTING.md#общие-файлы).
+Схема БД — многофайловая: модели модуля лежат в `apps/api/prisma/schema/<module>.prisma` (ADR 0018).
+
+### Фундамент backend — A · N
+- **Назначение:** каркас NestJS, конфигурация, Prisma, общие механизмы, контракты общих сервисов.
+- **Файлы:** `apps/api/{package.json,nest-cli.json,tsconfig*.json,prisma.config.ts}`, `src/{main.ts,app.module.ts}`, `src/{config,prisma,common,mail,health}/**`,
+  `prisma/schema/base.prisma` (generator, datasource), `prisma/schema/account.prisma` (User, Session — T0.3), `prisma/seed.ts`, `test/helpers/**`.
+- **Модели:** `User` (без полей профиля из других модулей), `Session`, `UserSettings`.
+- **Готово, когда:** `/api/v1/health` = 200; ошибки в формате API_CONTRACT §1.2; Swagger экспортируется; заглушки §3.1 есть и покрыты тестом сигнатуры.
+- **Блокирует второго:** да — C0 нужен B для backend.
+
+### `auth` — A · R + N (#1–#5) — [спецификация](features/auth.md), [эндпоинты](api/endpoints/auth.md)
+- **Файлы:** `src/auth/**`, `prisma/schema/auth.prisma` (EmailVerificationCode, PasswordResetToken, UsernameChange, OAuthAccount — в T4.A1), `test/auth*.e2e-spec.ts`.
+- **Права:** Public — регистрация, код, вход, сброс; остальное — сессия. **Интеграция:** создаёт сессии для `SessionGuard`.
+- **Блокирует второго:** frontend B — только страница входа (T1.A2) для ручной проверки; backend B — нет (тесты через `loginAs()`).
+
+### `users` + `settings` — A · R (#50 свой, #51–#54, #56, #57) + P0 — [спецификации](features/users-and-profiles.md), [settings](features/settings.md)
+- **Файлы:** `src/{users,settings}/**`, `prisma/schema/users.prisma` (UserLink; поля профиля `User` — в `account.prisma`, A), `prisma/schema/settings.prisma`.
+- **Зависит от:** T1.A1; аватар — от `MediaService` (T1.B1): эндпоинты аватара делаются последними в задаче.
+- **Блокирует второго:** frontend B — `GET /me` для оболочки (T0.7 работает по контракту до влития).
+
+### `follows` — A · R (#12–#15) + P0 — [спецификация](features/follows.md)
+- **Файлы:** `src/follows/**`, `prisma/schema/follows.prisma` (Follow, CloseFriend, FavoriteAccount).
+- **Интеграция:** `FollowsService.getFollowingIds()` для ленты (B) и ленты историй (B). **Блокирует второго:** лента (T1.B4) до влития показывает только свои посты — допустимое промежуточное поведение, описанное в задаче.
+
+### `privacy` — A · N + P0 — [спецификация](features/privacy-and-safety.md), [эндпоинты](api/endpoints/privacy.md)
+- **Файлы:** `src/privacy/**`, `prisma/schema/privacy.prisma` (Block, Restrict, Mute, StoryHiddenFrom, HiddenWord).
+- **Интеграция:** настоящая реализация `VisibilityService` — все модули B начинают учитывать приватность без своих изменений.
+
+### `search` — A · R (#41–#49) — [спецификация](features/search-and-explore.md), [эндпоинты](api/endpoints/search.md)
+- **Файлы:** `src/search/**`, `prisma/schema/search.prisma` (SearchHistoryEntry).
+- **Зависит от:** T1.A5; поиск хэштегов и мест — читает таблицы B (`Hashtag`, `Location`) после T1.B2/T1.B3.
+
+### `collections` (сохранённое) — A · R (#32, #55) + P1 подборки — [эндпоинты](api/endpoints/collections.md)
+- **Файлы:** `src/collections/**`, `prisma/schema/collections.prisma`. **Зависит от:** `PostsService.toPostDto()` (T1.B4).
+
+### `realtime` — A · P0 — [REALTIME.md](api/REALTIME.md), ADR 0013
+- **Файлы:** `src/realtime/**`, `apps/web/src/lib/realtime.ts`. **Интеграция:** настоящий `RealtimeService`.
+
+### `notifications` — A · P0 — [спецификация](features/notifications.md)
+- **Файлы:** `src/notifications/**`, `prisma/schema/notifications.prisma`. **Интеграция:** модули B уже вызывают `create()` в точках из контракта.
+
+### `chats` — A · R (#6–#11) + P0 — [спецификация](features/chat.md), [эндпоинты](api/endpoints/chats.md)
+- **Файлы:** `src/chats/**`, `prisma/schema/chats.prisma`. **Зависит от:** `realtime`, `privacy`, `media`.
+- **Блокирует второго:** ответы на истории (T2.B2).
+
+### `calls` — A · опционально — [спецификация](features/calls.md)
+- **Файлы:** `src/calls/**`, `prisma/schema/calls.prisma`, `apps/web/src/lib/webrtc.ts`.
+
+### Фундамент frontend — B · N
+- **Файлы:** `apps/web/**` каркас, `src/app/{layout.tsx,globals.css}`, `src/lib/{api,store*,design.ts,utils.ts}`, `src/components/{ui,layout,states}/**`,
+  `src/app/(main)/layout.tsx`, `src/proxy.ts`, `next.config.ts`; цепочка `npm run contract`.
+- **Блокирует второго:** да — frontend A строится на нём (готов в Phase 0).
+
+### `media` + `storage` — B · R (#9, #26, #38, #56 — загрузка) + N — [эндпоинты](api/endpoints/media.md), ADR 0007, 0016
+- **Файлы:** `src/{media,storage}/**`, `prisma/schema/media.prisma` (MediaFile), `test/media*.e2e-spec.ts`.
+- **Интеграция:** `MediaService.attach()`, `toMediaItem()`; доступ к файлу — через `VisibilityService` и владельца объекта.
+- **Блокирует второго:** аватар (T1.A3) и вложения Direct (T2.A4).
+
+### `tags` — B · P0 — [спецификация](features/hashtags-and-mentions.md)
+- **Файлы:** `src/tags/**`, `prisma/schema/tags.prisma` (Hashtag, PostHashtag, PostMention, CommentMention), `apps/web/src/components/rich-text.tsx` (в Phase 3).
+- **Интеграция:** `TagsService.parse(text)` — им пользуются `users` (bio, A) и `chats` (A).
+
+### `locations` — B · R (#16–#20) — [спецификация](features/locations.md)
+- **Файлы:** `src/locations/**`, `prisma/schema/locations.prisma`; seed мест — `prisma/seed/locations.ts`.
+
+### `posts` — B · R (#21–#29) + P0 — [спецификация](features/posts.md), [эндпоинты](api/endpoints/posts.md)
+- **Файлы:** `src/posts/**`, `prisma/schema/posts.prisma` (Post, PostMedia, PostUserTag, PostCollaborator, PostLike, PostPlay).
+- **Интеграция:** `PostsService.toPostDto()`; вызывает `NotificationsService.create()` (лайк, отметка, упоминание), `VisibilityService`, `FollowsService`.
+
+### `comments` — B · R (#30, #31) + P0 — [спецификация](features/post-interactions.md), [эндпоинты](api/endpoints/comments.md)
+- **Файлы:** `src/comments/**`, `prisma/schema/comments.prisma` (Comment, CommentLike).
+
+### `stories` — B · R (#33–#40) + P0/P1 (актуальное) — [спецификация](features/stories.md), [эндпоинты](api/endpoints/stories.md)
+- **Файлы:** `src/stories/**`, `prisma/schema/stories.prisma`.
+- **Зависит от:** `media`, `posts`, `follows`; ответы и реакции — `chats` (T2.B2).
+
+### `admin` — B · опционально (кроме #50 Admin-удаления — R) — [спецификация](features/moderation.md)
+- **Файлы:** `src/admin/**`, `prisma/schema/admin.prisma` (Report).
+
+## 5. Задачи
+
+ID: `T<фаза>.<номер>` в Phase 0, `T<фаза>.<A|B><номер>` дальше — буква = владелец. Ревьюер каждой задачи — второй студент.
+Ветка задачи: `<тип>/<модуль>-<кратко>` от свежего `main`. «Готово, когда» — минимум; полностью — критерии спецификации.
+
+### Phase 0 — общий фундамент (маленький, у каждой задачи один владелец)
 
 | ID | Задача | Кто | Размер | Зависит от | Готово, когда |
 |---|---|---|---|---|---|
-| T0.1 | Корень: Prettier, `concurrently`, общие правила форматирования | A | S | — | `npm install` проходит; `npx prettier --check .` работает |
-| T0.2 | Каркас NestJS: структура, ESLint (правила границ ADR 0008), Jest, config, Prisma, префикс, `ValidationPipe`, фильтр ошибок, helmet, `Origin`, Swagger, `/health`, `openapi:export`, `mail` (драйвер log) | A | L | T0.1 | `GET /api/v1/health` = 200; lint/typecheck/test зелёные |
-| T0.3 | Каркас Next.js: Tailwind, shadcn/ui, **токены DESIGN_SYSTEM (светлая/тёмная)**, ESLint, Vitest, rewrites, `lib/api/*`, store, `StoreProvider`, Toaster, `BrandLogo`, страница `/health` | B | L | T0.1 | страница в обеих темах; lint/typecheck/test зелёные |
-| T0.4 | `api:types`, `npm run contract`, проверка прокси (cookie, Origin, multipart 650 МБ) → ADR 0004 | A + B | M | T0.2, T0.3 | `/health` через прокси; результат в ADR 0004 |
-| T0.5 | Socket.IO: модуль `realtime` (cookie, `Origin`, комнаты `user:{id}`), `lib/realtime.ts`, проверка → ADR 0013 | A | M | T0.4 | тестовое событие доходит до вкладки; чужой `Origin` отклоняется |
-| T0.6 | GitHub Actions: `npm ci`, lint, typecheck, test, контракт; защита `main` с обязательным ревью (CODEOWNERS) | B | M | T0.4 | PR с изменённым DTO без `contract` падает |
-| T0.7 | Harness: проверка ссылок docs в CI, `.claude/settings.json` (запрет `.env`, сгенерированных файлов) | B | S | T0.6 | битая ссылка роняет CI |
+| T0.1 | Корень: Prettier, `concurrently`, проверка `npm install` | A | S | — | `npm install` проходит; `npx prettier --check .` работает |
+| T0.2 | Каркас NestJS: config (валидация env), Prisma 7 (`prisma@7`, многофайловая схема `prisma/schema/`), `common` (фильтр ошибок, `ValidationPipe`, `Origin`, курсоры, `@Public`), helmet, `/health`, Swagger + `openapi:export`, `mail` (log), ESLint с правилами границ, Jest | A | L | T0.1 | `/api/v1/health` = 200; `npm run lint/typecheck/test -w api` зелёные |
+| T0.3 | Общие контракты: модели `User`, `Session`, `UserSettings` + первая миграция; `SessionGuard`, `@CurrentUser`; `UserSummaryDto`; заглушки `VisibilityService`, `NotificationsService`, `RealtimeService`; `test/helpers` (`createUser`, `loginAs`); базовый seed | A | M | T0.2 | **C0**: B может писать модуль и e2e-тест с вошедшим пользователем |
+| T0.4 | Каркас Next.js: Tailwind, shadcn/ui, токены DESIGN_SYSTEM (обе темы), `lib/api` (baseApi, types, errors, serverFetch, upload), store, Toaster, `BrandLogo`, ESLint, Vitest, rewrites | B | L | T0.1 | страница `/health`-заглушка в обеих темах; lint/typecheck/test зелёные |
+| T0.5 | `api:types`, `npm run contract`, проверка прокси (cookie, Origin, multipart 650 МБ) → обновить ADR 0004 | B | M | T0.2, T0.4 | `/health` через прокси; результат записан |
+| T0.6 | GitHub Actions: `npm ci`, lint, typecheck, unit + e2e с PostgreSQL, проверка контракта, проверка ссылок docs; защита `main` (обязательное ревью CODEOWNERS); `.claude/settings.json` | A | M | T0.5 | PR с изменённым DTO без `contract` или с битой ссылкой падает |
+| T0.7 | Оболочка `(main)`: меню 72/238, мобильная навигация, «Ещё», тема, заставка, `proxy.ts`, проверка сессии через `serverFetch('/me')` (по контракту) | B | M | T0.4 | оболочка по DESIGN_SYSTEM §4.1; гость → `/accounts/login/` |
 
-T0.2 и T0.3 идут **параллельно**; общий файл — только `package-lock.json` (CONTRIBUTING.md).
-
-### Phase 1 — Аккаунт и оболочка
+### Phase 1 — независимый backend (параллельно)
 
 | ID | Задача | Кто | Размер | Зависит от | Готово, когда |
 |---|---|---|---|---|---|
-| T1.1 | Модели `User`, `Session`, `PasswordResetToken`, `EmailVerificationCode`, `UserSettings`, `UsernameChange` — **первая миграция** | A | S | Phase 0 | миграция в `main` по DATA_MODEL |
-| T1.2 | `auth`: регистрация + код, вход (имя/email), выход, сброс, смена, сессии, `SessionGuard`, throttler | A | L | T1.1 | критерии auth.md (без соцвхода, удаления) + e2e |
-| T1.3 | `media` + `storage`: `MediaFile`, `POST /media`, проверка типа, sharp (EXIF, копии), раздача с проверкой доступа, очередь в процессе | B | L | T1.1 | загрузка фото → `READY`; чужой доступ → 404 |
-| T1.4 | UI: вход, регистрация, код, сброс пароля (SCREENS 3.1–3.2) | B | M | контракт T1.2 | экраны совпадают с SCREENS; сценарии работают после влития T1.2 |
-| T1.5 | Оболочка `(main)`: меню 72/238, мобильная навигация, «Ещё», тема, заставка, `proxy.ts`, проверка сессии | B | L | T1.2 | гость → `/accounts/login/`; оболочка по DESIGN_SYSTEM §4.1 |
-| T1.6 | Seed: тестовые пользователи, администратор, места | A | S | T1.2 | `npm run prisma:seed -w api` |
+| T1.A1 | `auth`: регистрация + код, вход (имя/email), выход, сброс, смена пароля, сессии, throttler | A | L | C0 | критерии auth.md (кроме соцвхода, удаления); e2e |
+| T1.A2 | Frontend входа: вход, регистрация, код, сброс (SCREENS 3.1–3.2) — раньше остального frontend A, потому что вход нужен обоим | A | M | T1.A1, T0.4 | вход через UI создаёт сессию; экраны по SCREENS |
+| T1.A3 | `users` + `settings`: `/me`, `PATCH /me`, имя пользователя, email, ссылки, профиль по id/имени, настройки; затем аватар | A | M | T1.A1; аватар — T1.B1 | критерии users-and-profiles.md (backend), settings.md (backend) |
+| T1.A4 | `follows`: подписки, запросы, списки, удалить подписчика, рекомендации | A | M | T1.A3 | критерии follows.md (backend P0) |
+| T1.A5 | `privacy`: закрытый аккаунт, блокировка, настоящий `VisibilityService` | A | L | T1.A4 | критерии privacy-and-safety.md (блок, закрытый) для всех существующих выдач |
+| T1.A6 | `search`: поиск аккаунтов, общий поиск, подсказки `@`, история поиска (#41–#49) | A | M | T1.A5 (хэштеги/места — после T1.B2/T1.B3) | критерии search-and-explore.md (backend) |
+| T1.B1 | `media` + `storage`: `POST /media`, проверка по содержимому, sharp, ffmpeg, очередь, раздача с проверкой доступа, `MediaService` | B | L | C0 (часть без HTTP — после T0.2); ffmpeg | загрузка фото и видео → `READY`; чужой доступ → 404 |
+| T1.B2 | `tags`: разбор `#`/`@`, хэштеги, `TagsService.parse()`, страница хэштега (выдача — после T1.B4) | B | M | C0 | критерии hashtags-and-mentions.md (backend) |
+| T1.B3 | `locations`: справочник, поиск, CRUD для `ADMIN`, seed мест | B | M | C0 | критерии locations.md (без страницы места) |
+| T1.B4 | `posts`: карусель (фото/видео), `shortcode`, просмотр, удаление, сетки профиля, лента, «Интересное», reels, лайки, воспроизведения, `toPostDto()` | B | L | T1.B1, T1.B2, T1.B3 | критерии posts.md (backend P0); `NotificationsService.create()` вызывается в точках контракта |
+| T1.B5 | `comments`: комментарии, ответы, лайки, удаление | B | L | T1.B4 | критерии post-interactions.md (комментарии P0, backend) |
 
-### Phase 2 — Профили и связи
-
-| ID | Задача | Кто | Размер | Зависит от | Готово, когда |
-|---|---|---|---|---|---|
-| T2.1 | `users`: `/me`, `PATCH /me`, аватар, ссылки, имя пользователя, email | A | M | T1.2, T1.3 | критерии users-and-profiles.md (backend) |
-| T2.2 | `follows`: подписки, запросы, списки, удалить подписчика, рекомендации (+ UI кнопок и списков) | A | M | T2.1 | критерии follows.md (P0) |
-| T2.3 | `privacy`: закрытый аккаунт, блокировка, `VisibilityService` (+ UI блокировки) | A | L | T2.2 | критерии privacy-and-safety.md (блок, закрытый) |
-| T2.4 | UI профиля: шапка, вкладки, сетка-заглушка, редактирование профиля | B | L | контракт T2.1 | SCREENS 3.9 в обеих темах |
-| T2.5 | `search`: поиск аккаунтов, история (#41–#49) + UI поиска | A | M | T2.3 | критерии search-and-explore.md (без «Интересного») |
-
-### Phase 3 — Публикации, лента, комментарии, уведомления
+### Phase 2 — зависимый backend
 
 | ID | Задача | Кто | Размер | Зависит от | Готово, когда |
 |---|---|---|---|---|---|
-| T3.1 | `tags`: разбор `#`/`@`, хэштеги, страница хэштега, подсказки, `RichText` — **начинается в Phase 2** | B | M | T1.2 (страница хэштега — после T2.3) | критерии hashtags-and-mentions.md |
-| T3.2 | `posts` backend: карусель (фото + видео через ffmpeg), `shortcode`, просмотр, удаление, сетки профиля, лента, «Интересное», Reels | B | L | T1.3, T2.3, T3.1 | критерии posts.md (P0) |
-| T3.3 | UI создания публикации: выбор, обрезка, подпись с подсказками, отметки, место, прогресс | B | L | T3.2 | SCREENS 3.6 |
-| T3.4 | UI ленты: карточка, карусель, окно поста (`@modal`), сетка профиля, «Интересное» | B | L | T3.2 | SCREENS 3.3–3.5, 3.8 |
-| T3.5 | Лайки (пост, двойной клик), воспроизведения, список лайков, сохранение | B | M | T3.2 | критерии post-interactions.md (лайки, сохранение) |
-| T3.6 | `comments`: комментарии, ответы, лайки, удаление + UI | A | L | T3.2 | критерии post-interactions.md (комментарии P0) |
-| T3.7 | `notifications`: создание, группировка, панель, значки, события | A | L | T0.5, T2.2, T3.5, T3.6 | критерии notifications.md |
-| T3.8 | UI Reels: вертикальная лента, действия | A | M | T3.2 | SCREENS 3.7 |
+| T2.A1 | `realtime`: Socket.IO (cookie, `Origin`, комнаты, присутствие), настоящий `RealtimeService`, `lib/realtime.ts` | A | M | C0 | тестовое событие доходит до вкладки; чужой `Origin` отклоняется (ADR 0013) |
+| T2.A2 | `notifications`: модель, создание с учётом настроек и приватности, группировка, список, значки, события | A | L | T1.A4, T2.A1, T1.B4, T1.B5 | критерии notifications.md (backend) |
+| T2.A3 | `collections`: сохранить/убрать, «Сохранённое» (#32, #55) | A | S | T1.B4 | критерии post-interactions.md (сохранение) |
+| T2.A4 | `chats`: личные и групповые, сообщения (текст, медиа, голосовые, «поделиться»), реакции, правка, отмена, прочитано, запросы, события; `ChatsService` для историй | A | L | T2.A1, T1.A5, T1.B1 | критерии chat.md (backend) |
+| T2.B1 | `stories`: создание (медиа или пост), лента кругов, просмотр, зрители, лайки, архив, актуальное, базовые стикеры (упоминание, место, хэштег, ссылка) | B | L | T1.B4, T1.A4 | критерии stories.md (backend P0 + актуальное) |
+| T2.B2 | Ответы и реакции на истории → Direct (`ChatsService`) | B | S | T2.B1, T2.A4 | ответ создаёт сообщение в личном чате с автором |
 
-### Phase 4 — Direct (A) ‖ Phase 5 — Истории и reels (B)
+### Phase 3 — frontend своих модулей (начинается на своей точке, не на M-BE)
 
-Фазы 4 и 5 идут **одновременно**: A делает Direct, B — истории. Ответы на истории (T5.1) используют контракт `chats`
-из T4.1 — B работает по файлу эндпоинтов до влития.
-
-| ID | Задача | Кто | Размер | Зависит от | Готово, когда |
+| ID | Задача | Кто | Размер | Можно начать | Готово, когда |
 |---|---|---|---|---|---|
-| T4.1 | `chats` backend: личные/группы, сообщения, медиа, прочитано, запросы, события | A | L | T0.5, T1.3, T2.3 | критерии chat.md (backend) |
-| T4.2 | UI Direct: список, переписка, отправка, оптимистичные сообщения, печатает, присутствие | A | L | T4.1 | SCREENS 3.11; сообщения < 1 с |
-| T4.3 | Голосовые, реакции, ответы, редактирование, отмена, «поделиться», группы (UI) | A | L | T4.2 | критерии chat.md полностью |
-| T5.1 | `stories` backend: создание, лента кругов, просмотр, зрители, лайки, ответы/реакции → Direct, архив | B | L | T3.2, контракт T4.1 | критерии stories.md (backend P0) |
-| T5.2 | UI историй: лента кругов, просмотр, создание с редактором | B | L | T5.1 | SCREENS 3.10 |
-| T5.3 | Стикеры: упоминание, место, хэштег, ссылка (P1); опрос, вопрос, шкала, викторина, отсчёт (P2) | B | M | T5.2 | ответы сохраняются, автор видит итоги |
-| T5.4 | Актуальное: создание, просмотр, редактирование | B | M | T5.1 | критерии stories.md (актуальное) |
-| T5.5 | Reels: обложка, вкладка профиля, счётчик воспроизведений | B | M | T3.8 | раздел reels posts.md |
+| T3.A1 | Профиль (шапка, вкладки; сетку даёт компонент B `ProfilePostsGrid`, до него — заглушка), редактирование профиля, настройки | A | L | MA-1 | SCREENS 3.9, 3.14 |
+| T3.A2 | Подписки и списки, блокировка, поиск и история поиска | A | M | MA-1 | критерии follows, privacy, search (UI) |
+| T3.A3 | Уведомления: панель, значки, события | A | M | T2.A2 | SCREENS 3.13 |
+| T3.A4 | «Сохранённое» на профиле | A | S | T2.A3, T3.B1 (карточки) | вкладка по SCREENS |
+| T3.A5 | Direct: список, переписка, отправка, голосовые, реакции, печатает, присутствие | A | L | MA-2 | SCREENS 3.11; сообщения < 1 с |
+| T3.B1 | Лента, карточка поста, окно поста (`@modal`), `ProfilePostsGrid`, лайки и двойной клик | B | L | MB-1 | SCREENS 3.3–3.5 |
+| T3.B2 | Создание публикации: выбор, обрезка, подпись с подсказками, отметки, место, прогресс | B | L | MB-1 | SCREENS 3.6 |
+| T3.B3 | «Интересное», страницы хэштега и места | B | M | MB-1 | SCREENS 3.8 |
+| T3.B4 | Лента Reels | B | M | MB-1 | SCREENS 3.7 |
+| T3.B5 | Комментарии и ответы в окне поста | B | M | MB-1 | критерии post-interactions.md (UI) |
+| T3.B6 | Истории: лента кругов, просмотр, создание, актуальное | B | L | MB-2 | SCREENS 3.10 |
 
-### Phase 6 — Полный паритет
+### Phase 4 — опционально (P1/P2), не блокирует M-BE и M-FE
 
-| ID | Задача | Кто | Размер | Зависит от | Готово, когда |
-|---|---|---|---|---|---|
-| T6.1 | Соцвход Google и Facebook (ADR 0014) | A | M | T1.2, Q32 | критерии auth.md (соцвход) |
-| T6.2 | Звонки 1:1 (ADR 0015) | A | L | T4.2 | критерии calls.md |
-| T6.3 | Ограничение, скрытие, близкие друзья, избранное, «скрыть историю от», ленты «Подписки»/«Избранное» | A | M | T2.3, T5.1 | критерии privacy-and-safety.md, follows.md |
-| T6.4 | Редактирование, архив, закрепление публикаций; скрыть лайки; отключить комментарии; alt-текст; **подборки** | B | L | T3.2, T3.5 | критерии posts.md (P1), post-interactions.md (подборки) |
-| T6.5 | Комментарии P1: закрепление, редактирование, одобрение ограниченных | A | M | T3.6 | критерии post-interactions.md (комментарии P1) |
-| T6.6 | Настройки (все разделы), язык ru/en, удаление аккаунта, сессии в UI | A | M | T2.1 | критерии settings.md, auth.md |
-| T6.7 | Места: страницы, выбор при публикации, администрирование | B | M | T3.2 | критерии locations.md |
-| T6.8 | Жалобы и админ-панель | B | M | T3.2 | критерии moderation.md |
-| T6.9 | P2 из каталога — делает владелец модуля: фильтры, соавторы (B); заметки, GIF, групповые звонки, 2FA, переключение аккаунтов, Web Push, сортировка комментариев, ваши действия, скачать данные (A) | A / B | — | по функции | отдельные критерии при постановке |
+| ID | Задача | Кто | Размер |
+|---|---|---|---|
+| T4.A1 | Соцвход Google и Facebook (ADR 0014; Q32) | A | M |
+| T4.A2 | Звонки 1:1 (ADR 0015) | A | L |
+| T4.A3 | Ограничение, скрытие, близкие друзья, избранное, «скрыть историю от» | A | M |
+| T4.A4 | Удаление и деактивация аккаунта, сессии в UI, 2FA | A | M |
+| T4.A5 | Подборки сохранённого (P1) | A | M |
+| T4.A6 | Direct P1/P2 в UI: группы, заметки, GIF | A | M |
+| T4.B1 | Правка, архив, закрепление публикаций; скрыть лайки; отключить комментарии; alt; ленты «Подписки»/«Избранное»; соавторы | B | L |
+| T4.B2 | Комментарии P1: закрепление, правка, одобрение | B | M |
+| T4.B3 | Редактор историй и стикеры P2 (опрос, вопрос, шкала, викторина, отсчёт) | B | M |
+| T4.B4 | Жалобы и админ-панель | B | M |
+| T4.B5 | Обрезка и фильтры изображений | B | M |
 
-### Phase 7 — Продакшен и защита
+### Phase 5 — выпуск и защита
 
-| ID | Задача | Кто | Размер | Зависит от | Готово, когда |
-|---|---|---|---|---|---|
-| T7.1 | Playwright: сквозные сценарии (регистрация → пост → лайк → комментарий; Direct; история) | B | M | Phase 5 | зелёные в CI |
-| T7.2 | Итоговая дизайн-сверка: каждый — экраны своих папок (SCREENS §0) | A + B | M | Phase 6 | отклонений нет или записаны |
-| T7.3 | R2/S3, почтовый сервис, TURN, деплой с HTTPS (Q23–Q25, Q34) | A | L | Phase 6 | приложение доступно по HTTPS |
-| T7.4 | Подготовка к защите: демо-данные, документы, сценарий, взаимное объяснение модулей | A + B | M | T7.1–T7.3 | QUALITY_CHECKLIST пройден |
+| ID | Задача | Кто | Размер |
+|---|---|---|---|
+| T5.A1 | Почтовый сервис, TURN, деплой с HTTPS (Q23, Q24, Q34) | A | L |
+| T5.A2 | Дизайн-сверка своих экранов (SCREENS §0) | A | S |
+| T5.A3 | Подготовка к защите: демо-данные своих модулей, объяснение модулей B | A | S |
+| T5.B1 | Playwright: сквозные сценарии | B | M |
+| T5.B2 | Драйвер хранилища `s3` (R2/S3, Q25) | B | M |
+| T5.B3 | Дизайн-сверка своих экранов (SCREENS §0) | B | S |
+| T5.B4 | Подготовка к защите: демо-данные своих модулей, объяснение модулей A | B | S |
 
-Дизайн-сверка выполняется также **в каждой UI-задаче** (SCREENS §0), T7.2 — итоговая.
+## 6. Backend завершён (M-BE)
 
-## 4. Правила интеграции
+- Все операции R (57) и функции P0 backend реализованы; DTO и ответы описаны в Swagger; `npm run contract` без расхождений.
+- Аутентификация и проверка прав на уровне объектов работают; e2e-тесты приватности для каждой выдачи.
+- Миграции воспроизводимы: пустая БД → `npm run prisma:migrate -w api` → `npm run prisma:seed -w api` без ошибок.
+- Загрузка и раздача медиа работают (фото, видео, голосовые).
+- Критические сценарии проверены e2e: регистрация → вход → публикация → комментарий → лайк → уведомление; Direct; история.
+- Оба студента запускают объединённый backend по [LOCAL_SETUP.md](development/LOCAL_SETUP.md).
 
-- Владелец модуля первым описывает изменения контракта в своём файле `docs/api/endpoints/<module>.md`, чтобы второй
-  студент мог начать UI или зависимый модуль по согласованному контракту.
-- Изменения `schema.prisma` — по очереди, по [CHANGE_PROCESS.md](development/CHANGE_PROCESS.md).
-- Модули нижнего слоя (`privacy`, `media`, `tags`, `notifications`, `realtime`) меняются только с ревью второго студента.
-- Раз в неделю — синхронизация: что влито, что блокирует, какие `Q` закрыты.
-- В конце фазы — совместная проверка критериев из [ROADMAP.md](ROADMAP.md).
+## 7. Точки интеграции
+
+| Когда | Что делают оба |
+|---|---|
+| C0 | оба запускают `main` локально; B пишет первый e2e-тест с `loginAs()` |
+| MA-1 / MB-1 | совместный прогон: регистрация через UI → публикация → комментарий; проверка приватности на публикациях B |
+| M-BE | прогон §6 на чистой БД у каждого; обновить STATUS и историю |
+| еженедельно | 15 минут: что влито, что блокирует, какие `Q` закрыты, кто меняет общие файлы на неделе |
+
+## 8. С чего начать
+
+| Студент | Первая задача | Ветка | Потом |
+|---|---|---|---|
+| A (`JM-2007-07`) | T0.1 → T0.2 → T0.3 (C0) | `chore/root-tooling`, `feat/api-foundation`, `feat/api-core-contracts` | T0.6, T1.A1 |
+| B (`nek-yt`) | T0.4 (параллельно с T0.2 — после T0.1) | `feat/web-foundation` | T0.5, T0.7, затем T1.B1 (часть без HTTP — сразу после T0.2) |

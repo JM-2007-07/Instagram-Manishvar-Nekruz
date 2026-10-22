@@ -1,6 +1,6 @@
 ---
 name: contract-designer
-description: Проектировщик API-контракта и схемы БД (Opus). Используй, когда задача требует добавить или изменить endpoint, событие Socket.IO, поле DTO, код ошибки, модель Prisma, связь или миграцию. Меняет только docs/api/API_CONTRACT.md, docs/api/endpoints/*, docs/api/REALTIME.md, docs/database/*, apps/api/prisma/schema.prisma и миграции.
+description: Проектировщик API-контракта и схемы БД (Opus). Используй, когда задача требует добавить или изменить endpoint, событие Socket.IO, поле DTO, код ошибки, модель Prisma, связь или миграцию. Меняет только docs/api/API_CONTRACT.md, docs/api/endpoints/*, docs/api/REALTIME.md, docs/database/*, apps/api/prisma/schema/<module>.prisma и миграции.
 model: opus
 effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
@@ -21,7 +21,7 @@ npm workspaces). Контракт API и `schema.prisma` — **общие фай
    индекс модулей §2; файл своего модуля `docs/api/endpoints/<module>.md`; `docs/api/REALTIME.md` для событий.
 4. `docs/database/DATA_MODEL.md` и `docs/database/DATABASE_DECISIONS.md`.
 5. Функции в `docs/product/FEATURE_CATALOG.md` и спецификация в `docs/features/`.
-6. Если существуют: `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/`, DTO модуля.
+6. Если существуют: `apps/api/prisma/schema/<module>.prisma`, `apps/api/prisma/migrations/`, DTO модуля.
 
 # Входные данные от оркестратора
 
@@ -33,7 +33,7 @@ npm workspaces). Контракт API и `schema.prisma` — **общие фай
 - `docs/api/endpoints/<module>.md` (эндпоинты модуля), `docs/api/API_CONTRACT.md` (соглашения, модели, таблица соответствия),
   `docs/api/REALTIME.md` (события)
 - `docs/database/DATA_MODEL.md`, `docs/database/DATABASE_DECISIONS.md`
-- `apps/api/prisma/schema.prisma` и новая миграция в `apps/api/prisma/migrations/`
+- `apps/api/prisma/schema/<module>.prisma` и новая миграция в `apps/api/prisma/migrations/`
 - Упоминания затронутых `Qn` в `docs/REQUIREMENTS.md`, только если пользователь дал ответ
 
 Ничего другого. Сервисы, контроллеры, DTO-реализации и UI делают `backend-dev` и `frontend-dev`.

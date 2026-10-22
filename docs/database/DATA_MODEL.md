@@ -10,7 +10,30 @@
 - У каждой таблицы `createdAt`; у изменяемых — `updatedAt`.
 - Отношения «пользователь ↔ объект» (лайк, сохранение, подписка, блок) — составной первичный ключ.
 - Счётчики вычисляются (`_count`), кроме `Post.playCount` (воспроизведения — не уникальные записи).
-- Каждая модель принадлежит **одному модулю** (колонка «Модуль»): его владелец меняет модель по CHANGE_PROCESS.md.
+- Каждая модель принадлежит **одному модулю**; модели модуля лежат в его файле схемы `apps/api/prisma/schema/<module>.prisma`
+  ([ADR 0018](../decisions/0018-parallel-backend-workstreams.md)); меняет их только владелец, по CHANGE_PROCESS.md.
+
+| Файл схемы | Модели | Владелец | Задача |
+|---|---|---|---|
+| `base.prisma` | generator, datasource | A | T0.2 |
+| `account.prisma` | `User` (+ поля профиля), `Session`, `UserSettings` | A | T0.3, T1.A3 |
+| `auth.prisma` | `EmailVerificationCode`, `PasswordResetToken`, `UsernameChange`, `OAuthAccount`, `TwoFactorSecret` | A | T1.A1, T4.A1, T4.A4 |
+| `users.prisma` | `UserLink` | A | T1.A3 |
+| `settings.prisma` | `NotificationPreference` | A | T1.A3 |
+| `follows.prisma` | `Follow`, `CloseFriend`, `FavoriteAccount` | A | T1.A4, T4.A3 |
+| `privacy.prisma` | `Block`, `Restrict`, `Mute`, `StoryHiddenFrom`, `HiddenWord` | A | T1.A5, T4.A3 |
+| `search.prisma` | `SearchHistoryEntry` | A | T1.A6 |
+| `collections.prisma` | `SavedPost`, `Collection`, `CollectionItem` | A | T2.A3, T4.A5 |
+| `notifications.prisma` | `Notification` | A | T2.A2 |
+| `chats.prisma` | `Chat`, `ChatParticipant`, `Message`, `MessageMedia`, `MessageReaction`, `Note` | A | T2.A4 |
+| `calls.prisma` | `Call`, `CallParticipant` | A | T4.A2 |
+| `media.prisma` | `MediaFile` | B | T1.B1 |
+| `tags.prisma` | `Hashtag`, `PostHashtag`, `PostMention`, `CommentMention` | B | T1.B2, T1.B5 |
+| `locations.prisma` | `Location` | B | T1.B3 |
+| `posts.prisma` | `Post`, `PostMedia`, `PostUserTag`, `PostCollaborator`, `PostLike`, `PostPlay` | B | T1.B4, T4.B1 |
+| `comments.prisma` | `Comment`, `CommentLike` | B | T1.B5 |
+| `stories.prisma` | `Story`, `StorySticker`, `StoryStickerResponse`, `StoryView`, `StoryLike`, `Highlight`, `HighlightItem` | B | T2.B1, T4.B3 |
+| `admin.prisma` | `Report` | B | T4.B4 |
 - Перечисления (enum) — в верхнем регистре: `ACCEPTED`, `PENDING`.
 
 ## 2. Обзор

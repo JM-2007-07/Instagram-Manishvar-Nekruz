@@ -6,23 +6,23 @@
 
 | Спецификация | Функции | Модуль backend | Владелец | Статус |
 |---|---|---|---|---|
-| [auth.md](auth.md) | F-ACC-* | `auth` | A (backend), B (страницы) | ✅ |
-| [users-and-profiles.md](users-and-profiles.md) | F-PRF-* | `users` | A (backend), B (страницы) | ✅ |
+| [auth.md](auth.md) | F-ACC-* | `auth` | A | ✅ |
+| [users-and-profiles.md](users-and-profiles.md) | F-PRF-* | `users` | A | ✅ |
 | [follows.md](follows.md) | F-SOC-* | `follows` | A | ✅ |
 | [privacy-and-safety.md](privacy-and-safety.md) | F-PRV-* | `privacy` | A | ✅ |
-| [posts.md](posts.md) | F-PST-*, F-FED-*, F-REL-* | `posts` | B (лента Reels — A) | ✅ |
-| [post-interactions.md](post-interactions.md) | F-INT-* | `posts`, `comments`, `collections` | B (комментарии — A) | ✅ |
+| [posts.md](posts.md) | F-PST-*, F-FED-*, F-REL-* | `posts` | B | ✅ |
+| [post-interactions.md](post-interactions.md) | F-INT-* | `posts`, `comments`, `collections` | B (сохранение и подборки — A) | ✅ |
 | [stories.md](stories.md) | F-STR-* | `stories` | B | ✅ (Q30) |
 | [chat.md](chat.md) | F-DM-* | `chats` | A | ✅ |
-| [calls.md](calls.md) | F-CAL-* | `calls` | A | ✅ (Q34) |
-| [search-and-explore.md](search-and-explore.md) | F-SRC-01…03 | `search` | A («Интересное» — B) | ✅ |
+| [calls.md](calls.md) | F-CAL-* | `calls` | A (опц.) | ✅ (Q34) |
+| [search-and-explore.md](search-and-explore.md) | F-SRC-01…03 | `search` | A («Интересное» — B, модуль `posts`) | ✅ |
 | [hashtags-and-mentions.md](hashtags-and-mentions.md) | F-TAG-*, F-SRC-04 | `tags` | B | ✅ |
 | [notifications.md](notifications.md) | F-NTF-* | `notifications` | A | ✅ |
 | [settings.md](settings.md) | F-SET-* | `settings` | A | ✅ |
 | [locations.md](locations.md) | F-PST-07, F-SRC-05, F-MOD-03 | `locations` | B | ✅ |
-| [moderation.md](moderation.md) | F-PRV-11, F-MOD-* | `admin` | B | ✅ |
+| [moderation.md](moderation.md) | F-PRV-11, F-MOD-* | `admin` | B (опц.) | ✅ |
 
-Владельцы модулей — [IMPLEMENTATION_PLAN.md §2.2](../IMPLEMENTATION_PLAN.md#22-владельцы-модулей); ревьюер — второй студент.
+Владельцы модулей — [IMPLEMENTATION_PLAN.md §4](../IMPLEMENTATION_PLAN.md#4-карточки-модулей); ревьюер — второй студент.
 Медиа (`media`, `storage`) — сквозной механизм: [endpoints/media.md](../api/endpoints/media.md), ADR 0007 и 0016.
 
 Структура каждой спецификации: назначение → сценарии → данные → права → валидация → ошибки и пустые состояния →

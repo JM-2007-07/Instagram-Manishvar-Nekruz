@@ -9,10 +9,15 @@ REST API `/api/v1` и Socket.IO, Swagger, PostgreSQL через Prisma, серв
 
 ```
 apps/api/
+├── prisma.config.ts         # Prisma 7: schema → prisma/schema (многофайловая схема, ADR 0018)
 ├── prisma/
-│   ├── schema.prisma        # общий файл — изменения по docs/development/CHANGE_PROCESS.md
+│   ├── schema/
+│   │   ├── base.prisma      # generator, datasource — A
+│   │   ├── account.prisma   # User, Session, UserSettings — A
+│   │   └── <module>.prisma  # модели модуля — его владелец (docs/database/DATA_MODEL.md §1)
 │   ├── migrations/          # генерируются Prisma, вручную не редактируются
-│   └── seed.ts              # тестовые пользователи, администратор, места
+│   ├── seed.ts              # A; вызывает seed/<module>.ts
+│   └── seed/<module>.ts     # данные модуля — его владелец
 ├── src/
 │   ├── main.ts              # bootstrap: префикс /api/v1, pipes, filters, helmet, Swagger
 │   ├── app.module.ts
@@ -41,6 +46,7 @@ apps/api/
 │   ├── locations/           # места
 │   └── admin/               # жалобы, модерация
 ├── test/                    # e2e-тесты (supertest)
+│   └── helpers/             # createUser, loginAs — A; <module>.ts — владелец модуля
 ├── openapi.ts               # экспорт Swagger в docs/api/openapi.json
 └── .env.example
 ```

@@ -55,7 +55,7 @@
 
 ## Playbook 3. Изменить схему БД
 
-1. Предупреди пользователя: `schema.prisma` — общий файл.
+1. Меняй только файл схемы своего модуля `prisma/schema/<module>.prisma`; чужой файл (кроме обратных связей в `User` по CHANGE_PROCESS.md) — остановись и предупреди пользователя.
 2. Обнови DATA_MODEL.md (сущности, ограничения, правила удаления).
 3. `git fetch` + rebase на `main` → изменить схему → `npm exec -w api -- prisma migrate dev --name <name>`.
 4. CHECK-ограничения — через `--create-only` и правку SQL (DATABASE_DECISIONS.md).

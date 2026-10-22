@@ -24,6 +24,7 @@ ADR (Architecture Decision Record) — короткая запись: какое
 | [0015](0015-webrtc-calls.md) | Аудио- и видеозвонки: WebRTC + сигнализация Socket.IO | ✅ Принято |
 | [0016](0016-media-processing.md) | Обработка медиа: sharp, ffmpeg, фоновая очередь | ✅ Принято |
 | [0017](0017-cursor-pagination.md) | Курсорная пагинация для всех списков | ✅ Принято |
+| [0018](0018-parallel-backend-workstreams.md) | Параллельный backend: многофайловая схема Prisma, заглушки общих сервисов, backend-first | ✅ Принято |
 
 ## Как добавить ADR
 

@@ -388,7 +388,7 @@ createPost: build.mutation<Post, CreatePostBody>({
 4. Эндпоинты RTK Query пишутся вручную, но их типы ответов — псевдонимы сгенерированных (`lib/api/types.ts`).
    Изменился DTO → `npm run typecheck` покажет все места, где frontend использует старую форму.
 5. URL эндпоинтов не проверяются компилятором — их сверяет `reviewer` с API_CONTRACT.md, а e2e-сценарии
-   Playwright (T5.2) ловят ошибки в путях.
+   Playwright (T5.B1) ловят ошибки в путях.
 6. CI выполняет `npm run contract` и падает, если сгенерированные файлы отличаются от закоммиченных, затем `typecheck`.
 
 Процесс изменения: [CHANGE_PROCESS.md](../development/CHANGE_PROCESS.md#изменение-api-контракта).
