@@ -11,6 +11,8 @@ import { AppModule } from '@/app.module';
 import { setupApp } from '@/app.setup';
 import { MediaService } from '@/media/media.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { StorageService } from '@/storage/storage.service';
+import { ConfigService } from '@nestjs/config';
 import { createUser, loginAs, resetDb, withOrigin } from './helpers';
 import type { TestUser } from './helpers';
 import { resetThrottler } from './helpers/throttler';
@@ -48,8 +50,12 @@ describe('Media: загрузка, обработка, раздача, прив�
 
   beforeAll(async () => {
     storageDir = await mkdtemp(join(tmpdir(), 'photogram-test-storage-'));
-    process.env.STORAGE_LOCAL_DIR = storageDir;
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    // Значение из .env важнее process.env, заданного здесь, поэтому каталог передаём сервису напрямую.
+    const testConfig = { get: (key: string) => (key === 'STORAGE_LOCAL_DIR' ? storageDir : undefined) };
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideProvider(StorageService)
+      .useValue(new StorageService(testConfig as ConfigService))
+      .compile();
     app = moduleRef.createNestApplication();
     setupApp(app);
     await app.init();
