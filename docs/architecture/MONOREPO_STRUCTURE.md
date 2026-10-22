@@ -64,7 +64,7 @@ flowchart LR
 - `apps/web` **не импортирует** файлы из `apps/api` и наоборот.
 - Единственная связь — файл контракта `docs/api/openapi.json` (генерируется, вручную не правится).
 - Зависимости объявляются в `package.json` того приложения, которое их использует. Корневой `package.json`
-  содержит только workspaces, скрипты и общие dev-инструменты (Prettier, `concurrently` — в Phase 0).
+  содержит только workspaces, скрипты и общие dev-инструменты (Prettier, `concurrently` — установлены в T0.1).
 - npm поднимает пакеты в общий `node_modules` в корне, поэтому импорт чужого пакета «случайно» сработает.
   Это запрещают правила ESLint (Phase 0): `import/no-extraneous-dependencies` (импорт только объявленных
   зависимостей) и `no-restricted-imports` (запрет импорта из соседнего приложения). См. [ADR 0008](../decisions/0008-npm-workspaces.md).
@@ -80,6 +80,7 @@ flowchart LR
 | `npm run build` | собирает оба приложения |
 | `npm run lint` / `npm run typecheck` / `npm run test` | проверки во всех приложениях |
 | `npm run contract` | экспорт Swagger из api → `docs/api/openapi.json` → генерация `schema.d.ts` в web |
+| `npm run format` / `npm run format:check` | Prettier: исправить / проверить форматирование (`*.md` и генерируемые файлы — в `.prettierignore`) |
 
 Скрипты внутри приложений (планируются): `dev`, `build`, `lint`, `typecheck`, `test`;
 в api дополнительно `openapi:export`, `prisma:migrate`, `prisma:seed`, `test:e2e`; в web — `api:types`.
@@ -92,9 +93,9 @@ flowchart LR
 | установить зависимость в приложение | `npm install zod -w web` |
 | dev-зависимость в приложение | `npm install -D @types/multer -w api` |
 | CLI-инструмент приложения | `npm exec -w api -- prisma migrate dev --name add_posts` |
-| общий dev-инструмент в корень | `npm install -D prettier` (в корне, без `-w`) |
+| общий dev-инструмент в корень | `npm install -D -E prettier` (в корне, без `-w`) |
 
-`npm run dev` использует пакет `concurrently` (корневая dev-зависимость, ставится в Phase 0): у npm нет
+`npm run dev` использует пакет `concurrently` (корневая dev-зависимость): у npm нет
 встроенного параллельного запуска, а `&` в скриптах не работает одинаково в Windows и Linux.
 
 ## 5. Версии
@@ -102,5 +103,6 @@ flowchart LR
 - **Node.js 24** (`.nvmrc`, `engines`). Установлен у разработчиков: 24.15.
 - **npm 11** — идёт вместе с Node.js 24 (у разработчиков 11.12.1); отдельная установка не нужна.
 - Версии библиотек фиксируются в `package-lock.json` при создании приложений (Phase 0); используется актуальная стабильная версия на тот момент.
+- Корневые dev-инструменты (Prettier, `concurrently`) ставятся с точной версией: `npm install -D -E <pkg>` (без `^`).
 - Lockfile один — в корне; в приложениях своих `package-lock.json` нет.
 - В CI зависимости ставятся через `npm ci` (строго по lockfile).

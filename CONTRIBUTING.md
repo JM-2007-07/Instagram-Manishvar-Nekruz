@@ -67,7 +67,7 @@ chore(ci): add contract check
 
 | Файл / каталог | Владелец | Как менять второму |
 |---|---|---|
-| корневые `package.json`, `.nvmrc`, `.editorconfig`, `.gitattributes`, `.gitignore` | A | сообщение A, затем PR с ревью A |
+| корневые `package.json`, `.nvmrc`, `.editorconfig`, `.gitattributes`, `.gitignore`, `.prettierrc.json`, `.prettierignore` | A | сообщение A, затем PR с ревью A |
 | `package-lock.json` | — | меняется при `npm install <pkg> -w <app>` в своей задаче; при конфликте — взять версию `main` и выполнить `npm install` |
 | `apps/api/{package.json,tsconfig*.json,nest-cli.json,prisma.config.ts}` | A | новые зависимости своего модуля — `npm install <pkg> -w api` в своём PR (упомянуть в описании) |
 | `apps/api/src/{main.ts,config,common,prisma,mail,health}` | A | новые переменные env своего модуля — в своём PR: поле в схеме `config` + `.env.example`, ревью A |
