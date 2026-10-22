@@ -55,10 +55,7 @@ export class ProfileService {
     await this.visibility.assertCanViewProfile(viewerId, profile.id);
 
     // Контент виден: себе, всем у открытого аккаунта, ACCEPTED-подписчикам у закрытого.
-    // TODO(T1.A5): правило переедет в VisibilityService.canViewContent; здесь останется только вызов.
-    const canView = await this.visibility.canViewContent(viewerId, profile.id);
-    profile.canViewContent =
-      canView && (profile.isMe || !profile.isPrivate || profile.followStatus === 'FOLLOWING');
+    profile.canViewContent = await this.visibility.canViewContent(viewerId, profile.id);
     profile.mutualFollowers = await this.follows.mutualPreview(viewerId, profile.id);
     return profile;
   }

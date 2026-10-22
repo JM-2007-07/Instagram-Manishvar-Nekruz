@@ -72,6 +72,10 @@ model User {
   following Follow[] @relation("FollowSource") // подписки пользователя (он — follower)
   followers Follow[] @relation("FollowTarget") // подписчики пользователя (он — following)
 
+  // --- privacy (A) ---
+  blocksMade     Block[] @relation("BlockSource") // кого заблокировал пользователь
+  blocksReceived Block[] @relation("BlockTarget") // кто заблокировал пользователя
+
   // --- posts (B) ---
   // --- stories (B) ---
   // --- comments (B) ---

@@ -116,6 +116,7 @@ flowchart TD
 | `VisibilityService` (`src/privacy`) | `canViewProfile(viewerId, ownerId): Promise<boolean>`, `canViewContent(viewerId, ownerId): Promise<boolean>` | `true` |
 | | `assertCanViewProfile(viewerId, ownerId)` — бросает 404; `assertCanViewContent(viewerId, ownerId)` — 404 или 403 `PRIVATE_ACCOUNT` | не бросают |
 | | `getHiddenUserIds(viewerId): Promise<string[]>`; `visibleUserWhere(viewerId): Prisma.UserWhereInput` (для `where` в своих запросах) | `[]`, `{}` |
+| | **Добавлено в T1.A5:** `visibleAuthorWhere(viewerId): Prisma.UserWhereInput` — для `where` по автору контента: нет блокировок И (сам viewer, или открытый аккаунт, или viewer — ACCEPTED-подписчик), напр. `where: { author: visibility.visibleAuthorWhere(viewerId) }`; `visibleUserWhere` теперь = ACTIVE + подтверждён + без блокировок в обе стороны | настоящая |
 | `NotificationsService` (`src/notifications`) | `create({ recipientId, actorId, type, postId?, commentId?, storyId? }): Promise<void>` | запись в лог |
 | `RealtimeService` (`src/realtime`) | `emitToUsers(userIds, event, payload): void` | ничего |
 | `SessionService` (`src/common/session`) | `@CurrentUser()` → `SessionUser { id, role, sessionId }` | настоящая |

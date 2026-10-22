@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import { decodeCursor, encodeCursor, type Page } from '@/common/pagination/cursor';
 import { FollowStatus, Prisma } from '@/generated/prisma/client';
@@ -35,7 +30,6 @@ interface Row {
 // Подписки. Публичные методы для других модулей (ленты, истории, privacy):
 //   getFollowingIds(userId)           — id, на кого userId подписан (только ACCEPTED);
 //   isFollowing(viewerId, ownerId)    — подписан ли viewer на owner (только ACCEPTED);
-//   canViewContent(viewerId, ownerId) — свой, или открытый, или ACCEPTED-подписчик;
 //   removeFollowsBetween(tx, a, b)    — удалить подписки в обе стороны (для блокировки).
 @Injectable()
 export class FollowsService {
@@ -62,18 +56,6 @@ export class FollowsService {
       select: { status: true },
     });
     return row?.status === 'ACCEPTED';
-  }
-
-  // TODO(T1.A5): правило переедет в VisibilityService.canViewContent (вместе с блокировками).
-  async canViewContent(viewerId: string, ownerId: string): Promise<boolean> {
-    if (viewerId === ownerId) return true;
-    const owner = await this.prisma.user.findUnique({
-      where: { id: ownerId },
-      select: { isPrivate: true },
-    });
-    if (!owner) return false;
-    if (!owner.isPrivate) return true;
-    return this.isFollowing(viewerId, ownerId);
   }
 
   // Удаляет подписки между двумя пользователями в обе стороны (вызывает блокировка, T1.A5).
@@ -229,14 +211,9 @@ export class FollowsService {
     userId: string,
     query: FollowListQueryDto,
   ): Promise<Page<FollowListItemDto>> {
-    const owner = await this.findActiveUser(userId);
+    await this.findActiveUser(userId);
     await this.visibility.assertCanViewProfile(viewerId, userId);
-    // TODO(T1.A5): заменить на visibility.assertCanViewContent.
-    const allowed =
-      viewerId === userId || !owner.isPrivate || (await this.isFollowing(viewerId, userId));
-    if (!allowed) {
-      throw new ForbiddenException({ code: 'PRIVATE_ACCOUNT', message: 'This account is private' });
-    }
+    await this.visibility.assertCanViewContent(viewerId, userId); // закрытый аккаунт = 403
 
     const page = await this.listRows(side, userId, 'ACCEPTED', viewerId, query);
     const statuses = await this.followStatuses(

@@ -678,6 +678,102 @@
         ]
       }
     },
+    "/api/v1/users/{userId}/block": {
+      "put": {
+        "operationId": "PrivacyController_block",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Заблокирован (повторный вызов тоже 204)"
+          },
+          "400": {
+            "description": "Блокировка самого себя"
+          },
+          "404": {
+            "description": "Нет такого пользователя"
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "delete": {
+        "operationId": "PrivacyController_unblock",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Разблокирован (повторный вызов тоже 204)"
+          },
+          "404": {
+            "description": "Нет такого пользователя"
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/me/blocked": {
+      "get": {
+        "operationId": "PrivacyController_listBlocked",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthController_check",
