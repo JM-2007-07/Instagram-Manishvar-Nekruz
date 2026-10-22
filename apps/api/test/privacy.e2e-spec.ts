@@ -152,6 +152,14 @@ describe('Privacy: блокировки и закрытые аккаунты', (
       expect(blocked.body.code).toBe(missing.body.code);
     });
 
+    it('DELETE follow -> 404 в обе стороны, как на несуществующего', async () => {
+      const missing = await send('delete', `/users/${UNKNOWN_ID}/follow`).expect(404);
+      const mine = await send('delete', `/users/${bob.id}/follow`).expect(404);
+      const theirs = await send('delete', `/users/${alice.id}/follow`, bobCookie).expect(404);
+      expect(mine.body.code).toBe(missing.body.code);
+      expect(theirs.body.code).toBe(missing.body.code);
+    });
+
     it('PUT follow -> 404 в обе стороны, связь не создаётся', async () => {
       await send('put', `/users/${bob.id}/follow`).expect(404);
       await send('put', `/users/${alice.id}/follow`, bobCookie).expect(404);

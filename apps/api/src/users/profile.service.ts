@@ -16,6 +16,7 @@ import { Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
 import { FollowsService } from '@/follows/follows.service';
+import { SuggestionsService } from '@/follows/suggestions.service';
 import { MeDto, ProfileDto } from './dto/me.dto';
 import type { ChangeUserNameDto, SetLinksDto, UpdateProfileDto } from './dto/profile-requests.dto';
 import { UsersService } from './users.service';
@@ -41,6 +42,7 @@ export class ProfileService {
     private readonly users: UsersService,
     private readonly visibility: VisibilityService,
     private readonly follows: FollowsService,
+    private readonly suggestions: SuggestionsService,
   ) {}
 
   // --- Чтение ------------------------------------------------------------------------------------
@@ -56,7 +58,7 @@ export class ProfileService {
 
     // Контент виден: себе, всем у открытого аккаунта, ACCEPTED-подписчикам у закрытого.
     profile.canViewContent = await this.visibility.canViewContent(viewerId, profile.id);
-    profile.mutualFollowers = await this.follows.mutualPreview(viewerId, profile.id);
+    profile.mutualFollowers = await this.suggestions.mutualPreview(viewerId, profile.id);
     return profile;
   }
 

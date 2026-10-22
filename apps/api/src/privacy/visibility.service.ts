@@ -25,9 +25,15 @@ export class VisibilityService {
   }
 
   // Можно ли viewer смотреть профиль owner (шапку, счётчики): нет блокировки в любую сторону.
+  // Владелец должен быть ACTIVE с подтверждённым email — те же условия, что в visibleUserWhere.
   async canViewProfile(viewerId: string, ownerId: string): Promise<boolean> {
     if (viewerId === ownerId) return true;
-    return !(await this.isBlockedEitherWay(viewerId, ownerId));
+    if (await this.isBlockedEitherWay(viewerId, ownerId)) return false;
+    const owner = await this.prisma.user.findFirst({
+      where: { id: ownerId, status: 'ACTIVE', emailVerifiedAt: { not: null } },
+      select: { id: true },
+    });
+    return owner !== null;
   }
 
   // Можно ли viewer смотреть контент owner (посты, истории): свой, или (нет блокировки) и
@@ -36,12 +42,12 @@ export class VisibilityService {
     return (await this.contentDenial(viewerId, ownerId)) === null;
   }
 
-  // Бросает 404, если профиль недоступен (блокировка).
+  // Бросает 404, если профиль недоступен (блокировка, неактивный или неподтверждённый владелец).
   async assertCanViewProfile(viewerId: string, ownerId: string): Promise<void> {
     if (!(await this.canViewProfile(viewerId, ownerId))) throw new NotFoundException();
   }
 
-  // Бросает 404 (блокировка или нет пользователя) или 403 PRIVATE_ACCOUNT (закрытый аккаунт).
+  // Бросает 404 (блокировка или недоступный пользователь) или 403 PRIVATE_ACCOUNT (закрытый аккаунт).
   async assertCanViewContent(viewerId: string, ownerId: string): Promise<void> {
     const denial = await this.contentDenial(viewerId, ownerId);
     if (denial === 'NOT_FOUND') throw new NotFoundException();
@@ -50,15 +56,15 @@ export class VisibilityService {
     }
   }
 
-  // Почему контент недоступен: null — доступен, NOT_FOUND — блокировка/нет пользователя, PRIVATE — закрытый аккаунт.
+  // Почему контент недоступен: null — доступен, NOT_FOUND — блокировка/нет активного подтверждённого пользователя, PRIVATE — закрытый аккаунт.
   private async contentDenial(
     viewerId: string,
     ownerId: string,
   ): Promise<null | 'NOT_FOUND' | 'PRIVATE'> {
     if (viewerId === ownerId) return null;
     if (await this.isBlockedEitherWay(viewerId, ownerId)) return 'NOT_FOUND';
-    const owner = await this.prisma.user.findUnique({
-      where: { id: ownerId },
+    const owner = await this.prisma.user.findFirst({
+      where: { id: ownerId, status: 'ACTIVE', emailVerifiedAt: { not: null } },
       select: { isPrivate: true },
     });
     if (!owner) return 'NOT_FOUND';

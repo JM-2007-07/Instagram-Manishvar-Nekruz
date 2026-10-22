@@ -223,6 +223,28 @@ describe('Follows: подписки, запросы, списки, рекоме�
     });
   });
 
+  describe('счётчики и неактивные', () => {
+    it('followerCount и followingCount не учитывают BANNED', async () => {
+      const bannedFan = await createUser(app, { userName: 'bannedfan' });
+      const bannedIdol = await createUser(app, { userName: 'bannedidol' });
+      const fan = await createUser(app, { userName: 'fan' });
+      await link(bannedFan.id, me.id, 'ACCEPTED');
+      await link(fan.id, me.id, 'ACCEPTED');
+      await link(me.id, bannedIdol.id, 'ACCEPTED');
+      await prisma.user.updateMany({
+        where: { id: { in: [bannedFan.id, bannedIdol.id] } },
+        data: { status: 'BANNED' },
+      });
+
+      const body = (await get('/me').expect(200)).body;
+      expect(body.followerCount).toBe(1);
+      expect(body.followingCount).toBe(0);
+      const viewer = await createUser(app, { userName: 'viewer' });
+      const other = await profile(me.id, await loginAs(app, viewer));
+      expect(other.followerCount).toBe(1);
+    });
+  });
+
   describe('canViewContent', () => {
     it('закрытый: false для неподписанного и для PENDING, true для ACCEPTED', async () => {
       const priv = await createUser(app, { userName: 'secret', isPrivate: true });
@@ -499,6 +521,35 @@ describe('Follows: подписки, запросы, списки, рекоме�
       await follow(priv.id).expect(200);
       const ids = ((await get('/users/suggestions').expect(200)).body as Item[]).map((i) => i.id);
       expect(ids).not.toContain(priv.id);
+    });
+
+    it('FOLLOWED_BY: reason и followedBy — тот, на кого я подписан и кто подписан на кандидата', async () => {
+      const friend = await createUser(app, { userName: 'friend' });
+      const target = await createUser(app, { userName: 'target' });
+      await link(me.id, friend.id, 'ACCEPTED');
+      await link(friend.id, target.id, 'ACCEPTED');
+
+      const res = await get('/users/suggestions').expect(200);
+      const item = (
+        res.body as Array<Item & { followedBy?: { id: string; userName: string } }>
+      ).find((i) => i.id === target.id);
+      expect(item).toMatchObject({
+        reason: 'FOLLOWED_BY',
+        followedBy: { id: friend.id, userName: 'friend' },
+      });
+    });
+
+    it('забаненный, на которого я подписан, не попадает в followedBy', async () => {
+      const banned = await createUser(app, { userName: 'banned' });
+      const target = await createUser(app, { userName: 'target' });
+      await link(me.id, banned.id, 'ACCEPTED');
+      await link(banned.id, target.id, 'ACCEPTED');
+      await prisma.user.update({ where: { id: banned.id }, data: { status: 'BANNED' } });
+
+      const res = await get('/users/suggestions').expect(200);
+      const body = res.body as Array<Item & { followedBy?: { id: string } }>;
+      expect(body.some((i) => i.followedBy?.id === banned.id)).toBe(false);
+      expect(body.find((i) => i.id === target.id)?.reason).not.toBe('FOLLOWED_BY');
     });
   });
 });

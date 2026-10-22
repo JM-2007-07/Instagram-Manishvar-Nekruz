@@ -156,4 +156,52 @@ describe('VisibilityService', () => {
       await expect(visibility.getHiddenUserIds(v.id)).resolves.toEqual([]);
     });
   });
+
+  describe('visibleAuthorWhere', () => {
+    const visibleIds = async (viewerId: string) =>
+      (await prisma.user.findMany({ where: visibility.visibleAuthorWhere(viewerId) }))
+        .map((u) => u.id)
+        .sort();
+
+    it('сам, открытый видны; закрытый без подписки нет', async () => {
+      expect(await visibleIds(v.id)).toEqual([v.id, open.id].sort());
+    });
+
+    it('закрытый: ACCEPTED виден, PENDING нет', async () => {
+      await follow(v.id, priv.id, 'PENDING');
+      expect(await visibleIds(v.id)).not.toContain(priv.id);
+      await prisma.follow.updateMany({ data: { status: 'ACCEPTED' } });
+      expect(await visibleIds(v.id)).toContain(priv.id);
+    });
+
+    it.each([
+      ['я заблокировал', true],
+      ['меня заблокировали', false],
+    ])('%s: автор не виден', async (_name, iBlocked) => {
+      if (iBlocked) await blockUser(v.id, open.id);
+      else await blockUser(open.id, v.id);
+      expect(await visibleIds(v.id)).not.toContain(open.id);
+    });
+
+    it('ACCEPTED + блокировка: закрытый автор не виден', async () => {
+      await follow(v.id, priv.id, 'ACCEPTED');
+      await blockUser(priv.id, v.id);
+      expect(await visibleIds(v.id)).not.toContain(priv.id);
+    });
+
+    it('BANNED открытый автор не виден', async () => {
+      await prisma.user.update({ where: { id: open.id }, data: { status: 'BANNED' } });
+      expect(await visibleIds(v.id)).not.toContain(open.id);
+    });
+  });
+
+  describe('неактивный владелец', () => {
+    it('BANNED открытый: assertCanViewContent -> 404, canViewContent -> false', async () => {
+      await prisma.user.update({ where: { id: open.id }, data: { status: 'BANNED' } });
+      await expect(visibility.assertCanViewContent(v.id, open.id)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      await expect(visibility.canViewContent(v.id, open.id)).resolves.toBe(false);
+    });
+  });
 });

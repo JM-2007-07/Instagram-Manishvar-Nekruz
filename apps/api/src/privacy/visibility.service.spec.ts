@@ -5,7 +5,7 @@ import { VisibilityService } from './visibility.service';
 // Юнит-тест на подмене Prisma: фиксирует сигнатуры (от них зависят модули B) и основные правила.
 describe('VisibilityService', () => {
   const block = { findFirst: jest.fn(), findMany: jest.fn() };
-  const user = { findUnique: jest.fn() };
+  const user = { findFirst: jest.fn() };
   const follow = { findUnique: jest.fn() };
   const service = new VisibilityService({ block, user, follow } as unknown as PrismaService);
 
@@ -28,10 +28,10 @@ describe('VisibilityService', () => {
   });
 
   it('открытый аккаунт виден, закрытый без подписки — 403', async () => {
-    user.findUnique.mockResolvedValue({ isPrivate: false });
+    user.findFirst.mockResolvedValue({ isPrivate: false });
     await expect(service.canViewContent('a', 'b')).resolves.toBe(true);
 
-    user.findUnique.mockResolvedValue({ isPrivate: true });
+    user.findFirst.mockResolvedValue({ isPrivate: true });
     follow.findUnique.mockResolvedValue({ status: 'PENDING' });
     await expect(service.canViewContent('a', 'b')).resolves.toBe(false);
     await expect(service.assertCanViewContent('a', 'b')).rejects.toBeInstanceOf(ForbiddenException);

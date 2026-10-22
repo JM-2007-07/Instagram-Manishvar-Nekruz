@@ -15,11 +15,11 @@ function profileSelect(viewerId: string) {
       orderBy: { position: 'asc' },
       select: { url: true, title: true },
     },
-    // Подписки: счётчики (только ACCEPTED), моя подписка на него и подписан ли он на меня.
+    // Подписки: счётчики (только ACCEPTED и только ACTIVE-пользователи), моя подписка на него и подписан ли он на меня.
     _count: {
       select: {
-        followers: { where: { status: 'ACCEPTED' } },
-        following: { where: { status: 'ACCEPTED' } },
+        followers: { where: { status: 'ACCEPTED', follower: { status: 'ACTIVE' } } },
+        following: { where: { status: 'ACCEPTED', following: { status: 'ACTIVE' } } },
       },
     },
     followers: { where: { followerId: viewerId }, select: { status: true } },
@@ -88,7 +88,7 @@ export class UsersService {
       followingCount: user._count.following,
       followStatus: this.followStatusOf(user.followers[0]?.status),
       followsMe: user.following.length > 0,
-      isBlocked: false,
+      isBlocked: false, // в текущем решении всегда false: блокирующий получает 404
       isRestricted: false,
       isMuted: { posts: false, stories: false },
       mutualFollowers: { users: [], total: 0 },

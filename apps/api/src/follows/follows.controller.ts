@@ -23,11 +23,15 @@ import {
   UserSummaryPageDto,
 } from './dto/follows.dto';
 import { FollowsService } from './follows.service';
+import { SuggestionsService } from './suggestions.service';
 
 @ApiTags('follows')
 @Controller()
 export class FollowsController {
-  constructor(private readonly follows: FollowsService) {}
+  constructor(
+    private readonly follows: FollowsService,
+    private readonly suggestionsService: SuggestionsService,
+  ) {}
 
   // Должен стоять раньше маршрутов с :userId (FollowsModule подключён в AppModule раньше UsersModule).
   @Get('users/suggestions')
@@ -36,7 +40,7 @@ export class FollowsController {
     @CurrentUser() user: SessionUser,
     @Query() query: SuggestionsQueryDto,
   ): Promise<SuggestionDto[]> {
-    return this.follows.suggestions(user.id, query.limit);
+    return this.suggestionsService.suggestions(user.id, query.limit);
   }
 
   @Put('users/:userId/follow')
@@ -98,7 +102,7 @@ export class FollowsController {
     @Param('userId', ParseUuidPipe) userId: string,
     @Query() query: CursorQueryDto,
   ): Promise<UserSummaryPageDto> {
-    return this.follows.listMutualFollowers(user.id, userId, query);
+    return this.suggestionsService.listMutualFollowers(user.id, userId, query);
   }
 
   @Delete('me/followers/:userId')

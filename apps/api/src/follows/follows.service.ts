@@ -5,7 +5,6 @@ import { FollowStatus, Prisma } from '@/generated/prisma/client';
 import { NotificationsService } from '@/notifications/notifications.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { VisibilityService } from '@/privacy/visibility.service';
-import type { UserSummaryDto } from '@/users/dto/user-summary.dto';
 import { userSummarySelect, type UserSummaryRow } from '@/users/user-summary.select';
 import { UsersService } from '@/users/users.service';
 import type {
@@ -13,12 +12,7 @@ import type {
   FollowListQueryDto,
   FollowRequestItemDto,
   FollowStatusValue,
-  SuggestionDto,
 } from './dto/follows.dto';
-
-// Максимум связей, из которых собираем рекомендации «на него подписаны мои подписки» (запрос ограничен).
-const SUGGESTION_SCAN_LIMIT = 500;
-const PROFILE_MUTUAL_PREVIEW = 3;
 
 // Сторона списка: 'follower' — кто подписан на владельца; 'following' — на кого подписан владелец.
 type Side = 'follower' | 'following';
@@ -81,11 +75,12 @@ export class FollowsService {
       where: { followingId: userId, status: 'PENDING' },
       select: { followerId: true },
     });
+    const pendingIds = pending.map((row) => row.followerId);
     await tx.follow.updateMany({
-      where: { followingId: userId, status: 'PENDING' },
+      where: { followingId: userId, status: 'PENDING', followerId: { in: pendingIds } },
       data: { status: 'ACCEPTED', acceptedAt: new Date() },
     });
-    return pending.map((row) => row.followerId);
+    return pendingIds;
   }
 
   async notifyAccepted(ownerId: string, followerIds: string[]): Promise<void> {
@@ -138,11 +133,8 @@ export class FollowsService {
 
   // Отписка или отмена запроса. Повторный вызов — без ошибки; неизвестный пользователь — 404.
   async unfollow(viewerId: string, targetId: string): Promise<void> {
-    const target = await this.prisma.user.findUnique({
-      where: { id: targetId },
-      select: { id: true },
-    });
-    if (!target) throw new NotFoundException();
+    await this.findActiveUser(targetId);
+    await this.visibility.assertCanViewProfile(viewerId, targetId); // блокировка = 404
     await this.prisma.follow.deleteMany({ where: { followerId: viewerId, followingId: targetId } });
   }
 
@@ -256,8 +248,6 @@ export class FollowsService {
   ): Promise<Page<Row>> {
     const q = query.q;
     const userWhere: Prisma.UserWhereInput = {
-      status: 'ACTIVE',
-      emailVerifiedAt: { not: null },
       AND: [this.visibility.visibleUserWhere(viewerId)],
       ...(q
         ? {
@@ -322,156 +312,6 @@ export class FollowsService {
         ? encodeCursor({ createdAt: last.createdAt, id: last.user.id })
         : null;
     return { items, nextCursor };
-  }
-
-  // --- Общие подписчики --------------------------------------------------------------------------
-
-  // Пользователи, на которых подписан viewer и которые подписаны на target.
-  private mutualWhere(viewerId: string, targetId: string): Prisma.UserWhereInput {
-    return {
-      status: 'ACTIVE',
-      emailVerifiedAt: { not: null },
-      AND: [this.visibility.visibleUserWhere(viewerId)],
-      followers: { some: { followerId: viewerId, status: 'ACCEPTED' } },
-      following: { some: { followingId: targetId, status: 'ACCEPTED' } },
-    };
-  }
-
-  async listMutualFollowers(
-    viewerId: string,
-    targetId: string,
-    query: CursorQueryDto,
-  ): Promise<Page<UserSummaryDto>> {
-    await this.findActiveUser(targetId);
-    await this.visibility.assertCanViewProfile(viewerId, targetId);
-    const c = query.cursor ? decodeCursor(query.cursor) : null;
-    const rows = await this.prisma.user.findMany({
-      where: {
-        AND: [
-          this.mutualWhere(viewerId, targetId),
-          c
-            ? {
-                OR: [
-                  { createdAt: { lt: c.createdAt } },
-                  { createdAt: c.createdAt, id: { lt: c.id } },
-                ],
-              }
-            : {},
-        ],
-      },
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      take: query.limit + 1,
-      select: { createdAt: true, ...userSummarySelect(viewerId) },
-    });
-    const items = rows.slice(0, query.limit);
-    const last = items[items.length - 1];
-    return {
-      items: items.map((user) => this.users.toSummary(user)),
-      nextCursor: rows.length > query.limit && last ? encodeCursor(last) : null,
-    };
-  }
-
-  // Для Profile.mutualFollowers: первые несколько и общее число.
-  async mutualPreview(
-    viewerId: string,
-    targetId: string,
-  ): Promise<{ users: UserSummaryDto[]; total: number }> {
-    if (viewerId === targetId) return { users: [], total: 0 };
-    const where = this.mutualWhere(viewerId, targetId);
-    const [rows, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: PROFILE_MUTUAL_PREVIEW,
-        select: userSummarySelect(viewerId),
-      }),
-      this.prisma.user.count({ where }),
-    ]);
-    return { users: rows.map((user) => this.users.toSummary(user)), total };
-  }
-
-  // --- Рекомендации ------------------------------------------------------------------------------
-
-  // 1) FOLLOWED_BY — на кого подписаны мои подписки; 2) POPULAR — больше всего подписчиков;
-  // 3) если мало — новые аккаунты (тоже POPULAR). Уже отслеживаемые и запрошенные исключаются.
-  async suggestions(viewerId: string, limit: number): Promise<SuggestionDto[]> {
-    const mine = await this.prisma.follow.findMany({
-      where: { followerId: viewerId },
-      select: { followingId: true, status: true },
-    });
-    const exclude = [viewerId, ...mine.map((row) => row.followingId)];
-    const followingIds = mine.filter((r) => r.status === 'ACCEPTED').map((r) => r.followingId);
-    const userWhere: Prisma.UserWhereInput = {
-      status: 'ACTIVE',
-      emailVerifiedAt: { not: null },
-      AND: [this.visibility.visibleUserWhere(viewerId)],
-    };
-
-    // candidateId -> кто из моих подписок на него подписан
-    const via = new Map<string, string[]>();
-    if (followingIds.length > 0) {
-      const links = await this.prisma.follow.findMany({
-        where: {
-          followerId: { in: followingIds },
-          status: 'ACCEPTED',
-          followingId: { notIn: exclude },
-          following: userWhere,
-        },
-        orderBy: { createdAt: 'desc' },
-        take: SUGGESTION_SCAN_LIMIT,
-        select: { followerId: true, followingId: true },
-      });
-      for (const link of links) {
-        via.set(link.followingId, [...(via.get(link.followingId) ?? []), link.followerId]);
-      }
-    }
-    const followedByIds = [...via.entries()]
-      .sort((a, b) => b[1].length - a[1].length)
-      .slice(0, limit)
-      .map(([id]) => id);
-
-    const popularIds: string[] = [];
-    if (followedByIds.length < limit) {
-      const taken = [...exclude, ...followedByIds];
-      const groups = await this.prisma.follow.groupBy({
-        by: ['followingId'],
-        where: { status: 'ACCEPTED', followingId: { notIn: taken }, following: userWhere },
-        _count: { followingId: true },
-        orderBy: { _count: { followingId: 'desc' } },
-        take: limit - followedByIds.length,
-      });
-      popularIds.push(...groups.map((group) => group.followingId));
-      if (followedByIds.length + popularIds.length < limit) {
-        const fresh = await this.prisma.user.findMany({
-          where: { ...userWhere, id: { notIn: [...taken, ...popularIds] } },
-          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-          take: limit - followedByIds.length - popularIds.length,
-          select: { id: true },
-        });
-        popularIds.push(...fresh.map((user) => user.id));
-      }
-    }
-
-    const firstFollowers = followedByIds.map((id) => via.get(id)?.[0] ?? '');
-    const summaryIds = [...new Set([...followedByIds, ...popularIds, ...firstFollowers])];
-    if (summaryIds.length === 0) return [];
-    const rows = await this.prisma.user.findMany({
-      where: { id: { in: summaryIds } },
-      select: userSummarySelect(viewerId),
-    });
-    const byId = new Map(rows.map((row) => [row.id, this.users.toSummary(row)]));
-
-    const result: SuggestionDto[] = [];
-    followedByIds.forEach((id, index) => {
-      const user = byId.get(id);
-      const followedBy = byId.get(firstFollowers[index]);
-      if (user && followedBy) result.push({ ...user, reason: 'FOLLOWED_BY', followedBy });
-    });
-    for (const id of popularIds) {
-      const user = byId.get(id);
-      if (user) result.push({ ...user, reason: 'POPULAR' });
-    }
-    return result;
   }
 
   // --- Вспомогательное ---------------------------------------------------------------------------
