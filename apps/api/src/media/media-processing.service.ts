@@ -71,8 +71,14 @@ export class MediaProcessingService implements OnApplicationBootstrap, OnModuleD
       }
     }
     // Оба раза не получилось: помечаем FAILED и убираем исходник.
-    const row = await this.prisma.mediaFile.findUnique({ where: { id }, select: { storageKey: true } });
-    await this.prisma.mediaFile.updateMany({ where: { id, status: 'PROCESSING' }, data: { status: 'FAILED' } });
+    const row = await this.prisma.mediaFile.findUnique({
+      where: { id },
+      select: { storageKey: true },
+    });
+    await this.prisma.mediaFile.updateMany({
+      where: { id, status: 'PROCESSING' },
+      data: { status: 'FAILED' },
+    });
     if (row) await this.storage.delete(row.storageKey).catch(() => undefined);
   }
 

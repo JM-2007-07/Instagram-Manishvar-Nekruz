@@ -37,22 +37,47 @@ export const MAX_UPLOAD_BYTES = 650 * MB;
 export type Container = 'jpeg' | 'png' | 'webp' | 'mp4' | 'webm' | 'ogg';
 
 // Бренды ISO-контейнера, которые означают HEIC/AVIF-картинку, а не видео. Их sharp без патентных кодеков не читает.
-const IMAGE_BRANDS = new Set(['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1', 'avif', 'avis']);
+const IMAGE_BRANDS = new Set([
+  'heic',
+  'heix',
+  'hevc',
+  'hevx',
+  'heim',
+  'heis',
+  'mif1',
+  'msf1',
+  'avif',
+  'avis',
+]);
 
 // Определяет формат по первым байтам файла (сигнатуре), а не по расширению и не по заголовку клиента.
 // null — формат не поддерживается (в том числе SVG, HTML, GIF, HEIC).
 export function sniffContainer(head: Buffer): Container | null {
   if (head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return 'jpeg';
-  if (head.length >= 8 && head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+  if (
+    head.length >= 8 &&
+    head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  ) {
     return 'png';
   }
-  if (head.length >= 12 && head.toString('latin1', 0, 4) === 'RIFF' && head.toString('latin1', 8, 12) === 'WEBP') {
+  if (
+    head.length >= 12 &&
+    head.toString('latin1', 0, 4) === 'RIFF' &&
+    head.toString('latin1', 8, 12) === 'WEBP'
+  ) {
     return 'webp';
   }
   if (head.length >= 12 && head.toString('latin1', 4, 8) === 'ftyp') {
     return IMAGE_BRANDS.has(head.toString('latin1', 8, 12)) ? null : 'mp4';
   }
-  if (head.length >= 4 && head[0] === 0x1a && head[1] === 0x45 && head[2] === 0xdf && head[3] === 0xa3) return 'webm';
+  if (
+    head.length >= 4 &&
+    head[0] === 0x1a &&
+    head[1] === 0x45 &&
+    head[2] === 0xdf &&
+    head[3] === 0xa3
+  )
+    return 'webm';
   if (head.length >= 4 && head.toString('latin1', 0, 4) === 'OggS') return 'ogg';
   return null;
 }

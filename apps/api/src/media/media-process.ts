@@ -12,7 +12,11 @@ export class ToolMissingError extends Error {}
 // Запускает программу и ждёт завершения (с ограничением времени). Возвращает stdout.
 export function run(bin: string, args: string[], timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'], timeout: timeoutMs, windowsHide: true });
+    const child = spawn(bin, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: timeoutMs,
+      windowsHide: true,
+    });
     let out = '';
     let err = '';
     child.stdout.on('data', (chunk: Buffer) => {
@@ -26,7 +30,12 @@ export function run(bin: string, args: string[], timeoutMs: number): Promise<str
     });
     child.on('close', (code) => {
       if (code === 0) resolve(out);
-      else reject(new Error(`${basename(bin)} exited with ${String(code)}: ${err.trim().split('\n').pop() ?? ''}`));
+      else
+        reject(
+          new Error(
+            `${basename(bin)} exited with ${String(code)}: ${err.trim().split('\n').pop() ?? ''}`,
+          ),
+        );
     });
   });
 }
@@ -70,10 +79,28 @@ export function transcodeVideo(ffmpegPath: string, input: string, output: string
   return run(
     ffmpegPath,
     [
-      '-y', '-i', input, '-map_metadata', '-1',
-      '-vf', "scale='min(1080,iw)':-2",
-      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p',
-      '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output,
+      '-y',
+      '-i',
+      input,
+      '-map_metadata',
+      '-1',
+      '-vf',
+      "scale='min(1080,iw)':-2",
+      '-c:v',
+      'libx264',
+      '-preset',
+      'veryfast',
+      '-crf',
+      '23',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '128k',
+      '-movflags',
+      '+faststart',
+      output,
     ],
     TRANSCODE_TIMEOUT_MS,
   );
@@ -83,7 +110,21 @@ export function transcodeVideo(ffmpegPath: string, input: string, output: string
 export function transcodeAudio(ffmpegPath: string, input: string, output: string): Promise<string> {
   return run(
     ffmpegPath,
-    ['-y', '-i', input, '-map_metadata', '-1', '-vn', '-c:a', 'aac', '-b:a', '64k', '-f', 'ipod', output],
+    [
+      '-y',
+      '-i',
+      input,
+      '-map_metadata',
+      '-1',
+      '-vn',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '64k',
+      '-f',
+      'ipod',
+      output,
+    ],
     TRANSCODE_TIMEOUT_MS,
   );
 }

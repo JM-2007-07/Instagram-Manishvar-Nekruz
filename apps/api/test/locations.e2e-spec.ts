@@ -107,10 +107,18 @@ describe('Locations: справочник мест', () => {
 
   it('создание: валидация -> 400', async () => {
     await send('post', '/locations').send({ name: 'X' }).expect(400);
-    await send('post', '/locations').send({ ...valid, name: '' }).expect(400);
-    await send('post', '/locations').send({ ...valid, latitude: 91 }).expect(400);
-    await send('post', '/locations').send({ ...valid, longitude: -181 }).expect(400);
-    await send('post', '/locations').send({ ...valid, extra: 1 }).expect(400);
+    await send('post', '/locations')
+      .send({ ...valid, name: '' })
+      .expect(400);
+    await send('post', '/locations')
+      .send({ ...valid, latitude: 91 })
+      .expect(400);
+    await send('post', '/locations')
+      .send({ ...valid, longitude: -181 })
+      .expect(400);
+    await send('post', '/locations')
+      .send({ ...valid, extra: 1 })
+      .expect(400);
   });
 
   it('изменение: ADMIN меняет, USER -> 403, нет места -> 404', async () => {

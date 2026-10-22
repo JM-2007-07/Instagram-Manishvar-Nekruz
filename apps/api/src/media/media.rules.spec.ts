@@ -3,8 +3,12 @@ import { PURPOSE_RULES, sniffContainer } from './media.rules';
 
 describe('sniffContainer: тип по содержимому', () => {
   it('узнаёт JPEG, PNG, WebP', () => {
-    expect(sniffContainer(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe('jpeg');
-    expect(sniffContainer(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]))).toBe('png');
+    expect(sniffContainer(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe(
+      'jpeg',
+    );
+    expect(
+      sniffContainer(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0])),
+    ).toBe('png');
     expect(sniffContainer(Buffer.from('RIFF\0\0\0\0WEBPVP8 '))).toBe('webp');
   });
 
