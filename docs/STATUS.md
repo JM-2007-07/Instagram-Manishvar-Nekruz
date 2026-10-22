@@ -56,7 +56,7 @@
 | T0.4 | Каркас Next.js + токены | B | ✔ | 🟨 | `feat/web-foundation` (PR ещё не открыт) | PR #5 (T0.1) в `main`; затем rebase |
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | ⬜ | — | T0.2, T0.4 |
 | T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
-| T0.7 | Оболочка `(main)` | B | ✔ | ⬜ | — | T0.4 |
+| T0.7 | Оболочка `(main)` | B | ✔ | 🟨 | `feat/web-shell` (от `feat/web-foundation`, PR ещё не открыт) | PR #5 → T0.4 → rebase |
 | T1.A1 | `auth` | A | ✔ | ⬜ | — | C0 |
 | T1.A2 | Frontend входа | A | ✔ | ⬜ | — | T1.A1, T0.4 |
 | T1.A3 | `users` + `settings` | A | ✔ | ⬜ | — | T1.A1; аватар — T1.B1 |
@@ -156,6 +156,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 16:11 | [web-shell](stories/2026-10-22_1611_web-shell.md) | T0.7: оболочка `(main)` — прокси по cookie, layout с проверкой сессии, боковое меню и «Ещё», тема в cookie; ветка от T0.4 |
 | 2026-10-22 15:40 | [web-foundation](stories/2026-10-22_1540_web-foundation.md) | T0.4: каркас `apps/web` — Next.js 16, токены, RTK Query baseApi, Vitest; ветка от T0.1 |
 | 2026-10-22 10:39 | [root-tooling](stories/2026-10-22_1039_root-tooling.md) | T0.1: Prettier и `concurrently` в корне; PR #4 влит, Phase −1 завершена |
 | 2026-10-22 10:40 | [pr-and-onboarding](stories/2026-10-22_1040_pr-and-onboarding.md) | PR #4 с планом; онбординг для Студента B; роль студента по `git config user.name` |
