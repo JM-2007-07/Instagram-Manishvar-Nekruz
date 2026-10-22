@@ -1,0 +1,11 @@
+// Общая часть схемы (владелец — Студент A). Модели лежат в соседних файлах <module>.prisma.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
