@@ -12,7 +12,9 @@ import { RealtimeService } from '@/realtime/realtime.service';
 import { UsersService } from '@/users/users.service';
 import { hashPassword } from './auth.rules';
 import type { AuthResult } from './auth.types';
+import { TwoFactorService } from './two-factor.service';
 import type { LoginDto, SessionDto } from './dto/auth.dto';
+import type { TwoFactorRequiredDto } from './dto/two-factor.dto';
 
 // Вход, выход и список сессий. Регистрация — RegistrationService, пароль — PasswordService.
 @Injectable()
@@ -24,9 +26,10 @@ export class AuthService {
     private readonly sessions: SessionService,
     private readonly users: UsersService,
     private readonly realtime: RealtimeService,
+    private readonly twoFactor: TwoFactorService,
   ) {}
 
-  async login(dto: LoginDto, meta: SessionMeta): Promise<AuthResult> {
+  async login(dto: LoginDto, meta: SessionMeta): Promise<AuthResult | TwoFactorRequiredDto> {
     const login = dto.login.toLowerCase();
     const user = await this.prisma.user.findFirst({
       where: { OR: [{ userName: login }, { email: login }] },
@@ -50,15 +53,45 @@ export class AuthService {
         message: 'Email is not verified',
       });
     }
-    // Вход деактивированного или удаляемого аккаунта восстанавливает его (F-ACC-13, 14).
-    if (user.status !== 'ACTIVE') {
+    // С включённой 2FA сессию создаёт POST /auth/login/2fa после проверки кода.
+    if (await this.twoFactor.isEnabled(user.id)) {
+      return {
+        twoFactorRequired: true,
+        challengeId: await this.twoFactor.createChallenge(user.id),
+      };
+    }
+    return this.startSession(user.id, user.status, meta);
+  }
+
+  // Второй шаг входа с 2FA: код (или резервный код) + challengeId из ответа /auth/login.
+  async loginWithTwoFactor(
+    challengeId: string,
+    code: string,
+    meta: SessionMeta,
+  ): Promise<AuthResult> {
+    const userId = await this.twoFactor.completeChallenge(challengeId, code);
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { status: true },
+    });
+    if (user.status === 'BANNED') throw new ForbiddenException('Account is banned');
+    return this.startSession(userId, user.status, meta);
+  }
+
+  // Вход деактивированного или удаляемого аккаунта восстанавливает его (F-ACC-13, 14).
+  private async startSession(
+    userId: string,
+    status: string,
+    meta: SessionMeta,
+  ): Promise<AuthResult> {
+    if (status !== 'ACTIVE') {
       await this.prisma.user.update({
-        where: { id: user.id },
+        where: { id: userId },
         data: { status: 'ACTIVE', deletionScheduledAt: null },
       });
     }
-    const { token } = await this.sessions.create(user.id, meta);
-    return { token, me: await this.users.getMe(user.id) };
+    const { token } = await this.sessions.create(userId, meta);
+    return { token, me: await this.users.getMe(userId) };
   }
 
   async logout(sessionId: string): Promise<void> {

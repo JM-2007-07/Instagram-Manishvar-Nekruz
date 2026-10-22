@@ -136,6 +136,9 @@ export class FollowsService {
     await this.findActiveUser(targetId);
     await this.visibility.assertCanViewProfile(viewerId, targetId); // блокировка = 404
     await this.prisma.follow.deleteMany({ where: { followerId: viewerId, followingId: targetId } });
+    for (const type of ['FOLLOW', 'FOLLOW_REQUEST'] as const) {
+      await this.notifications.remove({ recipientId: targetId, actorId: viewerId, type });
+    }
   }
 
   // --- Мои подписчики и запросы ------------------------------------------------------------------
@@ -177,6 +180,11 @@ export class FollowsService {
       where: { followerId, followingId: ownerId, status: 'PENDING' },
     });
     if (count === 0) throw new NotFoundException();
+    await this.notifications.remove({
+      recipientId: ownerId,
+      actorId: followerId,
+      type: 'FOLLOW_REQUEST',
+    });
   }
 
   // --- Списки подписчиков / подписок -------------------------------------------------------------

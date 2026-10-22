@@ -21,3 +21,32 @@ model Follow {
   @@index([followerId, status, createdAt]) // подписки
   @@map("follows")
 }
+
+// Близкие друзья владельца (F-SOC-06): аудитория историй CLOSE_FRIENDS.
+model CloseFriend {
+  ownerId   String   @db.Uuid
+  friendId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  owner  User @relation("CloseFriendOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friend User @relation("CloseFriendTarget", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, friendId])
+  @@index([friendId])
+  @@index([ownerId, createdAt])
+  @@map("close_friends")
+}
+
+// Избранные аккаунты (F-SOC-07, до 50): их посты в ленте «Избранное».
+model FavoriteAccount {
+  ownerId   String   @db.Uuid
+  targetId  String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  owner  User @relation("FavoriteOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  target User @relation("FavoriteTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, targetId])
+  @@index([targetId])
+  @@map("favorite_accounts")
+}

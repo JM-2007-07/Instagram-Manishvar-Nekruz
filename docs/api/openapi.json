@@ -409,6 +409,176 @@
         ]
       }
     },
+    "/api/v1/me/close-friends": {
+      "get": {
+        "operationId": "CloseFriendsController_listCloseFriends",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/close-friends/{userId}": {
+      "put": {
+        "operationId": "CloseFriendsController_addCloseFriend",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Добавлен (повторный вызов тоже 204)"
+          },
+          "400": {
+            "description": "Добавление самого себя"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      },
+      "delete": {
+        "operationId": "CloseFriendsController_removeCloseFriend",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/favorite-accounts": {
+      "get": {
+        "operationId": "CloseFriendsController_listFavorites",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
+    "/api/v1/me/favorite-accounts/{userId}": {
+      "put": {
+        "operationId": "CloseFriendsController_addFavorite",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "Добавление самого себя"
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "LIMIT_REACHED: больше 50 избранных"
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      },
+      "delete": {
+        "operationId": "CloseFriendsController_removeFavorite",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "follows"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "UsersController_getMe",
@@ -455,6 +625,41 @@
           },
           "400": {
             "description": "Неверные значения или лишние поля"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "delete": {
+        "operationId": "AccountController_requestDeletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordConfirmDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Удаление через 30 дней, все сессии завершены; вход отменяет удаление",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionScheduledDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_PASSWORD"
+          },
+          "429": {
+            "description": ""
           }
         },
         "tags": [
@@ -678,6 +883,36 @@
         ]
       }
     },
+    "/api/v1/me/deactivate": {
+      "post": {
+        "operationId": "AccountController_deactivate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordConfirmDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Аккаунт деактивирован, все сессии завершены"
+          },
+          "400": {
+            "description": "INVALID_PASSWORD"
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/api/v1/users/{userId}/block": {
       "put": {
         "operationId": "PrivacyController_block",
@@ -771,6 +1006,436 @@
         },
         "tags": [
           "privacy"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/restrict": {
+      "put": {
+        "operationId": "RestrictionsController_restrict",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Ограничен (повторный вызов тоже 204)"
+          },
+          "400": {
+            "description": "Ограничение самого себя"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "delete": {
+        "operationId": "RestrictionsController_unrestrict",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/me/restricted": {
+      "get": {
+        "operationId": "RestrictionsController_listRestricted",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/users/{userId}/mute": {
+      "put": {
+        "operationId": "RestrictionsController_mute",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MuteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Скрытие сохранено; posts=false и stories=false — выключено"
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "delete": {
+        "operationId": "RestrictionsController_unmute",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/me/muted": {
+      "get": {
+        "operationId": "RestrictionsController_listMuted",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutedUserPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/me/story-hidden-from": {
+      "get": {
+        "operationId": "RestrictionsController_listStoryHiddenFrom",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummaryPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/me/story-hidden-from/{userId}": {
+      "put": {
+        "operationId": "RestrictionsController_hideStoryFrom",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "delete": {
+        "operationId": "RestrictionsController_unhideStoryFrom",
+        "parameters": [
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/me/hidden-words": {
+      "get": {
+        "operationId": "RestrictionsController_getHiddenWords",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HiddenWordsDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      },
+      "put": {
+        "operationId": "RestrictionsController_setHiddenWords",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HiddenWordsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HiddenWordsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/read": {
+      "post": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkReadDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Уведомления отмечены прочитанными"
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/me/badges": {
+      "get": {
+        "operationId": "NotificationsController_badges",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BadgesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "notifications"
         ]
       }
     },
@@ -950,7 +1615,7 @@
         },
         "responses": {
           "200": {
-            "description": "Cookie сессии установлена",
+            "description": "Cookie сессии установлена; при включённой 2FA — TwoFactorRequiredDto без cookie",
             "content": {
               "application/json": {
                 "schema": {
@@ -967,6 +1632,131 @@
           },
           "429": {
             "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login/2fa": {
+      "post": {
+        "operationId": "AuthController_loginTwoFactor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cookie сессии установлена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_CODE или CHALLENGE_EXPIRED"
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/2fa/setup": {
+      "post": {
+        "operationId": "AuthController_setupTwoFactor",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TwoFactorSetupDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "TWO_FACTOR_UNAVAILABLE (нет ключа) или уже включена"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/2fa/enable": {
+      "post": {
+        "operationId": "AuthController_enableTwoFactor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorEnableDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupCodesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_CODE или TWO_FACTOR_SETUP_REQUIRED"
+          },
+          "409": {
+            "description": "TWO_FACTOR_UNAVAILABLE"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/2fa/disable": {
+      "post": {
+        "operationId": "AuthController_disableTwoFactor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TwoFactorDisableDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "INVALID_PASSWORD"
           }
         },
         "tags": [
@@ -1118,6 +1908,157 @@
           },
           "404": {
             "description": "Сессия не найдена или принадлежит другому пользователю"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/providers": {
+      "get": {
+        "operationId": "OAuthController_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Какие провайдеры включены ключами",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthProvidersDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/{provider}": {
+      "get": {
+        "operationId": "OAuthController_start",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "google",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Редирект к провайдеру (PKCE, state в короткой cookie)"
+          },
+          "404": {
+            "description": "Провайдер выключен"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/{provider}/callback": {
+      "get": {
+        "operationId": "OAuthController_callback",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "google",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Редирект: `/` (вход), `/accounts/oauth/complete/` или `?error=oauth`"
+          },
+          "404": {
+            "description": "Провайдер выключен"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/oauth/complete": {
+      "post": {
+        "operationId": "OAuthController_complete",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteOAuthDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Аккаунт создан, cookie сессии установлена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Нет или истёк незавершённый вход; неверные данные"
+          },
+          "409": {
+            "description": "Имя пользователя занято"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/me/oauth/{provider}": {
+      "delete": {
+        "operationId": "OAuthController_unlink",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": [
+                "google",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Провайдер отвязан"
+          },
+          "404": {
+            "description": "Провайдер не привязан"
+          },
+          "409": {
+            "description": "LIMIT_REACHED: это единственный способ входа"
           }
         },
         "tags": [
@@ -1513,6 +2454,986 @@
         },
         "tags": [
           "search"
+        ]
+      }
+    },
+    "/api/v1/calls/ice-servers": {
+      "get": {
+        "operationId": "CallsController_iceServers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "STUN и временные учётные данные TURN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IceServersDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/calls": {
+      "post": {
+        "operationId": "CallsController_start",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartCallDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "RINGING; участникам уходит call:incoming",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Чат не найден, вы не участник или есть блокировка"
+          },
+          "409": {
+            "description": "CALL_BUSY: кто-то уже на звонке"
+          }
+        },
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/v1/calls/{callId}/accept": {
+      "post": {
+        "operationId": "CallsController_accept",
+        "parameters": [
+          {
+            "name": "callId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Звонок уже не RINGING"
+          }
+        },
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/v1/calls/{callId}/decline": {
+      "post": {
+        "operationId": "CallsController_decline",
+        "parameters": [
+          {
+            "name": "callId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/v1/calls/{callId}/end": {
+      "post": {
+        "operationId": "CallsController_end",
+        "parameters": [
+          {
+            "name": "callId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/v1/calls/{callId}": {
+      "get": {
+        "operationId": "CallsController_get",
+        "parameters": [
+          {
+            "name": "callId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "calls"
+        ]
+      }
+    },
+    "/api/v1/chats": {
+      "get": {
+        "operationId": "ChatsController_list",
+        "parameters": [
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "folder",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "PRIMARY",
+              "type": "string",
+              "enum": [
+                "PRIMARY",
+                "REQUESTS"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "post": {
+        "operationId": "ChatsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Личный чат с этим пользователем уже есть",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Новый чат",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Нельзя писать себе"
+          },
+          "404": {
+            "description": "Нет такого пользователя или блокировка"
+          },
+          "409": {
+            "description": "LIMIT_REACHED"
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}": {
+      "get": {
+        "operationId": "ChatsController_get",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Чужой чат"
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "patch": {
+        "operationId": "ChatsController_update",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "delete": {
+        "operationId": "ChatsController_remove",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Переписка скрыта у меня; группа — ещё и выход"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/participants": {
+      "post": {
+        "operationId": "ChatsController_addParticipants",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddParticipantsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Уже участник или LIMIT_REACHED"
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/participants/{userId}": {
+      "delete": {
+        "operationId": "ChatsController_removeParticipant",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Участник убран или вышел сам"
+          },
+          "403": {
+            "description": "Убирать других может только администратор"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/participants/{userId}/admin": {
+      "put": {
+        "operationId": "ChatsController_makeAdmin",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "delete": {
+        "operationId": "ChatsController_removeAdmin",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "403": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/accept": {
+      "post": {
+        "operationId": "ChatsController_accept",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Запрос принят, чат в «Основном»"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/mute": {
+      "put": {
+        "operationId": "ChatsController_mute",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MuteChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "delete": {
+        "operationId": "ChatsController_unmute",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/read": {
+      "post": {
+        "operationId": "ChatsController_read",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadChatDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Прочитано; участники получают chat:read"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/messages": {
+      "get": {
+        "operationId": "MessagesController_list",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor from the previous page",
+            "schema": {
+              "maxLength": 500,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Новые сначала",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagePageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "post": {
+        "operationId": "MessagesController_send",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Рассылает message:new",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ошибка валидации или тип пока не поддерживается"
+          },
+          "404": {
+            "description": ""
+          },
+          "429": {
+            "description": "Больше 60 сообщений в минуту"
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/messages/{messageId}": {
+      "patch": {
+        "operationId": "MessagesController_edit",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Рассылает message:updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Чужое сообщение"
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "EDIT_WINDOW_EXPIRED (15 минут)"
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "delete": {
+        "operationId": "MessagesController_unsend",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Отправка отменена у всех; рассылает message:unsent"
+          },
+          "403": {
+            "description": "Чужое сообщение"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/chats/{chatId}/messages/{messageId}/reaction": {
+      "put": {
+        "operationId": "MessagesController_react",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Рассылает message:reaction"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      },
+      "delete": {
+        "operationId": "MessagesController_unreact",
+        "parameters": [
+          {
+            "name": "chatId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
+        ]
+      }
+    },
+    "/api/v1/messages/share": {
+      "post": {
+        "operationId": "MessagesController_share",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Публикации и истории — после модулей B"
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "chats"
         ]
       }
     }
@@ -2240,6 +4161,294 @@
           "isMe"
         ]
       },
+      "PasswordConfirmDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Текущий пароль; не нужен аккаунту без пароля (только соцвход)"
+          }
+        }
+      },
+      "DeletionScheduledDto": {
+        "type": "object",
+        "properties": {
+          "deletionScheduledAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "deletionScheduledAt"
+        ]
+      },
+      "MuteDto": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "type": "boolean",
+            "description": "Скрыть посты"
+          },
+          "stories": {
+            "type": "boolean",
+            "description": "Скрыть истории"
+          }
+        },
+        "required": [
+          "posts",
+          "stories"
+        ]
+      },
+      "MutedUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "hasActiveStory": {
+            "type": "boolean",
+            "description": "Есть активная история (кольцо вокруг аватара)"
+          },
+          "isCloseFriendStory": {
+            "type": "boolean",
+            "description": "Активная история только для близких друзей (зелёное кольцо)"
+          },
+          "posts": {
+            "type": "boolean"
+          },
+          "stories": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "userName",
+          "fullName",
+          "avatarUrl",
+          "isVerified",
+          "isPrivate",
+          "hasActiveStory",
+          "isCloseFriendStory",
+          "posts",
+          "stories"
+        ]
+      },
+      "MutedUserPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MutedUserDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "HiddenWordsDto": {
+        "type": "object",
+        "properties": {
+          "words": {
+            "maxItems": 100,
+            "description": "До 100 слов, каждое до 50 символов",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 50
+            }
+          },
+          "filterOffensive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "words",
+          "filterOffensive"
+        ]
+      },
+      "NotificationPostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "shortcode": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "shortcode",
+          "thumbnailUrl"
+        ]
+      },
+      "NotificationCommentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text"
+        ]
+      },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id самого нового уведомления группы"
+          },
+          "type": {
+            "enum": [
+              "POST_LIKE",
+              "COMMENT_LIKE",
+              "COMMENT",
+              "COMMENT_REPLY",
+              "MENTION_POST",
+              "MENTION_COMMENT",
+              "MENTION_STORY",
+              "POST_TAG",
+              "FOLLOW",
+              "FOLLOW_REQUEST",
+              "FOLLOW_ACCEPTED",
+              "COLLAB_INVITE"
+            ],
+            "type": "string"
+          },
+          "actors": {
+            "description": "До 3 последних авторов группы",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummaryDto"
+            }
+          },
+          "actorCount": {
+            "type": "number",
+            "description": "Сколько всего авторов в группе"
+          },
+          "post": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationPostDto"
+              }
+            ]
+          },
+          "comment": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCommentDto"
+              }
+            ]
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "actors",
+          "actorCount",
+          "post",
+          "comment",
+          "isRead",
+          "createdAt"
+        ]
+      },
+      "NotificationPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "MarkReadDto": {
+        "type": "object",
+        "properties": {
+          "upToId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Отметить прочитанными всё до этого уведомления включительно; по умолчанию все"
+          }
+        }
+      },
+      "BadgesDto": {
+        "type": "object",
+        "properties": {
+          "unreadNotifications": {
+            "type": "number"
+          },
+          "unreadChats": {
+            "type": "number"
+          },
+          "followRequests": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "unreadNotifications",
+          "unreadChats",
+          "followRequests"
+        ]
+      },
       "HealthResponseDto": {
         "type": "object",
         "properties": {
@@ -2377,6 +4586,83 @@
           "password"
         ]
       },
+      "TwoFactorLoginDto": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "description": "6 цифр из приложения или резервный код"
+          }
+        },
+        "required": [
+          "challengeId",
+          "code"
+        ]
+      },
+      "TwoFactorSetupDto": {
+        "type": "object",
+        "properties": {
+          "otpauthUrl": {
+            "type": "string",
+            "description": "otpauth://… для QR-кода"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Секрет для ручного ввода (base32)"
+          }
+        },
+        "required": [
+          "otpauthUrl",
+          "secret"
+        ]
+      },
+      "TwoFactorEnableDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "example": "123456",
+            "description": "6 цифр из приложения-аутентификатора"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "BackupCodesDto": {
+        "type": "object",
+        "properties": {
+          "backupCodes": {
+            "description": "Показываются один раз",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "backupCodes"
+        ]
+      },
+      "TwoFactorDisableDto": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "Текущий пароль"
+          }
+        },
+        "required": [
+          "password"
+        ]
+      },
       "ForgotPasswordDto": {
         "type": "object",
         "properties": {
@@ -2461,6 +4747,40 @@
           "createdAt",
           "lastUsedAt",
           "isCurrent"
+        ]
+      },
+      "OAuthProvidersDto": {
+        "type": "object",
+        "properties": {
+          "google": {
+            "type": "boolean"
+          },
+          "facebook": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "google",
+          "facebook"
+        ]
+      },
+      "CompleteOAuthDto": {
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string",
+            "example": "ivan.petrov"
+          },
+          "birthday": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "example": "2000-01-31",
+            "description": "YYYY-MM-DD, возраст не меньше 13 лет"
+          }
+        },
+        "required": [
+          "userName",
+          "birthday"
         ]
       },
       "SettingsDto": {
@@ -2759,6 +5079,659 @@
         },
         "required": [
           "type"
+        ]
+      },
+      "IceServerDto": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "username": {
+            "type": "string"
+          },
+          "credential": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "urls"
+        ]
+      },
+      "IceServersDto": {
+        "type": "object",
+        "properties": {
+          "iceServers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IceServerDto"
+            }
+          }
+        },
+        "required": [
+          "iceServers"
+        ]
+      },
+      "StartCallDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "AUDIO",
+              "VIDEO"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "CallDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chatId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "enum": [
+              "AUDIO",
+              "VIDEO"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "RINGING",
+              "ONGOING",
+              "ENDED",
+              "MISSED",
+              "DECLINED"
+            ],
+            "type": "string"
+          },
+          "initiator": {
+            "$ref": "#/components/schemas/UserSummaryDto"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "answeredAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "chatId",
+          "type",
+          "status",
+          "initiator",
+          "startedAt",
+          "answeredAt",
+          "endedAt"
+        ]
+      },
+      "ChatParticipantDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isVerified": {
+            "type": "boolean"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          },
+          "hasActiveStory": {
+            "type": "boolean",
+            "description": "Есть активная история (кольцо вокруг аватара)"
+          },
+          "isCloseFriendStory": {
+            "type": "boolean",
+            "description": "Активная история только для близких друзей (зелёное кольцо)"
+          },
+          "role": {
+            "enum": [
+              "MEMBER",
+              "ADMIN"
+            ],
+            "type": "string"
+          },
+          "isOnline": {
+            "type": "boolean"
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "userName",
+          "fullName",
+          "avatarUrl",
+          "isVerified",
+          "isPrivate",
+          "hasActiveStory",
+          "isCloseFriendStory",
+          "role",
+          "isOnline",
+          "lastActiveAt"
+        ]
+      },
+      "MessageReplyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "senderName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "senderName"
+        ]
+      },
+      "MessageReactionGroupDto": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "emoji",
+          "users"
+        ]
+      },
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "chatId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sender": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "MEDIA",
+              "VOICE",
+              "SHARE_POST",
+              "SHARE_PROFILE",
+              "SHARE_STORY",
+              "STORY_REPLY",
+              "STORY_REACTION",
+              "CALL",
+              "SYSTEM"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "clientId": {
+            "type": "string",
+            "nullable": true,
+            "description": "clientId отправителя"
+          },
+          "media": {
+            "description": "Пока всегда пусто (до T1.B1)",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "replyTo": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageReplyDto"
+              }
+            ]
+          },
+          "sharedPost": {
+            "type": "object",
+            "nullable": true,
+            "description": "До T1.B4 всегда null"
+          },
+          "sharedUser": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummaryDto"
+              }
+            ]
+          },
+          "storyId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "id истории"
+          },
+          "call": {
+            "type": "object",
+            "nullable": true,
+            "description": "До звонков всегда null"
+          },
+          "systemData": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Данные системного сообщения"
+          },
+          "reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageReactionGroupDto"
+            }
+          },
+          "editedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "chatId",
+          "sender",
+          "type",
+          "text",
+          "clientId",
+          "media",
+          "replyTo",
+          "sharedPost",
+          "sharedUser",
+          "storyId",
+          "call",
+          "systemData",
+          "reactions",
+          "editedAt",
+          "createdAt"
+        ]
+      },
+      "ChatDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "enum": [
+              "DIRECT",
+              "GROUP"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatParticipantDto"
+            }
+          },
+          "lastMessage": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageDto"
+              }
+            ]
+          },
+          "unreadCount": {
+            "type": "number"
+          },
+          "isMuted": {
+            "type": "boolean"
+          },
+          "isRequest": {
+            "type": "boolean",
+            "description": "Запрос на переписку (папка «Запросы»)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "avatarUrl",
+          "participants",
+          "lastMessage",
+          "unreadCount",
+          "isMuted",
+          "isRequest",
+          "updatedAt"
+        ]
+      },
+      "ChatPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "CreateChatDto": {
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "uniqueItems": true,
+            "minItems": 1,
+            "description": "Один id — личный чат, несколько — группа",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "Название группы"
+          }
+        },
+        "required": [
+          "userIds"
+        ]
+      },
+      "UpdateChatDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "avatarMediaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Не реализовано до T1.B1 (MediaService)"
+          }
+        }
+      },
+      "AddParticipantsDto": {
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "uniqueItems": true,
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "userIds"
+        ]
+      },
+      "MuteChatDto": {
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Без значения — навсегда"
+          }
+        }
+      },
+      "ReadChatDto": {
+        "type": "object",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "messageId"
+        ]
+      },
+      "MessagePageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "SendMessageDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "TEXT",
+              "MEDIA",
+              "VOICE",
+              "SHARE_POST",
+              "SHARE_PROFILE",
+              "SHARE_STORY"
+            ],
+            "type": "string"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "mediaIds": {
+            "maxItems": 10,
+            "description": "Не реализовано до T1.B1",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "replyToId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sharedPostId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Не реализовано до T1.B4"
+          },
+          "sharedUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Не реализовано до T2.B1"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "id, созданный клиентом (защита от дубля при повторе)"
+          }
+        },
+        "required": [
+          "type",
+          "clientId"
+        ]
+      },
+      "EditMessageDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "text"
+        ]
+      },
+      "ReactionDto": {
+        "type": "object",
+        "properties": {
+          "emoji": {
+            "type": "string",
+            "pattern": "^(?:\\p{Extended_Pictographic}|‍|️|⃣){1,16}$",
+            "example": "❤️"
+          }
+        },
+        "required": [
+          "emoji"
+        ]
+      },
+      "ShareMessageDto": {
+        "type": "object",
+        "properties": {
+          "userIds": {
+            "uniqueItems": true,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "chatIds": {
+            "uniqueItems": true,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "postId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Не реализовано до T1.B4"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Профиль, которым делятся"
+          },
+          "storyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Не реализовано до T2.B1"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "ShareResultDto": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageDto"
+            }
+          }
+        },
+        "required": [
+          "messages"
         ]
       }
     }

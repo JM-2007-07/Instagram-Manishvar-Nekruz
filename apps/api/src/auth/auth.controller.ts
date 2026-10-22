@@ -36,6 +36,7 @@ import { AuthService } from './auth.service';
 import { PasswordService } from './password.service';
 import { RegistrationService } from './registration.service';
 import { ipAndLogin } from './auth.throttle';
+import { TwoFactorService } from './two-factor.service';
 import {
   ChangePasswordDto,
   EmailDto,
@@ -49,6 +50,14 @@ import {
   UserNameAvailabilityQueryDto,
   VerifyEmailDto,
 } from './dto/auth.dto';
+import {
+  BackupCodesDto,
+  TwoFactorDisableDto,
+  TwoFactorEnableDto,
+  TwoFactorLoginDto,
+  TwoFactorRequiredDto,
+  TwoFactorSetupDto,
+} from './dto/two-factor.dto';
 
 // Лимиты чувствительных операций — SECURITY.md «Ограничение частоты запросов».
 const PER_HOUR_5 = { default: { limit: 5, ttl: hours(1) } };
@@ -62,6 +71,7 @@ export class AuthController {
     private readonly registration: RegistrationService,
     private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
+    private readonly twoFactor: TwoFactorService,
   ) {}
 
   @Public()
@@ -119,7 +129,10 @@ export class AuthController {
     default: { limit: 5, ttl: minutes(1), getTracker: ipAndLogin },
     [HOURLY]: { limit: 20, ttl: hours(1), getTracker: ipAndLogin },
   })
-  @ApiOkResponse({ type: MeDto, description: 'Cookie сессии установлена' })
+  @ApiOkResponse({
+    type: MeDto,
+    description: 'Cookie сессии установлена; при включённой 2FA — TwoFactorRequiredDto без cookie',
+  })
   @ApiUnauthorizedResponse({ description: 'INVALID_CREDENTIALS' })
   @ApiForbiddenResponse({ description: 'EMAIL_NOT_VERIFIED или аккаунт заблокирован' })
   @ApiTooManyRequestsResponse()
@@ -127,10 +140,66 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+  ): Promise<MeDto | TwoFactorRequiredDto> {
+    const result = await this.auth.login(dto, sessionMeta(req));
+    if ('twoFactorRequired' in result) return result;
+    this.sessions.setSessionCookie(res, result.token);
+    return result.me;
+  }
+
+  @Public()
+  @Post('login/2fa')
+  @HttpCode(200)
+  @Throttle(PER_15_MIN_5)
+  @ApiOkResponse({ type: MeDto, description: 'Cookie сессии установлена' })
+  @ApiBadRequestResponse({ description: 'INVALID_CODE или CHALLENGE_EXPIRED' })
+  @ApiTooManyRequestsResponse()
+  async loginTwoFactor(
+    @Body() dto: TwoFactorLoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<MeDto> {
-    const { token, me } = await this.auth.login(dto, sessionMeta(req));
+    const { token, me } = await this.auth.loginWithTwoFactor(
+      dto.challengeId,
+      dto.code,
+      sessionMeta(req),
+    );
     this.sessions.setSessionCookie(res, token);
     return me;
+  }
+
+  @Post('2fa/setup')
+  @HttpCode(200)
+  @Throttle(PER_15_MIN_5)
+  @ApiOkResponse({ type: TwoFactorSetupDto })
+  @ApiConflictResponse({ description: 'TWO_FACTOR_UNAVAILABLE (нет ключа) или уже включена' })
+  setupTwoFactor(@CurrentUser() user: SessionUser): Promise<TwoFactorSetupDto> {
+    return this.twoFactor.setup(user.id);
+  }
+
+  @Post('2fa/enable')
+  @HttpCode(200)
+  @Throttle(PER_15_MIN_5)
+  @ApiOkResponse({ type: BackupCodesDto })
+  @ApiBadRequestResponse({ description: 'INVALID_CODE или TWO_FACTOR_SETUP_REQUIRED' })
+  @ApiConflictResponse({ description: 'TWO_FACTOR_UNAVAILABLE' })
+  enableTwoFactor(
+    @CurrentUser() user: SessionUser,
+    @Body() dto: TwoFactorEnableDto,
+  ): Promise<BackupCodesDto> {
+    return this.twoFactor.enable(user.id, dto.code);
+  }
+
+  @Post('2fa/disable')
+  @HttpCode(204)
+  @Throttle(PER_15_MIN_5)
+  @ApiNoContentResponse()
+  @ApiBadRequestResponse({ description: 'INVALID_PASSWORD' })
+  disableTwoFactor(
+    @CurrentUser() user: SessionUser,
+    @Body() dto: TwoFactorDisableDto,
+  ): Promise<void> {
+    return this.twoFactor.disable(user.id, dto.password);
   }
 
   @Post('logout')

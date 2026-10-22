@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
+import { CallsModule } from './calls/calls.module';
+import { ChatsModule } from './chats/chats.module';
 import { OriginGuard } from './common/guards/origin.guard';
 import { SessionGuard } from './common/session/session.guard';
 import { SessionModule } from './common/session/session.module';
@@ -36,6 +38,8 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     SettingsModule,
     SearchModule,
+    CallsModule,
+    ChatsModule,
   ],
   providers: [
     // Порядок глобальных guard'ов: Origin -> Session -> Throttler.

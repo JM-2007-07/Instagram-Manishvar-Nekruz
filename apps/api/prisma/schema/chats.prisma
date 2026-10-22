@@ -1,0 +1,123 @@
+// Direct (владелец — Студент A): чаты, участники, сообщения, реакции.
+// Note (заметки) добавится отдельной задачей. Поля-ссылки на модели Студента B (Media, Post, Story, Call)
+// сделаны обычными nullable uuid БЕЗ relation: FK — после T1.B1 / T1.B4 / T2.B1 / T5.*.
+
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+enum ChatRole {
+  MEMBER
+  ADMIN
+}
+
+enum ChatParticipantStatus {
+  ACTIVE
+  REQUEST // запрос на переписку: сообщение от того, на кого получатель не подписан
+  LEFT // вышел из группы или удалён из неё
+}
+
+enum MessageType {
+  TEXT
+  MEDIA
+  VOICE
+  SHARE_POST
+  SHARE_PROFILE
+  SHARE_STORY
+  STORY_REPLY
+  STORY_REACTION
+  CALL
+  SYSTEM
+}
+
+model Chat {
+  id            String   @id @default(uuid()) @db.Uuid
+  type          ChatType
+  title         String?
+  avatarMediaId String?  @db.Uuid // FK на MediaFile — после T1.B1
+  createdById   String   @db.Uuid
+  directKey     String?  @unique // для DIRECT: "меньший id:больший id" — один чат на пару
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt, id])
+  @@map("chats")
+}
+
+model ChatParticipant {
+  chatId            String                @db.Uuid
+  userId            String                @db.Uuid
+  role              ChatRole              @default(MEMBER)
+  status            ChatParticipantStatus @default(ACTIVE)
+  joinedAt          DateTime              @default(now())
+  lastReadMessageId String?               @db.Uuid
+  lastReadAt        DateTime? // createdAt прочитанного сообщения: от него считаем непрочитанные
+  mutedUntil        DateTime?
+  clearedAt         DateTime? // «удалить чат у себя»: сообщения раньше не показываются
+  hidden            Boolean               @default(false) // чат скрыт у участника до нового сообщения
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, userId])
+  @@index([userId, status, hidden])
+  @@map("chat_participants")
+}
+
+model Message {
+  id           String      @id @default(uuid()) @db.Uuid
+  chatId       String      @db.Uuid
+  senderId     String?     @db.Uuid
+  type         MessageType
+  text         String?
+  clientId     String? // id, созданный клиентом: повторная отправка не создаёт дубликат
+  replyToId    String?     @db.Uuid
+  sharedPostId String?     @db.Uuid // FK на Post — после T1.B4
+  sharedUserId String?     @db.Uuid
+  storyId      String?     @db.Uuid // FK на Story — после T2.B1
+  callId       String?     @db.Uuid // FK на Call — после T5.*
+  systemData   Json?
+  editedAt     DateTime?
+  unsentAt     DateTime?
+  createdAt    DateTime    @default(now())
+
+  chat       Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender     User?             @relation("MessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+  sharedUser User?             @relation("MessageSharedUser", fields: [sharedUserId], references: [id], onDelete: SetNull)
+  replyTo    Message?          @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies    Message[]         @relation("MessageReply")
+  media      MessageMedia[]
+  reactions  MessageReaction[]
+
+  @@index([chatId, createdAt, id])
+  @@index([chatId, senderId, clientId])
+  @@map("messages")
+}
+
+model MessageMedia {
+  messageId String @db.Uuid
+  mediaId   String @db.Uuid // FK на MediaFile — после T1.B1
+  position  Int
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, position])
+  @@map("message_media")
+}
+
+model MessageReaction {
+  messageId String   @db.Uuid
+  userId    String   @db.Uuid
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@map("message_reactions")
+}

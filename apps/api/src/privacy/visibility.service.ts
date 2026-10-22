@@ -88,6 +88,65 @@ export class VisibilityService {
     return [...ids];
   }
 
+  // --- T4.A3: ограничение, близкие друзья, «скрыть историю от», скрытие (для модулей B и чатов) ---
+
+  // ownerId ограничил targetId (F-PRV-03): комментарии targetId требуют одобрения, его чат — в запросах.
+  async isRestricted(ownerId: string, targetId: string): Promise<boolean> {
+    const row = await this.prisma.restrict.findUnique({
+      where: { ownerId_targetId: { ownerId, targetId } },
+      select: { ownerId: true },
+    });
+    return row !== null;
+  }
+
+  // Id пользователей, которых ownerId ограничил.
+  async getRestrictedIds(ownerId: string): Promise<string[]> {
+    const rows = await this.prisma.restrict.findMany({
+      where: { ownerId },
+      select: { targetId: true },
+    });
+    return rows.map((r) => r.targetId);
+  }
+
+  // viewerId в списке близких друзей ownerId (аудитория историй CLOSE_FRIENDS).
+  async isCloseFriend(ownerId: string, viewerId: string): Promise<boolean> {
+    const row = await this.prisma.closeFriend.findUnique({
+      where: { ownerId_friendId: { ownerId, friendId: viewerId } },
+      select: { ownerId: true },
+    });
+    return row !== null;
+  }
+
+  // Id, от кого ownerId скрыл свои истории («Скрыть историю от»).
+  async getStoryHiddenFromIds(ownerId: string): Promise<string[]> {
+    const rows = await this.prisma.storyHiddenFrom.findMany({
+      where: { ownerId },
+      select: { viewerId: true },
+    });
+    return rows.map((r) => r.viewerId);
+  }
+
+  // Id авторов, чьи посты или истории viewerId скрыл у себя в ленте (F-PRV-04).
+  async getMutedUserIds(viewerId: string, kind: 'posts' | 'stories'): Promise<string[]> {
+    const rows = await this.prisma.mute.findMany({
+      where: {
+        ownerId: viewerId,
+        ...(kind === 'posts' ? { mutePosts: true } : { muteStories: true }),
+      },
+      select: { targetId: true },
+    });
+    return rows.map((r) => r.targetId);
+  }
+
+  // Id избранных аккаунтов viewerId (лента «Избранное»).
+  async getFavoriteIds(viewerId: string): Promise<string[]> {
+    const rows = await this.prisma.favoriteAccount.findMany({
+      where: { ownerId: viewerId },
+      select: { targetId: true },
+    });
+    return rows.map((r) => r.targetId);
+  }
+
   // Условие для where по User: «этих пользователей viewer может видеть в выдаче» —
   // активные подтверждённые аккаунты без блокировок в обе стороны. Синхронно (relation-фильтры).
   visibleUserWhere(viewerId: string): Prisma.UserWhereInput {

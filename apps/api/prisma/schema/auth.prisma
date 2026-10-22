@@ -54,3 +54,30 @@ model UsernameChange {
   @@index([oldUserName])
   @@map("username_changes")
 }
+
+// 2FA (F-ACC-15): секрет TOTP зашифрован AES-256-GCM; резервные коды — sha256-хеши. enabledAt пуст до подтверждения кодом.
+model TwoFactorSecret {
+  userId           String    @id @db.Uuid
+  secretEncrypted  String
+  backupCodeHashes String[]
+  enabledAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_secrets")
+}
+
+// Промежуточный шаг входа: пароль верен, ждём код. Живёт 5 минут, не больше 5 попыток.
+model TwoFactorChallenge {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor_challenges")
+}
