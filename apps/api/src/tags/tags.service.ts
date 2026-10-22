@@ -59,8 +59,8 @@ export class TagsService {
       take: limit,
       select: { name: true },
     });
-    // TODO(T1.B4): postCount = число видимых публикаций через PostHashtag.
-    return rows.map((r) => ({ name: r.name, postCount: 0 }));
+    const counts = await Promise.all(rows.map((r) => this.countPosts(r.name)));
+    return rows.map((r, i) => ({ name: r.name, postCount: counts[i] }));
   }
 
   // GET /hashtags/:name
@@ -68,7 +68,13 @@ export class TagsService {
     const name = rawName.trim().replace(/^#/, '').toLowerCase();
     const row = await this.prisma.hashtag.findUnique({ where: { name }, select: { name: true } });
     if (!row) throw new NotFoundException('Hashtag not found');
-    // TODO(T1.B4): postCount = число видимых публикаций через PostHashtag.
-    return { name: row.name, postCount: 0 };
+    return { name: row.name, postCount: await this.countPosts(row.name) };
+  }
+
+  // Опубликованные публикации не из архива. Приватность авторов здесь не учитывается: счётчик общий.
+  private countPosts(name: string): Promise<number> {
+    return this.prisma.postHashtag.count({
+      where: { hashtag: { name }, post: { status: 'PUBLISHED', isArchived: false } },
+    });
   }
 }

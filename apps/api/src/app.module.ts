@@ -14,6 +14,7 @@ import { LocationsModule } from './locations/locations.module';
 import { MediaModule } from './media/media.module';
 import { MailModule } from './mail/mail.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PostsModule } from './posts/posts.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrivacyModule } from './privacy/privacy.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -49,6 +50,7 @@ import { UsersModule } from './users/users.module';
     MediaModule,
     TagsModule,
     LocationsModule,
+    PostsModule,
   ],
   providers: [
     // Порядок глобальных guard'ов: Origin -> Session -> Throttler.

@@ -22,7 +22,7 @@ import {
 } from './dto/locations.dto';
 import { LocationsService } from './locations.service';
 
-// GET /locations/{id}/posts появится после T1.B4 (модуль posts).
+// GET /locations/{id}/posts лежит в модуле posts (FeedController).
 @ApiTags('locations')
 @Controller('locations')
 export class LocationsController {

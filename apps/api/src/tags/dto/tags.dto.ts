@@ -4,6 +4,6 @@ export class HashtagDto {
   @ApiProperty({ description: 'Без «#», в нижнем регистре' })
   name!: string;
 
-  @ApiProperty({ description: 'Число публикаций (до T1.B4 всегда 0)' })
+  @ApiProperty({ description: 'Число опубликованных публикаций с хэштегом' })
   postCount!: number;
 }

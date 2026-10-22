@@ -11,6 +11,8 @@ model Location {
   longitude Float?
   createdAt DateTime @default(now())
 
+  posts Post[]
+
   @@index([name])
   @@index([city])
   @@map("locations")

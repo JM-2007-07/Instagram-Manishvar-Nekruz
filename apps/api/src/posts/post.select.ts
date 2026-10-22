@@ -1,0 +1,48 @@
+import type { Prisma } from '@/generated/prisma/client';
+import { locationSelect } from '@/locations/locations.service';
+import { mediaItemSelect } from '@/media/media.service';
+import { userSummarySelect } from '@/users/user-summary.select';
+
+// Поля публикации для PostDto. Другие модули (collections, chats) берут их так:
+//   select: postSelect(viewerId)  ->  posts.toPostDto(row, viewerId)
+export function postSelect(viewerId: string) {
+  return {
+    id: true,
+    shortcode: true,
+    type: true,
+    status: true,
+    authorId: true,
+    caption: true,
+    commentsDisabled: true,
+    hideLikeCount: true,
+    isArchived: true,
+    pinnedAt: true,
+    playCount: true,
+    editedAt: true,
+    publishedAt: true,
+    createdAt: true,
+    author: { select: userSummarySelect(viewerId) },
+    location: { select: locationSelect },
+    media: {
+      orderBy: { position: 'asc' },
+      select: { position: true, altText: true, media: { select: mediaItemSelect } },
+    },
+    userTags: {
+      orderBy: { taggedUserId: 'asc' },
+      select: {
+        position: true,
+        x: true,
+        y: true,
+        tagged: { select: userSummarySelect(viewerId) },
+      },
+    },
+    collaborators: {
+      where: { status: 'ACCEPTED' },
+      select: { user: { select: userSummarySelect(viewerId) } },
+    },
+    likes: { where: { userId: viewerId }, select: { userId: true }, take: 1 },
+    _count: { select: { likes: true } },
+  } satisfies Prisma.PostSelect;
+}
+
+export type PostRow = Prisma.PostGetPayload<{ select: ReturnType<typeof postSelect> }>;

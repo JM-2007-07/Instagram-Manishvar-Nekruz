@@ -98,8 +98,10 @@ export class LocationsService {
   async findById(id: string): Promise<LocationDetailsDto> {
     const row = await this.prisma.location.findUnique({ where: { id }, select: locationSelect });
     if (!row) throw new NotFoundException('Location not found');
-    // TODO(T1.B4): считать публикации места, когда появится модель Post.
-    return { ...toLocationDto(row), postCount: 0 };
+    const postCount = await this.prisma.post.count({
+      where: { locationId: id, status: 'PUBLISHED', isArchived: false },
+    });
+    return { ...toLocationDto(row), postCount };
   }
 
   async create(role: string, dto: CreateLocationDto): Promise<LocationDto> {

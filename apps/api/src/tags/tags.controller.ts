@@ -3,7 +3,7 @@ import { ApiNotFoundResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { HashtagDto } from './dto/tags.dto';
 import { TagsService } from './tags.service';
 
-// TODO(T1.B4): GET /hashtags/:name/posts?tab=TOP|RECENT — выдача появится вместе с моделью Post.
+// GET /hashtags/:name/posts лежит в модуле posts (FeedController).
 @ApiTags('tags')
 @Controller('hashtags')
 export class TagsController {

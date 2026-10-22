@@ -113,6 +113,12 @@ model User {
   // --- tags (B) ---
   // --- locations (B) ---
   // --- posts (B) ---
+  posts              Post[]             @relation("PostAuthor")
+  postLikes          PostLike[]         @relation("PostLikes")
+  postPlays          PostPlay[]         @relation("PostPlays")
+  postTagged         PostUserTag[]      @relation("PostTagged")
+  postCollaborations PostCollaborator[] @relation("PostCollaborations")
+  postMentions       PostMention[]      @relation("PostMentions")
   // --- stories (B) ---
   // --- comments (B) ---
 
