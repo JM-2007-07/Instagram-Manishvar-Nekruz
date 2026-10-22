@@ -3,7 +3,7 @@
 export type MediaPurpose =
   'POST' | 'REEL' | 'STORY' | 'AVATAR' | 'MESSAGE' | 'VOICE' | 'HIGHLIGHT_COVER';
 
-// TODO(T0.5): вернуть тип MediaItem из schema.d.ts вместо unknown
+// TODO(T1.B1): вернуть тип MediaItem из schema.d.ts вместо unknown (появится после backend B)
 export function uploadMedia(
   file: Blob,
   purpose: MediaPurpose,
