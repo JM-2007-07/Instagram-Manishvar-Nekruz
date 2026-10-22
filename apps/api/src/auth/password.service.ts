@@ -7,6 +7,7 @@ import { SessionService } from '@/common/session/session.service';
 import type { Env } from '@/config/env';
 import { MailService } from '@/mail/mail.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RealtimeService } from '@/realtime/realtime.service';
 import { assertPasswordAllowed, hashPassword } from './auth.rules';
 import type { ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 
@@ -21,6 +22,7 @@ export class PasswordService {
     private readonly prisma: PrismaService,
     private readonly sessions: SessionService,
     private readonly mail: MailService,
+    private readonly realtime: RealtimeService,
     config: ConfigService<Env, true>,
   ) {
     this.webOrigin = config.get('WEB_ORIGIN', { infer: true });
@@ -87,6 +89,7 @@ export class PasswordService {
       await tx.user.update({ where: { id: record.user.id }, data: { passwordHash } });
     });
     await this.sessions.revokeAllForUser(record.user.id);
+    this.realtime.disconnectUser(record.user.id);
   }
 
   async changePassword(
@@ -116,6 +119,7 @@ export class PasswordService {
       await tx.passwordResetToken.deleteMany({ where: { userId, usedAt: null } });
       await tx.session.deleteMany({ where: { userId, id: { not: currentSessionId } } });
     });
+    this.realtime.disconnectUser(userId, currentSessionId);
   }
 }
 

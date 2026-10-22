@@ -8,6 +8,7 @@ import * as argon2 from 'argon2';
 import { randomBytes } from 'node:crypto';
 import { SessionService, type SessionMeta } from '@/common/session/session.service';
 import { PrismaService } from '@/prisma/prisma.service';
+import { RealtimeService } from '@/realtime/realtime.service';
 import { UsersService } from '@/users/users.service';
 import { hashPassword } from './auth.rules';
 import type { AuthResult } from './auth.types';
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly sessions: SessionService,
     private readonly users: UsersService,
+    private readonly realtime: RealtimeService,
   ) {}
 
   async login(dto: LoginDto, meta: SessionMeta): Promise<AuthResult> {
@@ -61,6 +63,7 @@ export class AuthService {
 
   async logout(sessionId: string): Promise<void> {
     await this.sessions.revoke(sessionId);
+    this.realtime.disconnectSessions([sessionId]);
   }
 
   async listSessions(userId: string, currentSessionId: string): Promise<SessionDto[]> {
@@ -92,6 +95,7 @@ export class AuthService {
     });
     if (!session) throw new NotFoundException();
     await this.sessions.revoke(session.id);
+    this.realtime.disconnectSessions([session.id]);
     return session.id === currentSessionId;
   }
 

@@ -118,7 +118,7 @@ flowchart TD
 | | `getHiddenUserIds(viewerId): Promise<string[]>`; `visibleUserWhere(viewerId): Prisma.UserWhereInput` (для `where` в своих запросах) | `[]`, `{}` |
 | | **Добавлено в T1.A5:** `visibleAuthorWhere(viewerId): Prisma.UserWhereInput` — для `where` по автору контента: нет блокировок И (сам viewer, или открытый аккаунт, или viewer — ACCEPTED-подписчик), напр. `where: { author: visibility.visibleAuthorWhere(viewerId) }`; `visibleUserWhere` теперь = ACTIVE + подтверждён + без блокировок в обе стороны | настоящая |
 | `NotificationsService` (`src/notifications`) | `create({ recipientId, actorId, type, postId?, commentId?, storyId? }): Promise<void>` | запись в лог |
-| `RealtimeService` (`src/realtime`) | `emitToUsers(userIds, event, payload): void` | ничего |
+| `RealtimeService` (`src/realtime`) | `emitToUsers(userIds, event, payload): void` — в комнаты `user:{id}`; **добавлено в T2.A1:** `disconnectSessions(sessionIds)`, `disconnectUser(userId, exceptSessionId?)` (закрыть сокеты при выходе/смене пароля), `isOnline(userId): boolean` (присутствие в памяти) | ничего; настоящая с T2.A1 (без запущенного сервера по-прежнему ничего не делает) |
 | `SessionService` (`src/common/session`) | `@CurrentUser()` → `SessionUser { id, role, sessionId }` | настоящая |
 | `UsersService` (`src/users`) | `toSummary(row)` + `userSummarySelect` → `UserSummaryDto` | `avatarUrl = null`, `hasActiveStory = false` |
 | тесты (`test/helpers`) | `createTestApp()`, `resetDb(app)`, `createUser(app, overrides?)`, `loginAs(app, user)` → `'sid=…'`, `ORIGIN` | настоящие |
