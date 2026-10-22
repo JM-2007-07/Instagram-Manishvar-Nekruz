@@ -5,6 +5,8 @@ export const DESIGN = {
   sidebarExpanded: 238, // раскрывается поверх контента при наведении
   guestHeaderHeight: 60, // верхняя панель гостя
   mobileBreakpoint: 768, // ниже — мобильная оболочка
+  mobileTopBarHeight: 60, // 📝 сверить: верхняя панель мобильной оболочки
+  mobileBottomBarHeight: 50, // 📝 сверить: нижняя панель вкладок
 
   // Лента
   feedColumn: 630,
