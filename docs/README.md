@@ -77,6 +77,7 @@
 | [CODING_CONVENTIONS.md](development/CODING_CONVENTIONS.md) | как писать код: шаблоны модулей, RTK Query, дизайн-токены, тесты |
 | [CHANGE_PROCESS.md](development/CHANGE_PROCESS.md) | изменение API-контракта и `schema.prisma` |
 | [TESTING.md](development/TESTING.md) | стратегия тестирования |
+| [ONBOARDING.md](development/ONBOARDING.md) | подключение студента: программы, Git-логин, клонирование, Claude Code, ежедневная работа, порядок задач B |
 | [LOCAL_SETUP.md](development/LOCAL_SETUP.md) | запуск на своей машине |
 
 ## Что читать под задачу
