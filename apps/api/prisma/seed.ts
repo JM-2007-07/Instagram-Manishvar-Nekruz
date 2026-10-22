@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as argon2 from 'argon2';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { seedLocations } from './seed/locations';
 
 // ТЕСТОВЫЕ ДАННЫЕ ДЛЯ РАЗРАБОТКИ. Пароли ниже публичные и известны всем; в production не запускать.
 const DEMO_PASSWORD = 'Demo-password-123';
@@ -37,7 +38,7 @@ async function main(): Promise<void> {
       });
     }
     // Данные модулей добавляются здесь, после пользователей (CONTRIBUTING «Общие файлы»):
-    //   await seedLocations(prisma);  // prisma/seed/locations.ts
+    await seedLocations(prisma); // prisma/seed/locations.ts (B)
 
     console.log(`Seed done: ${users.length} users (demo password in prisma/seed.ts)`);
   } finally {

@@ -1,0 +1,10 @@
+// Хэштеги (владелец — Студент B, T1.B2).
+// PostHashtag добавит модуль posts (T1.B4), PostMention — posts, CommentMention — comments (T1.B5).
+
+model Hashtag {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique // без «#», всегда в нижнем регистре
+  createdAt DateTime @default(now())
+
+  @@map("hashtags")
+}

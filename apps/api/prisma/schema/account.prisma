@@ -108,6 +108,10 @@ model User {
   callsInitiated     Call[]            @relation("CallInitiator")
   callParticipations CallParticipant[] @relation("CallParticipation")
 
+  // --- media (B) ---
+  mediaFiles MediaFile[] @relation("MediaOwner")
+  // --- tags (B) ---
+  // --- locations (B) ---
   // --- posts (B) ---
   // --- stories (B) ---
   // --- comments (B) ---

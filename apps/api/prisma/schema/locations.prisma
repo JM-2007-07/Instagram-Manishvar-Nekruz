@@ -1,0 +1,17 @@
+// Справочник мест (владелец — Студент B). Связь Post.locationId добавит T1.B4.
+model Location {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  city      String
+  state     String?
+  zipCode   String?
+  country   String
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@index([city])
+  @@map("locations")
+}
