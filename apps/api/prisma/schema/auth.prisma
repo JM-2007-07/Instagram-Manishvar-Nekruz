@@ -1,0 +1,40 @@
+// Вход и подтверждения: EmailVerificationCode, PasswordResetToken (владелец — Студент A).
+// OAuthAccount, UsernameChange, TwoFactorSecret появятся в T4.A1 / T4.A4.
+
+enum VerificationPurpose {
+  SIGNUP
+  EMAIL_CHANGE
+}
+
+// Код из письма. В БД лежит только хеш; не больше 5 попыток и 15 минут жизни (проверяет AuthService).
+model EmailVerificationCode {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @db.Uuid
+  email     String // адрес, на который отправлен код (при смене email — новый)
+  codeHash  String
+  purpose   VerificationPurpose
+  attempts  Int                 @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@map("email_verification_codes")
+}
+
+// Одноразовый токен сброса пароля. В БД лежит sha256 токена из ссылки.
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './auth/auth.module';
 import { OriginGuard } from './common/guards/origin.guard';
 import { SessionGuard } from './common/session/session.guard';
 import { SessionModule } from './common/session/session.module';
+import { AppThrottlerGuard, AppThrottlerModule } from './common/throttler/app-throttler';
 import { AppConfigModule } from './config/app-config.module';
 import { HealthModule } from './health/health.module';
 import { MailModule } from './mail/mail.module';
@@ -20,16 +22,19 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     MailModule,
     SessionModule,
+    AppThrottlerModule,
     UsersModule,
     PrivacyModule,
     NotificationsModule,
     RealtimeModule,
     HealthModule,
+    AuthModule,
   ],
   providers: [
-    // Порядок глобальных guard'ов: Origin -> Session -> Throttler (Throttler — T1.A1).
+    // Порядок глобальных guard'ов: Origin -> Session -> Throttler.
     { provide: APP_GUARD, useClass: OriginGuard },
     { provide: APP_GUARD, useClass: SessionGuard },
+    { provide: APP_GUARD, useClass: AppThrottlerGuard },
   ],
 })
 export class AppModule {}

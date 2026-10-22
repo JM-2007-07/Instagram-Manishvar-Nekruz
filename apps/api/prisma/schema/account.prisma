@@ -59,6 +59,10 @@ model User {
   sessions Session[]
   settings UserSettings?
 
+  // --- auth (A) ---
+  emailCodes  EmailVerificationCode[]
+  resetTokens PasswordResetToken[]
+
   // --- posts (B) ---
   // --- stories (B) ---
   // --- comments (B) ---

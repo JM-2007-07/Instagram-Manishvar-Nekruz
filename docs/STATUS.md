@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-22 14:14.
+> Последнее обновление: 2026-10-22 14:33.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -19,14 +19,14 @@
 
 | Студент | Задача | Ветка | Блокер |
 |---|---|---|---|
-| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2 ✔ → T0.3 ✔ → PR для C0 → T1.A1… — весь backend A в одной ветке (решение A) | `chore/root-tooling`, `feat/backend-a` | ревью B |
-| B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md), ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) → **T0.4** (после влития T0.1) | `feat/web-foundation` | T0.1 в `main` |
+| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2, T0.3 на ревью ([PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6)) → T1.A1… — весь backend A в одной ветке (решение A) | `chore/root-tooling`, `feat/backend-a` | ревью B |
+| B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md), ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) и [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) → **T0.4** (после #5), Phase 1 (после #6, C0) | `feat/web-foundation` | #5 и #6 в `main` |
 
 ### Контрольные точки
 
 | Точка | Состояние |
 |---|---|
-| C0 — фундамент готов (T0.2, T0.3) | 🟨 код готов в `feat/backend-a`, ждёт PR и влития |
+| C0 — фундамент готов (T0.2, T0.3) | 🟦 [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) на ревью (поверх PR #5) |
 | MA-1 — backend A готов для frontend A | ⬜ |
 | MB-1 — backend B готов для frontend B | ⬜ |
 | MA-2 — Direct готов | ⬜ |
@@ -51,13 +51,13 @@
 | ID | Задача (кратко) | Владелец | Обяз. | Статус | Ветка / PR | Блокер |
 |---|---|---|---|---|---|---|
 | T0.1 | Корневые инструменты | A | ✔ | 🟦 | `chore/root-tooling` → [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) | ревью B |
-| T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | 🟨 | `feat/backend-a` (коммит, ждёт PR) | T0.1 в `main` |
-| T0.3 | Общие контракты и заглушки (C0) | A | ✔ | 🟨 | `feat/backend-a` (коммит, ждёт PR) | PR в `main` |
+| T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | 🟦 | `feat/api-foundation` → [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) | ревью B; сначала PR #5 |
+| T0.3 | Общие контракты и заглушки (C0) | A | ✔ | 🟦 | `feat/api-foundation` → [PR #6](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/6) | ревью B; сначала PR #5 |
 | T0.4 | Каркас Next.js + токены | B | ✔ | ⬜ | — | T0.1 |
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | ⬜ | — | T0.2, T0.4 |
 | T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
 | T0.7 | Оболочка `(main)` | B | ✔ | ⬜ | — | T0.4 |
-| T1.A1 | `auth` | A | ✔ | ⬜ | — | C0 |
+| T1.A1 | `auth` | A | ✔ | 🟨 | `feat/backend-a` (коммит; ревью с T1.A3) | C0 в `main` |
 | T1.A2 | Frontend входа | A | ✔ | ⬜ | — | T1.A1, T0.4 |
 | T1.A3 | `users` + `settings` | A | ✔ | ⬜ | — | T1.A1; аватар — T1.B1 |
 | T1.A4 | `follows` | A | ✔ | ⬜ | — | T1.A3 |
@@ -158,6 +158,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 14:33 | [auth](stories/2026-10-22_1433_auth.md) | T1.A1: регистрация с кодом, вход, выход, сброс и смена пароля, сессии, лимиты; PR #6 для C0 |
 | 2026-10-22 14:14 | [api-core-contracts](stories/2026-10-22_1414_api-core-contracts.md) | T0.3 (C0): User/Session/UserSettings, сессии, SessionGuard, заглушки общих сервисов, тестовые помощники, seed |
 | 2026-10-22 12:15 | [api-foundation](stories/2026-10-22_1215_api-foundation.md) | T0.2: каркас NestJS 11 + Prisma 7, формат ошибок, Origin-guard, курсоры, Swagger, ESLint, Jest; весь backend A — в `feat/backend-a` |
 | 2026-10-22 10:39 | [root-tooling](stories/2026-10-22_1039_root-tooling.md) | T0.1: Prettier и `concurrently` в корне; PR #4 влит, Phase −1 завершена |
