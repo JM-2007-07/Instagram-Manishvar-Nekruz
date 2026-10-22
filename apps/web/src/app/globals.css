@@ -1,0 +1,227 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Тёмная тема — класс .dark на <html> */
+@custom-variant dark (&:is(.dark *));
+
+/* Токены из docs/design/DESIGN_SYSTEM.md. Цвета — только здесь, в компонентах #… не пишем. */
+:root {
+  /* §2.1 основные (светлая тема) */
+  --background: #ffffff;
+  --background-secondary: #f3f5f7;
+  --background-elevated: #ffffff;
+  --background-elevated-hover: #efefef;
+  --background-highlight: #f3f5f7;
+  --background-banner: #ffffff;
+  --hover-overlay: rgba(12, 16, 20, 0.05);
+  --text-primary: #0c1014;
+  --text-secondary: #6a717a;
+  --text-tertiary: #c7c7c7;
+  --text-link: #4150f7;
+  --text-link-profile: #00376b;
+  --icon-primary: #0c1014;
+  --icon-secondary: #8e8e8e;
+  --separator: #dbdfe4;
+  --stroke: #dbdbdb;
+  --focus-ring: #a8a8a8;
+
+  /* §2.2 кнопки */
+  --button-primary: #4a5df9;
+  --button-primary-hover: #4150f7;
+  --button-primary-disabled: #b8cdff;
+  --button-primary-text: #ffffff;
+  --button-secondary: #f0f2f5;
+  --button-secondary-hover: #e7eaee;
+  --button-secondary-text: #0c1014;
+  --button-borderless-text: #4150f7;
+  --button-borderless-text-hover: #2536d0;
+
+  /* §2.3 состояния и акценты */
+  --badge: #ff3040;
+  --destructive: #ed4956;
+  --success: #58c322;
+  --close-friends: #1cd14f;
+  --live: #ff0169;
+  --facebook: #3579ea;
+  --bubble-incoming: #f3f5f7;
+  --bubble-outgoing: #4a5df9;
+  --toast: rgba(37, 41, 46, 0.95);
+  /* Текст на тёмном фоне тоста; в DESIGN_SYSTEM явно не задан — белый, как у Instagram */
+  --toast-foreground: #ffffff;
+  --shadow-strong: 0 4px 32px 0 rgba(11, 16, 20, 0.16);
+  --story-ring: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); /* 📝 */
+  --story-ring-seen: var(--stroke); /* 📝 */
+
+  /* §2.4 поля ввода */
+  --input-border-focus: #212328;
+  --input-disabled: #f3f5f7;
+  --radius-input: 12px;
+  --radius-search: 25px;
+
+  /* §5 движение */
+  --ease-move: cubic-bezier(0.17, 0.17, 0, 1);
+  --ease-hover: cubic-bezier(0.33, 0.33, 0.33, 1);
+  --duration-xxs: 100ms;
+
+  /* Токены shadcn/ui, связанные с нашими (§6) */
+  --foreground: #0c1014;
+  --card: #ffffff;
+  --card-foreground: #0c1014;
+  --popover: #ffffff;
+  --popover-foreground: #0c1014;
+  --primary: #4a5df9;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f2f5;
+  --secondary-foreground: #0c1014;
+  --muted: #f3f5f7;
+  --muted-foreground: #6a717a;
+  --accent: #efefef;
+  --accent-foreground: #0c1014;
+  --destructive-foreground: #ffffff;
+  --border: #dbdfe4;
+  --input: #dbdfe4;
+  --ring: #a8a8a8;
+  --radius: 0.5rem; /* 8px — кнопки */
+}
+
+.dark {
+  --background: #0c1014;
+  --background-secondary: #25292e;
+  --background-elevated: #212328;
+  --background-elevated-hover: #363636;
+  --background-highlight: #25292e;
+  --background-banner: #262626;
+  --hover-overlay: rgba(255, 255, 255, 0.1);
+  --text-primary: #f8f9f9;
+  --text-secondary: #a2aab4;
+  --text-tertiary: #737373;
+  --text-link: #708dff;
+  --text-link-profile: #e0f1ff;
+  --icon-primary: #f8f9f9;
+  --icon-secondary: #8e8e8e;
+  --separator: #2b3036;
+  --stroke: #363636;
+  --focus-ring: #555555;
+
+  --button-primary-disabled: #18208b;
+  --button-secondary: #25292e;
+  --button-secondary-hover: #363c44;
+  --button-secondary-text: #ffffff;
+  --button-borderless-text: #708dff;
+  --button-borderless-text-hover: #85a1ff;
+
+  --bubble-incoming: #25292e;
+
+  --input-border-focus: #f8f9f9;
+  --input-disabled: #25292e;
+
+  --foreground: #f8f9f9;
+  --card: #0c1014;
+  --card-foreground: #f8f9f9;
+  --popover: #212328;
+  --popover-foreground: #f8f9f9;
+  --secondary: #25292e;
+  --secondary-foreground: #ffffff;
+  --muted: #25292e;
+  --muted-foreground: #a2aab4;
+  --accent: #363636;
+  --accent-foreground: #f8f9f9;
+  --border: #2b3036;
+  --input: #5e646d;
+  --ring: #555555;
+}
+
+/* Имена Tailwind: bg-background, text-muted-foreground, bg-primary и т. д. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* свои токены проекта */
+  --color-background-secondary: var(--background-secondary);
+  --color-background-elevated: var(--background-elevated);
+  --color-background-elevated-hover: var(--background-elevated-hover);
+  --color-background-highlight: var(--background-highlight);
+  --color-background-banner: var(--background-banner);
+  --color-hover-overlay: var(--hover-overlay);
+  --color-link: var(--text-link);
+  --color-link-profile: var(--text-link-profile);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-icon-secondary: var(--icon-secondary);
+  --color-separator: var(--separator);
+  --color-stroke: var(--stroke);
+  --color-button-primary-hover: var(--button-primary-hover);
+  --color-button-primary-disabled: var(--button-primary-disabled);
+  --color-button-secondary-hover: var(--button-secondary-hover);
+  --color-button-borderless: var(--button-borderless-text);
+  --color-button-borderless-hover: var(--button-borderless-text-hover);
+  --color-badge: var(--badge);
+  --color-success: var(--success);
+  --color-close-friends: var(--close-friends);
+  --color-live: var(--live);
+  --color-facebook: var(--facebook);
+  --color-bubble-incoming: var(--bubble-incoming);
+  --color-bubble-outgoing: var(--bubble-outgoing);
+  --color-toast: var(--toast);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* §3 шрифт и размеры текста: text-14 = 14px / 18px */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --text-10: 10px;
+  --text-10--line-height: 12px;
+  --text-11: 11px;
+  --text-11--line-height: 13px;
+  --text-12: 12px;
+  --text-12--line-height: 16px;
+  --text-14: 14px;
+  --text-14--line-height: 18px;
+  --text-16: 16px;
+  --text-16--line-height: 20px;
+  --text-18: 18px;
+  --text-18--line-height: 24px;
+  --text-20: 20px;
+  --text-20--line-height: 25px;
+  --text-24: 24px;
+  --text-24--line-height: 27px;
+  --text-26: 26px;
+  --text-26--line-height: 28px;
+  --text-28: 28px;
+  --text-28--line-height: 32px;
+  --text-30: 30px;
+  --text-30--line-height: 36px;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 14px; /* базовый текст 14/18, вес 400 */
+    line-height: 18px;
+    font-weight: 400;
+  }
+}

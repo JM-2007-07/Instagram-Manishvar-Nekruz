@@ -1,0 +1,21 @@
+# Зависимости и результаты сборки
+node_modules/
+dist/
+.next/
+out/
+build/
+coverage/
+test-results/
+playwright-report/
+
+# Lock-файл ведёт npm
+package-lock.json
+
+# Генерируемые файлы: не редактируются руками (AGENTS.md §5)
+docs/api/openapi.json
+docs/api/original-swagger.json
+apps/web/src/lib/api/schema.d.ts
+apps/api/prisma/migrations/
+
+# Markdown не форматируется: Prettier перестроил бы таблицы во всей документации (решение T0.1)
+*.md

@@ -1,7 +1,18 @@
 # apps/web — Next.js frontend
 
-> **Статус:** приложение ещё не создано. Каталог содержит только этот файл и `.env.example`.
-> Каркас создаётся в Phase 0 (см. [docs/IMPLEMENTATION_PLAN.md](../../docs/IMPLEMENTATION_PLAN.md)).
+> **Статус:** каркас (T0.4, ветка `feat/web-foundation`) и оболочка `(main)` (T0.7, ветка `feat/web-shell`) — PR ещё не открыты.
+> Каркас: Next.js 16, Tailwind 4, токены [DESIGN_SYSTEM](../../docs/design/DESIGN_SYSTEM.md) (светлая и тёмная темы), RTK Query `baseApi`, Vitest.
+> Страницы и функции появятся в следующих задачах (см. [docs/IMPLEMENTATION_PLAN.md](../../docs/IMPLEMENTATION_PLAN.md)).
+
+## Запуск
+
+```bash
+cp apps/web/.env.example apps/web/.env.local   # из корня репозитория
+npm run dev:web                                 # из корня: http://localhost:3000
+```
+
+Главная `/` требует сессию (cookie `sid`): без неё — редирект на `/accounts/login/` (страница входа — T1.A2, Студент A).
+Пока API не запущен, страницы отдадут ошибку или редирект на вход. Страница `/health` удалена в T0.7.
 
 Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, Redux Toolkit (RTK Query), Socket.IO-клиент, WebRTC.
 Интерфейс повторяет веб-Instagram по [docs/design/](../../docs/design/DESIGN_SYSTEM.md) со своим брендом.
