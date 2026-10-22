@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { execFileSync } from 'node:child_process';
@@ -51,7 +52,9 @@ describe('Media: загрузка, обработка, раздача, прив�
   beforeAll(async () => {
     storageDir = await mkdtemp(join(tmpdir(), 'photogram-test-storage-'));
     // Значение из .env важнее process.env, заданного здесь, поэтому каталог передаём сервису напрямую.
-    const testConfig = { get: (key: string) => (key === 'STORAGE_LOCAL_DIR' ? storageDir : undefined) };
+    const testConfig = {
+      get: (key: string) => (key === 'STORAGE_LOCAL_DIR' ? storageDir : undefined),
+    };
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(StorageService)
       .useValue(new StorageService(testConfig as ConfigService))
@@ -267,9 +270,21 @@ describe('Media: загрузка, обработка, раздача, прив�
   });
 
   describe('доступ к привязанному файлу = доступ к объекту', () => {
+    // Пост с этим файлом: доступ к файлу поста проверяется по самому посту.
+    const linkPost = (mediaId: string, extra: { isArchived?: boolean } = {}) =>
+      prisma.post.create({
+        data: {
+          authorId: alice.id,
+          shortcode: randomUUID().slice(0, 11),
+          ...extra,
+          media: { create: [{ position: 0, mediaId }] },
+        },
+      });
+
     it('открытый аккаунт: файл поста виден другому пользователю', async () => {
       const item = await uploadImage(aliceCookie);
       await media.attach(alice.id, [item.id], { target: 'POST', purposes: ['POST'] });
+      await linkPost(item.id);
       await request(app.getHttpServer()).get(item.url).set('Cookie', bobCookie).expect(200);
     });
 
@@ -277,6 +292,7 @@ describe('Media: загрузка, обработка, раздача, прив�
       await prisma.user.update({ where: { id: alice.id }, data: { isPrivate: true } });
       const item = await uploadImage(aliceCookie);
       await media.attach(alice.id, [item.id], { target: 'POST', purposes: ['POST'] });
+      await linkPost(item.id);
       await request(app.getHttpServer()).get(item.url).set('Cookie', bobCookie).expect(404);
 
       await prisma.follow.create({
@@ -288,7 +304,15 @@ describe('Media: загрузка, обработка, раздача, прив�
     it('блокировка скрывает файл', async () => {
       const item = await uploadImage(aliceCookie);
       await media.attach(alice.id, [item.id], { target: 'POST', purposes: ['POST'] });
+      await linkPost(item.id);
       await prisma.block.create({ data: { blockerId: alice.id, blockedId: bob.id } });
+      await request(app.getHttpServer()).get(item.url).set('Cookie', bobCookie).expect(404);
+    });
+
+    it('архивный пост: файл другим 404', async () => {
+      const item = await uploadImage(aliceCookie);
+      await media.attach(alice.id, [item.id], { target: 'POST', purposes: ['POST'] });
+      await linkPost(item.id, { isArchived: true });
       await request(app.getHttpServer()).get(item.url).set('Cookie', bobCookie).expect(404);
     });
 
@@ -401,7 +425,16 @@ describe('Media: загрузка, обработка, раздача, прив�
       const path = join(work, 'in.mp4');
       execFileSync(
         FFMPEG,
-        ['-y', '-f', 'lavfi', '-i', 'testsrc=duration=1:size=320x240:rate=10', '-pix_fmt', 'yuv420p', path],
+        [
+          '-y',
+          '-f',
+          'lavfi',
+          '-i',
+          'testsrc=duration=1:size=320x240:rate=10',
+          '-pix_fmt',
+          'yuv420p',
+          path,
+        ],
         { stdio: 'ignore' },
       );
       const res = await request(app.getHttpServer())
@@ -438,7 +471,16 @@ describe('Media: загрузка, обработка, раздача, прив�
       const path = join(work, 'in2.mp4');
       execFileSync(
         FFMPEG,
-        ['-y', '-f', 'lavfi', '-i', 'testsrc=duration=1:size=160x120:rate=10', '-pix_fmt', 'yuv420p', path],
+        [
+          '-y',
+          '-f',
+          'lavfi',
+          '-i',
+          'testsrc=duration=1:size=160x120:rate=10',
+          '-pix_fmt',
+          'yuv420p',
+          path,
+        ],
         { stdio: 'ignore' },
       );
       await request(app.getHttpServer())

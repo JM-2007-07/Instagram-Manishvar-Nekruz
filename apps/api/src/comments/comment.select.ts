@@ -1,4 +1,5 @@
 import type { Prisma } from '@/generated/prisma/client';
+import { visibleUserCondition } from '@/posts/visible-user.where';
 import { userSummarySelect } from '@/users/user-summary.select';
 
 // Какие комментарии видит viewer: автор виден (активный, без блокировок в обе стороны — те же условия, что в
@@ -6,12 +7,7 @@ import { userSummarySelect } from '@/users/user-summary.select';
 // Чистая функция: нужна и в postSelect (commentCount, previewComments), где нет доступа к сервисам.
 export function visibleCommentWhere(viewerId: string): Prisma.CommentWhereInput {
   return {
-    author: {
-      status: 'ACTIVE',
-      emailVerifiedAt: { not: null },
-      blocksMade: { none: { blockedId: viewerId } },
-      blocksReceived: { none: { blockerId: viewerId } },
-    },
+    author: visibleUserCondition(viewerId),
     OR: [{ isPendingApproval: false }, { authorId: viewerId }, { post: { authorId: viewerId } }],
   };
 }

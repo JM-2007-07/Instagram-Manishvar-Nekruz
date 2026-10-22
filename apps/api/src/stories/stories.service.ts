@@ -27,7 +27,7 @@ import {
   parseStickerResponse,
   summarizeResponses,
 } from './stickers.rules';
-import { StoryRow, storySelect } from './story.select';
+import { StoryRow, isSharedPostVisible, storySelect } from './story.select';
 
 const STORY_TTL_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_DURATION_SEC = 5;
@@ -157,6 +157,15 @@ export class StoriesService {
     return row;
   }
 
+  private async loadAny(storyId: string) {
+    const row = await this.prisma.story.findUnique({
+      where: { id: storyId },
+      select: { id: true, mediaId: true },
+    });
+    if (!row) throw new NotFoundException();
+    return row;
+  }
+
   private async loadOwn(user: SessionUser, storyId: string) {
     const row = await this.prisma.story.findFirst({
       where: { id: storyId, authorId: user.id },
@@ -170,7 +179,8 @@ export class StoriesService {
 
   toStoryDto(row: StoryRow, viewerId: string): StoryDto {
     const isAuthor = row.authorId === viewerId;
-    const post = row.sharedPost;
+    const post =
+      row.sharedPost && isSharedPostVisible(row.sharedPost, viewerId) ? row.sharedPost : null;
     const previewMedia = post?.media[0]?.media;
     return {
       id: row.id,
@@ -195,7 +205,7 @@ export class StoriesService {
         width: s.width,
         height: s.height,
         rotation: s.rotation,
-        data: s.data as Record<string, unknown>,
+        data: this.stickerDataFor(s.type, s.data as Record<string, unknown>, isAuthor),
         myResponse: s.responses[0]?.value ?? null,
       })),
       durationSec: row.durationSec,
@@ -206,6 +216,18 @@ export class StoriesService {
       viewerCount: isAuthor ? row._count.views : null,
       likeCount: isAuthor ? row._count.likes : null,
     };
+  }
+
+  // Правильный ответ викторины видит только автор истории.
+  private stickerDataFor(
+    type: string,
+    data: Record<string, unknown>,
+    isAuthor: boolean,
+  ): Record<string, unknown> {
+    if (type !== 'QUIZ' || isAuthor) return data;
+    const { correctIndex: _hidden, ...rest } = data;
+    void _hidden;
+    return rest;
   }
 
   private async getDto(viewerId: string, storyId: string): Promise<StoryDto> {
@@ -428,7 +450,9 @@ export class StoriesService {
   }
 
   async remove(user: SessionUser, storyId: string): Promise<void> {
-    const story = await this.loadOwn(user, storyId);
+    // Автор удаляет свою историю, администратор — любую (по жалобе).
+    const story =
+      user.role === 'ADMIN' ? await this.loadAny(storyId) : await this.loadOwn(user, storyId);
     await this.prisma.$transaction([
       this.prisma.notification.deleteMany({ where: { storyId } }),
       this.prisma.story.delete({ where: { id: storyId } }), // стикеры, просмотры, лайки, актуальное — каскадом

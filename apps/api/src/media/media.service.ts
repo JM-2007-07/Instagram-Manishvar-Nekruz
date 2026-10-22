@@ -191,8 +191,12 @@ export class MediaService {
     const maxBytes = rule.maxBytes[kind];
     if (maxBytes !== undefined && size > maxBytes)
       throw new PayloadTooLargeException('File is too large');
-    if (rule.maxDurationSec !== undefined && (info?.durationSec ?? 0) > rule.maxDurationSec) {
-      throw new PayloadTooLargeException('Media is too long');
+    if (rule.maxDurationSec !== undefined && info) {
+      // Длительность неизвестна — лимит проверить нельзя, файл не принимаем.
+      if (!info.durationSec) throw new UnsupportedMediaTypeException('Unsupported file type');
+      if (info.durationSec > rule.maxDurationSec) {
+        throw new PayloadTooLargeException('Media is too long');
+      }
     }
 
     const id = randomUUID();
@@ -201,22 +205,28 @@ export class MediaService {
     // Видео и голосовые: сохраняем исходник и обрабатываем в фоне (ADR 0016).
     const storageKey = `${id}.orig`;
     await this.storage.save(storageKey, createReadStream(tmpPath));
-    const row = await this.prisma.mediaFile.create({
-      data: {
-        id,
-        ownerId,
-        purpose,
-        kind,
-        status: 'PROCESSING',
-        storageKey,
-        mimeType: 'application/octet-stream',
-        sizeBytes: size,
-        width: info?.width ?? null,
-        height: info?.height ?? null,
-        durationSec: info?.durationSec ?? null,
-      },
-      select: mediaItemSelect,
-    });
+    let row: MediaItemRow;
+    try {
+      row = await this.prisma.mediaFile.create({
+        data: {
+          id,
+          ownerId,
+          purpose,
+          kind,
+          status: 'PROCESSING',
+          storageKey,
+          mimeType: 'application/octet-stream',
+          sizeBytes: size,
+          width: info?.width ?? null,
+          height: info?.height ?? null,
+          durationSec: info?.durationSec ?? null,
+        },
+        select: mediaItemSelect,
+      });
+    } catch (error) {
+      await this.storage.delete(storageKey).catch(() => undefined);
+      throw error;
+    }
     this.processing.enqueue(id);
     return this.toMediaItem(row);
   }
@@ -317,7 +327,15 @@ export class MediaService {
         return false; // не привязанный файл видит только владелец
       case 'STORY':
         return this.canViewStoryMedia(viewerId, row);
-      case 'POST':
+      case 'POST': {
+        // Файл поста виден, если виден сам пост: опубликован, не в архиве, автор доступен.
+        const link = await this.prisma.postMedia.findUnique({
+          where: { mediaId: row.id },
+          select: { post: { select: { status: true, isArchived: true } } },
+        });
+        if (!link || link.post.status !== 'PUBLISHED' || link.post.isArchived) return false;
+        return this.visibility.canViewContent(viewerId, row.ownerId);
+      }
       case 'HIGHLIGHT_COVER':
         return this.visibility.canViewContent(viewerId, row.ownerId);
       case 'AVATAR':

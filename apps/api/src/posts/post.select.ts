@@ -3,6 +3,7 @@ import type { Prisma } from '@/generated/prisma/client';
 import { locationSelect } from '@/locations/locations.service';
 import { mediaItemSelect } from '@/media/media.service';
 import { userSummarySelect } from '@/users/user-summary.select';
+import { visibleUserCondition } from './visible-user.where';
 
 // Поля публикации для PostDto. Другие модули (collections, chats) берут их так:
 //   select: postSelect(viewerId)  ->  posts.toPostDto(row, viewerId)
@@ -29,6 +30,7 @@ export function postSelect(viewerId: string) {
       select: { position: true, altText: true, media: { select: mediaItemSelect } },
     },
     userTags: {
+      where: { tagged: visibleUserCondition(viewerId) },
       orderBy: { taggedUserId: 'asc' },
       select: {
         position: true,
@@ -38,7 +40,7 @@ export function postSelect(viewerId: string) {
       },
     },
     collaborators: {
-      where: { status: 'ACCEPTED' },
+      where: { status: 'ACCEPTED', user: visibleUserCondition(viewerId) },
       select: { user: { select: userSummarySelect(viewerId) } },
     },
     likes: { where: { userId: viewerId }, select: { userId: true }, take: 1 },

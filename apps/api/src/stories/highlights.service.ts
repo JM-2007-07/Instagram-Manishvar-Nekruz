@@ -21,11 +21,20 @@ const highlightSelect = {
   coverMedia: { select: { id: true, thumbnailKey: true } },
   items: {
     orderBy: { position: 'asc' },
-    take: 1,
-    select: { story: { select: { media: { select: { id: true, thumbnailKey: true } } } } },
+    select: {
+      story: {
+        select: {
+          authorId: true,
+          audience: true,
+          expiresAt: true,
+          media: { select: { id: true, thumbnailKey: true } },
+        },
+      },
+    },
   },
-  _count: { select: { items: true } },
 } as const;
+
+type HighlightStory = { authorId: string; audience: string; expiresAt: Date };
 
 @Injectable()
 export class HighlightsService {
@@ -36,21 +45,30 @@ export class HighlightsService {
     private readonly stories: StoriesService,
   ) {}
 
-  private toDto(row: {
-    id: string;
-    title: string;
-    coverMedia: { id: string; thumbnailKey: string | null } | null;
-    items: { story: { media: { id: string; thumbnailKey: string | null } | null } }[];
-    _count: { items: number };
-  }): HighlightDto {
-    const cover = row.coverMedia ?? row.items[0]?.story.media ?? null;
+  // storyCount и обложка-фолбэк считаются только по историям, которые видит зритель (аудитория, «скрыть от»).
+  private async toDto(
+    viewerId: string,
+    row: {
+      id: string;
+      title: string;
+      coverMedia: { id: string; thumbnailKey: string | null } | null;
+      items: {
+        story: HighlightStory & { media: { id: string; thumbnailKey: string | null } | null };
+      }[];
+    },
+  ): Promise<HighlightDto> {
+    const visible = [];
+    for (const item of row.items) {
+      if (await this.stories.isAllowed(viewerId, item.story, true)) visible.push(item);
+    }
+    const cover = row.coverMedia ?? visible[0]?.story.media ?? null;
     return {
       id: row.id,
       title: row.title,
       coverUrl: cover
         ? `/api/v1/media/${cover.id}${cover.thumbnailKey ? '?variant=thumb' : ''}`
         : null,
-      storyCount: row._count.items,
+      storyCount: visible.length,
     };
   }
 
@@ -63,12 +81,12 @@ export class HighlightsService {
     return row;
   }
 
-  private async getDto(highlightId: string): Promise<HighlightDto> {
+  private async getDto(viewerId: string, highlightId: string): Promise<HighlightDto> {
     const row = await this.prisma.highlight.findUniqueOrThrow({
       where: { id: highlightId },
       select: highlightSelect,
     });
-    return this.toDto(row);
+    return this.toDto(viewerId, row);
   }
 
   // Все истории должны быть свои (в том числе истёкшие), без повторов.
@@ -91,7 +109,7 @@ export class HighlightsService {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: highlightSelect,
     });
-    return rows.map((r) => this.toDto(r));
+    return Promise.all(rows.map((r) => this.toDto(viewerId, r)));
   }
 
   async getById(viewerId: string, highlightId: string): Promise<HighlightWithStoriesDto> {
@@ -113,7 +131,7 @@ export class HighlightsService {
         stories.push(this.stories.toStoryDto(story, viewerId));
       }
     }
-    return { ...this.toDto(row), stories };
+    return { ...(await this.toDto(viewerId, row)), stories };
   }
 
   async create(user: SessionUser, dto: HighlightCreateDto): Promise<HighlightDto> {
@@ -138,7 +156,7 @@ export class HighlightsService {
         select: { id: true },
       });
     });
-    return this.getDto(created.id);
+    return this.getDto(user.id, created.id);
   }
 
   async update(
@@ -169,7 +187,7 @@ export class HighlightsService {
     // Старую обложку удаляем после успешной транзакции.
     if (dto.coverMediaId && current.coverMediaId)
       await this.media.removeFiles([current.coverMediaId]);
-    return this.getDto(highlightId);
+    return this.getDto(user.id, highlightId);
   }
 
   async setStories(
@@ -186,7 +204,7 @@ export class HighlightsService {
       }),
       this.prisma.highlight.update({ where: { id: highlightId }, data: { updatedAt: new Date() } }),
     ]);
-    return this.getDto(highlightId);
+    return this.getDto(user.id, highlightId);
   }
 
   async remove(user: SessionUser, highlightId: string): Promise<void> {

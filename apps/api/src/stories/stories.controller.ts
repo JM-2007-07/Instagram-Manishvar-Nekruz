@@ -61,7 +61,7 @@ export class StoriesController {
   }
 
   @Post('stories')
-  @Throttle({ default: { limit: 50, ttl: hours(1) } })
+  @Throttle({ default: { limit: 25, ttl: hours(1) } })
   @ApiCreatedResponse({ type: StoryDto })
   @ApiBadRequestResponse()
   @ApiForbiddenResponse({ description: 'Автор поста запретил делиться в истории' })
@@ -105,6 +105,7 @@ export class StoriesController {
   }
 
   @Put('stories/:storyId/like')
+  @Throttle({ default: { limit: 300, ttl: hours(1) } })
   @HttpCode(204)
   @ApiNoContentResponse()
   @ApiNotFoundResponse()

@@ -21,7 +21,7 @@ import {
   ApiTags,
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
-import { Throttle, minutes } from '@nestjs/throttler';
+import { Throttle, hours, minutes } from '@nestjs/throttler';
 import { CursorQueryDto } from '@/common/pagination/cursor-query.dto';
 import { ParseUuidPipe } from '@/common/pipes/parse-uuid.pipe';
 import { CurrentUser } from '@/common/session/current-user.decorator';
@@ -107,6 +107,7 @@ export class CommentsController {
   }
 
   @Put('comments/:commentId/like')
+  @Throttle({ default: { limit: 300, ttl: hours(1) } })
   @HttpCode(204)
   @ApiNoContentResponse({ description: 'Повторный вызов тоже 204' })
   @ApiNotFoundResponse()

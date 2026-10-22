@@ -10,10 +10,13 @@ import type { SessionUser } from '@/common/session/session-user';
 import { SessionService } from '@/common/session/session.service';
 import { validationError } from '@/common/validation';
 import type { Prisma } from '@/generated/prisma/client';
+import { visibleCommentWhere } from '@/comments/comment.select';
+import { CommentsService } from '@/comments/comments.service';
 import { MediaService } from '@/media/media.service';
 import { PostsService } from '@/posts/posts.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RealtimeService } from '@/realtime/realtime.service';
+import { StoriesService } from '@/stories/stories.service';
 import type {
   CreateReportDto,
   ReportDto,
@@ -25,12 +28,6 @@ import type {
 interface TargetInfo {
   ownerId: string | null;
   preview: string | null;
-}
-
-// Модели Comment и Story создают другие задачи; обращаемся к ним по имени, пока их нет — объект «не найден».
-interface DynamicDelegate {
-  findUnique(args: unknown): Promise<{ authorId?: string | null } | null>;
-  deleteMany(args: unknown): Promise<unknown>;
 }
 
 const reportSelect = {
@@ -53,6 +50,8 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly posts: PostsService,
+    private readonly comments: CommentsService,
+    private readonly stories: StoriesService,
     private readonly media: MediaService,
     private readonly sessions: SessionService,
     private readonly realtime: RealtimeService,
@@ -65,6 +64,8 @@ export class AdminService {
     if (dto.targetType === 'POST' && !(await this.posts.findVisibleById(userId, dto.targetId))) {
       throw new NotFoundException();
     }
+    if (dto.targetType === 'COMMENT') await this.assertCommentVisible(userId, dto.targetId);
+    if (dto.targetType === 'STORY') await this.assertStoryVisible(userId, dto.targetId);
     if (dto.targetType === 'MESSAGE') await this.assertMessageParticipant(userId, dto.targetId);
 
     const target = await this.findTarget(dto.targetType, dto.targetId);
@@ -217,8 +218,9 @@ export class AdminService {
       select: { id: true },
     });
     this.realtime.disconnectUser(userId);
-    await this.media.removeFiles(files.map((f) => f.id));
     await this.prisma.user.delete({ where: { id: userId } });
+    // Файлы удаляем после успешного удаления пользователя.
+    await this.media.removeFiles(files.map((f) => f.id));
     // Жалобы на удалённого пользователя больше не имеют объекта.
     await this.prisma.report.updateMany({
       where: { targetType: 'USER', targetId: userId, status: 'OPEN' },
@@ -233,7 +235,10 @@ export class AdminService {
   }
 
   private async assertUserExists(userId: string): Promise<void> {
-    const found = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    const found = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
     if (!found) throw new NotFoundException();
   }
 
@@ -245,9 +250,31 @@ export class AdminService {
     if (!found) throw new NotFoundException();
   }
 
-  private delegate(name: 'comment' | 'story'): DynamicDelegate | null {
-    const found = (this.prisma as unknown as Record<string, DynamicDelegate | undefined>)[name];
-    return found && typeof found.findUnique === 'function' ? found : null;
+  // Комментарий / историю видит только тот, кто имеет к ним доступ (иначе 404, как для поста).
+  private async assertCommentVisible(userId: string, commentId: string): Promise<void> {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { postId: true },
+    });
+    if (!comment || !(await this.posts.findVisibleById(userId, comment.postId))) {
+      throw new NotFoundException();
+    }
+    const visible = await this.prisma.comment.findFirst({
+      where: { id: commentId, ...visibleCommentWhere(userId) },
+      select: { id: true },
+    });
+    if (!visible) throw new NotFoundException();
+  }
+
+  private async assertStoryVisible(userId: string, storyId: string): Promise<void> {
+    try {
+      await this.stories.getById(userId, storyId);
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw new NotFoundException();
+      }
+      throw error;
+    }
   }
 
   private async findTarget(type: TargetType, id: string): Promise<TargetInfo | null> {
@@ -257,7 +284,9 @@ export class AdminService {
           where: { id },
           select: { authorId: true, caption: true },
         });
-        return post ? { ownerId: post.authorId, preview: post.caption?.slice(0, 200) ?? null } : null;
+        return post
+          ? { ownerId: post.authorId, preview: post.caption?.slice(0, 200) ?? null }
+          : null;
       }
       case 'USER': {
         const found = await this.prisma.user.findUnique({
@@ -279,9 +308,20 @@ export class AdminService {
       }
       case 'COMMENT':
       case 'STORY': {
-        const delegate = this.delegate(type === 'COMMENT' ? 'comment' : 'story');
-        const row = await delegate?.findUnique({ where: { id }, select: { authorId: true } });
-        return row ? { ownerId: row.authorId ?? null, preview: null } : null;
+        if (type === 'COMMENT') {
+          const comment = await this.prisma.comment.findUnique({
+            where: { id },
+            select: { authorId: true, text: true },
+          });
+          return comment
+            ? { ownerId: comment.authorId, preview: comment.text.slice(0, 200) }
+            : null;
+        }
+        const story = await this.prisma.story.findUnique({
+          where: { id },
+          select: { authorId: true },
+        });
+        return story ? { ownerId: story.authorId, preview: null } : null;
       }
     }
   }
@@ -301,11 +341,10 @@ export class AdminService {
         });
         return;
       case 'COMMENT':
+        await this.comments.remove(user, id);
+        return;
       case 'STORY':
-        // TODO(comments/stories): заменить на CommentsService / StoriesService, когда модули будут готовы.
-        await this.delegate(type === 'COMMENT' ? 'comment' : 'story')?.deleteMany({
-          where: { id },
-        });
+        await this.stories.remove(user, id);
         return;
       case 'USER':
         throw new BadRequestException({

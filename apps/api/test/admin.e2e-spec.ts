@@ -2,7 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { PrismaService } from '@/prisma/prisma.service';
 import { createTestApp, createUser, loginAs, resetDb, withOrigin } from './helpers';
+import { createComment } from './helpers/comments';
 import { createPost } from './helpers/posts';
+import { createStory } from './helpers/stories';
 
 describe('Admin: жалобы и модерация', () => {
   let app: INestApplication;
@@ -90,9 +92,11 @@ describe('Admin: жалобы и модерация', () => {
       preview: 'buy now',
     });
     expect(list.body.nextCursor).toBeNull();
-    await get('/admin/reports?status=RESOLVED', adminCookie).expect(200).expect((r) => {
-      expect(r.body.items).toHaveLength(0);
-    });
+    await get('/admin/reports?status=RESOLVED', adminCookie)
+      .expect(200)
+      .expect((r) => {
+        expect(r.body.items).toHaveLength(0);
+      });
   });
 
   it('отклонение: статус REJECTED, действие запрещено; USER -> 403', async () => {
@@ -126,6 +130,36 @@ describe('Admin: жалобы и модерация', () => {
     await send('patch', '/admin/reports/00000000-0000-4000-8000-000000000000', adminCookie)
       .send({ status: 'RESOLVED' })
       .expect(404);
+  });
+
+  it('REMOVE_CONTENT удаляет комментарий и историю вместе с файлом истории', async () => {
+    const post = await createPost(app, author);
+    const comment = await createComment(app, post.id, author);
+    const story = await createStory(app, author);
+
+    const c = await report(reporterCookie, 'COMMENT', comment.id).expect(201);
+    await send('patch', `/admin/reports/${c.body.id}`, adminCookie)
+      .send({ status: 'RESOLVED', action: 'REMOVE_CONTENT' })
+      .expect(200);
+    expect(await prisma.comment.count({ where: { id: comment.id } })).toBe(0);
+
+    const s = await report(reporterCookie, 'STORY', story.id).expect(201);
+    await send('patch', `/admin/reports/${s.body.id}`, adminCookie)
+      .send({ status: 'RESOLVED', action: 'REMOVE_CONTENT' })
+      .expect(200);
+    expect(await prisma.story.count({ where: { id: story.id } })).toBe(0);
+    expect(await prisma.mediaFile.count({ where: { id: story.mediaId } })).toBe(0);
+  });
+
+  it('жалоба на невидимый комментарий или историю -> 404', async () => {
+    const post = await createPost(app, author);
+    const comment = await createComment(app, post.id, author);
+    const story = await createStory(app, author, { audience: 'CLOSE_FRIENDS' });
+    await report(reporterCookie, 'COMMENT', comment.id).expect(201);
+    await report(reporterCookie, 'STORY', story.id).expect(404);
+    await prisma.block.create({ data: { blockerId: author.id, blockedId: reporter.id } });
+    const other = await createComment(app, post.id, author);
+    await report(reporterCookie, 'COMMENT', other.id).expect(404);
   });
 
   it('BAN_USER блокирует автора и завершает его сессии', async () => {

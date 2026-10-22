@@ -17,7 +17,28 @@ export function storySelect(viewerId: string) {
       select: {
         id: true,
         shortcode: true,
-        author: { select: userSummarySelect(viewerId) },
+        status: true,
+        isArchived: true,
+        authorId: true,
+        // Поля для проверки видимости поста зрителю (см. isSharedPostVisible).
+        author: {
+          select: {
+            ...userSummarySelect(viewerId),
+            status: true,
+            emailVerifiedAt: true,
+            followers: {
+              where: { followerId: viewerId, status: 'ACCEPTED' },
+              take: 1,
+              select: { followerId: true },
+            },
+            blocksMade: { where: { blockedId: viewerId }, take: 1, select: { blockedId: true } },
+            blocksReceived: {
+              where: { blockerId: viewerId },
+              take: 1,
+              select: { blockerId: true },
+            },
+          },
+        },
         media: {
           orderBy: { position: 'asc' },
           take: 1,
@@ -46,3 +67,14 @@ export function storySelect(viewerId: string) {
 }
 
 export type StoryRow = Prisma.StoryGetPayload<{ select: ReturnType<typeof storySelect> }>;
+
+// Виден ли зрителю пост, которым поделились в истории: опубликован, не в архиве, автор активен,
+// нет блокировок, а закрытый автор — только своим подписчикам. Автор поста видит свой пост всегда.
+export function isSharedPostVisible(post: NonNullable<StoryRow['sharedPost']>, viewerId: string) {
+  if (post.authorId === viewerId) return true;
+  const author = post.author;
+  if (post.status !== 'PUBLISHED' || post.isArchived) return false;
+  if (author.status !== 'ACTIVE' || !author.emailVerifiedAt) return false;
+  if (author.blocksMade.length > 0 || author.blocksReceived.length > 0) return false;
+  return !author.isPrivate || author.followers.length > 0;
+}

@@ -35,6 +35,8 @@ import { randomUUID } from 'node:crypto';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { ParseUuidPipe } from '@/common/pipes/parse-uuid.pipe';
 import { CurrentUser } from '@/common/session/current-user.decorator';
 import type { SessionUser } from '@/common/session/session-user';
@@ -68,7 +70,7 @@ export class MediaController {
   ) {}
 
   @Post()
-  @Throttle({ default: { limit: 200, ttl: hours(1) } })
+  @Throttle({ default: { limit: 100, ttl: hours(1) } })
   @UseInterceptors(uploadInterceptor)
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadMediaBodyDto })
@@ -78,7 +80,7 @@ export class MediaController {
   })
   @ApiPayloadTooLargeResponse({ description: 'Файл больше лимита для этого purpose' })
   @ApiUnsupportedMediaTypeResponse({ description: 'Тип по содержимому не разрешён' })
-  @ApiTooManyRequestsResponse({ description: 'Больше 200 загрузок в час' })
+  @ApiTooManyRequestsResponse({ description: 'Больше 100 загрузок в час' })
   async upload(
     @CurrentUser() user: SessionUser,
     @UploadedFile() file: TmpUpload | undefined,
@@ -139,11 +141,18 @@ export class MediaController {
       res.status(HttpStatus.PARTIAL_CONTENT);
       res.setHeader('Content-Range', `bytes ${range.start}-${range.end}/${size}`);
       res.setHeader('Content-Length', String(range.end - range.start + 1));
-      this.storage.read(key, range).pipe(res);
+      await this.send(this.storage.read(key, range), res);
       return;
     }
     res.setHeader('Content-Length', String(size));
-    this.storage.read(key).pipe(res);
+    await this.send(this.storage.read(key), res);
+  }
+
+  // Исчезнувший посреди отдачи файл не должен ронять процесс: ошибку потока гасим, соединение закрываем.
+  private async send(stream: Readable, res: Response): Promise<void> {
+    await pipeline(stream, res).catch(() => {
+      if (!res.destroyed) res.destroy();
+    });
   }
 
   @Delete(':mediaId')

@@ -40,7 +40,7 @@ export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
   @Post('reports')
-  @Throttle({ default: { limit: 30, ttl: hours(1) } })
+  @Throttle({ default: { limit: 20, ttl: hours(1) } })
   @ApiCreatedResponse({ type: ReportIdDto })
   @ApiBadRequestResponse({ description: 'Жалоба на себя или своё' })
   @ApiNotFoundResponse()
