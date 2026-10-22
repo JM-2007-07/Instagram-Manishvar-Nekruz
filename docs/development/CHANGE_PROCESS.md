@@ -41,7 +41,7 @@ apps/api/prisma/
 │   ├── account.prisma       # User, Session, UserSettings — A
 │   ├── <module>.prisma      # модели модуля — владелец модуля (DATA_MODEL.md)
 │   └── …
-├── migrations/              # рядом с base.prisma — так требует Prisma
+├── migrations/              # путь задан в prisma.config.ts (migrations.path)
 ├── seed.ts                  # A; вызывает seed/<module>.ts
 └── seed/<module>.ts         # данные модуля — владелец модуля
 ```

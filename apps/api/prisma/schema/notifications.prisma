@@ -1,0 +1,17 @@
+// Уведомления (владелец — Студент A). Модель Notification появится в T2.A2;
+// enum нужен уже сейчас, чтобы сигнатура NotificationsService.create() (заглушка) была настоящей.
+
+enum NotificationType {
+  POST_LIKE
+  COMMENT_LIKE
+  COMMENT
+  COMMENT_REPLY
+  MENTION_POST
+  MENTION_COMMENT
+  MENTION_STORY
+  POST_TAG
+  FOLLOW
+  FOLLOW_REQUEST
+  FOLLOW_ACCEPTED
+  COLLAB_INVITE
+}

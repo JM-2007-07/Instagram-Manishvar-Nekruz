@@ -93,7 +93,8 @@ export class CreateCommentDto {
 ```
 
 - Одно DTO — одна форма запроса или ответа. Ограничения берутся из раздела «Валидация» спецификации функции.
-- Пагинация — общий `PaginationQueryDto` (`page`, `limit`) из `common/`.
+- Пагинация — курсорная ([ADR 0017](../decisions/0017-cursor-pagination.md)): запрос — общий `CursorQueryDto` (`cursor?`, `limit` 1–50, по умолчанию 20)
+  из `common/pagination/cursor-query.dto.ts`, ответ — `{ items, nextCursor }`; курсор кодируют `encodeCursor`/`decodeCursor` из `common/pagination/cursor.ts`.
 - Ответы описываются DTO-классами с `@ApiProperty`, чтобы Swagger и сгенерированные типы были полными.
 
 ### 2.5 Конфигурация и логи

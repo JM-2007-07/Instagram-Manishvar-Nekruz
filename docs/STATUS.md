@@ -1,17 +1,17 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-22 10:39.
+> Последнее обновление: 2026-10-22 14:14.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
 
 | | |
 |---|---|
-| **Текущая фаза** | Phase −1 завершена; **Phase 0 «Общий фундамент» — в работе** (T0.1) |
+| **Текущая фаза** | Phase −1 завершена; **Phase 0 «Общий фундамент» — в работе** (T0.1 на ревью; T0.2+ в `feat/backend-a`) |
 | **Подход** | backend-first, два независимых потока; frontend каждый начинает на своей точке (MA-1 / MB-1) |
 | **Команда** | A — `JM-2007-07` (аккаунт, люди, общение), B — `nek-yt` (контент и интерфейс); логины проверены через GitHub API |
-| **Код приложений** | отсутствует: `apps/web` и `apps/api` содержат только README и `.env.example` |
+| **Код приложений** | `apps/api` — каркас NestJS 11 + Prisma 7.10.1 в ветке `feat/backend-a` (T0.2); `apps/web` — нет |
 | **Зависимости** | в корне — Prettier и `concurrently` (T0.1); **ffmpeg и Docker на машине A не установлены** |
 | **Последний PR** | [PR #4](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/4) влит в `main` (`7bc09bb`); план и онбординг — в `main` |
 
@@ -19,14 +19,14 @@
 
 | Студент | Задача | Ветка | Блокер |
 |---|---|---|---|
-| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2 → T0.3 | `chore/root-tooling` | ревью B |
+| A (`JM-2007-07`) | **T0.1** на ревью ([PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5)) → T0.2 ✔ → T0.3 ✔ → PR для C0 → T1.A1… — весь backend A в одной ветке (решение A) | `chore/root-tooling`, `feat/backend-a` | ревью B |
 | B (`nek-yt`) | настройка по [ONBOARDING.md](development/ONBOARDING.md), ревью [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) → **T0.4** (после влития T0.1) | `feat/web-foundation` | T0.1 в `main` |
 
 ### Контрольные точки
 
 | Точка | Состояние |
 |---|---|
-| C0 — фундамент готов (T0.2, T0.3) | ⬜ |
+| C0 — фундамент готов (T0.2, T0.3) | 🟨 код готов в `feat/backend-a`, ждёт PR и влития |
 | MA-1 — backend A готов для frontend A | ⬜ |
 | MB-1 — backend B готов для frontend B | ⬜ |
 | MA-2 — Direct готов | ⬜ |
@@ -51,8 +51,8 @@
 | ID | Задача (кратко) | Владелец | Обяз. | Статус | Ветка / PR | Блокер |
 |---|---|---|---|---|---|---|
 | T0.1 | Корневые инструменты | A | ✔ | 🟦 | `chore/root-tooling` → [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) | ревью B |
-| T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | ⬜ | — | T0.1 |
-| T0.3 | Общие контракты и заглушки (C0) | A | ✔ | ⬜ | — | T0.2 |
+| T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | 🟨 | `feat/backend-a` (коммит, ждёт PR) | T0.1 в `main` |
+| T0.3 | Общие контракты и заглушки (C0) | A | ✔ | 🟨 | `feat/backend-a` (коммит, ждёт PR) | PR в `main` |
 | T0.4 | Каркас Next.js + токены | B | ✔ | ⬜ | — | T0.1 |
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | ⬜ | — | T0.2, T0.4 |
 | T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
@@ -140,9 +140,11 @@
 | Объём вырос в несколько раз; двум студентам может не хватить времени до защиты | строго соблюдать порядок P0 → P1 → P2; Q1 (сроки) определяет, что войдёт в демонстрацию |
 | Прокси через Next.js rewrites не проверен на `Set-Cookie`, `Origin`, больших `multipart` | T0.5, запасной вариант в ADR 0004 |
 | WebSocket не идёт через rewrites — нужен отдельный адрес сокета | ADR 0013, проверка в T2.A1 |
-| `npm install prisma` ставит 8.0.0-rc (метка `latest`) | ставить явно `prisma@7` и `@prisma/client@7` (T0.2) |
+| `npm install prisma` ставит 8.0.0-rc (метка `latest`) | ✅ T0.2: `prisma`, `@prisma/client`, `@prisma/adapter-pg` — точно 7.10.1 |
 | Обратные связи моделей B должны объявляться в модели `User` (файл A) | процедура в CONTRIBUTING «Общие файлы» |
 | npm не запрещает импорт чужих зависимостей | правила ESLint в T0.2 и T0.4 (ADR 0008) |
+| `npm audit`: 2 moderate в `js-yaml` внутри `@nestjs/swagger` 11 | исправление только через `@nestjs/swagger@12` (major) — вернуться при переходе на Nest 12 |
+| Весь backend A в одной ветке `feat/backend-a` | B ждёт C0 в `main`: после T0.3 открыть PR (ветка поверх `chore/root-tooling`) |
 | ffmpeg не установлен | установить до T1.B1 (LOCAL_SETUP) |
 | Звонки через строгие NAT без TURN не соединятся | локально работают; продакшен — Q34 |
 | Соцвход требует приложений разработчика | Q32; без ключей кнопки скрыты |
@@ -156,6 +158,8 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 14:14 | [api-core-contracts](stories/2026-10-22_1414_api-core-contracts.md) | T0.3 (C0): User/Session/UserSettings, сессии, SessionGuard, заглушки общих сервисов, тестовые помощники, seed |
+| 2026-10-22 12:15 | [api-foundation](stories/2026-10-22_1215_api-foundation.md) | T0.2: каркас NestJS 11 + Prisma 7, формат ошибок, Origin-guard, курсоры, Swagger, ESLint, Jest; весь backend A — в `feat/backend-a` |
 | 2026-10-22 10:39 | [root-tooling](stories/2026-10-22_1039_root-tooling.md) | T0.1: Prettier и `concurrently` в корне; PR #4 влит, Phase −1 завершена |
 | 2026-10-22 10:40 | [pr-and-onboarding](stories/2026-10-22_1040_pr-and-onboarding.md) | PR #4 с планом; онбординг для Студента B; роль студента по `git config user.name` |
 | 2026-10-22 09:53 | [backend-first-plan](stories/2026-10-22_0953_backend-first-plan.md) | план перестроен: два независимых backend-потока, точки MA-1/MB-1, заглушки, многофайловая схема Prisma (ADR 0018) |

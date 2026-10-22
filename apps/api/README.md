@@ -1,7 +1,7 @@
 # apps/api — NestJS backend
 
-> **Статус:** приложение ещё не создано. Каталог содержит только этот файл и `.env.example`.
-> Каркас создаётся в Phase 0 (см. [docs/IMPLEMENTATION_PLAN.md](../../docs/IMPLEMENTATION_PLAN.md)).
+> **Статус:** каркас создан (T0.2): config, prisma, common, mail, health, Swagger. Доменные модули добавляются по
+> [плану](../../docs/IMPLEMENTATION_PLAN.md); те, что ниже без пометки, ещё не созданы.
 
 REST API `/api/v1` и Socket.IO, Swagger, PostgreSQL через Prisma, серверные сессии, обработка медиа (sharp, ffmpeg).
 
@@ -19,8 +19,12 @@ apps/api/
 │   ├── seed.ts              # A; вызывает seed/<module>.ts
 │   └── seed/<module>.ts     # данные модуля — его владелец
 ├── src/
-│   ├── main.ts              # bootstrap: префикс /api/v1, pipes, filters, helmet, Swagger
+│   ├── main.ts              # запуск: Swagger UI /api/docs (не в production), listen
+│   ├── app.setup.ts         # общая настройка (префикс /api/v1, helmet, pipe, filter); её же вызывают e2e-тесты
 │   ├── app.module.ts
+│   ├── swagger.ts           # сборка OpenAPI-документа
+│   ├── openapi.ts           # экспорт Swagger в docs/api/openapi.json (npm run openapi:export)
+│   ├── generated/           # клиент Prisma (prisma generate), в git не попадает
 │   ├── config/              # загрузка и валидация env
 │   ├── common/              # фильтр ошибок, SessionGuard, @Public, @CurrentUser, Origin, курсоры, разбор #/@
 │   ├── prisma/              # PrismaService
@@ -45,11 +49,33 @@ apps/api/
 │   ├── search/              # поиск, история поиска
 │   ├── locations/           # места
 │   └── admin/               # жалобы, модерация
-├── test/                    # e2e-тесты (supertest)
+├── test/                    # e2e-тесты (supertest), jest-e2e.json, global-setup.ts
 │   └── helpers/             # createUser, loginAs — A; <module>.ts — владелец модуля
-├── openapi.ts               # экспорт Swagger в docs/api/openapi.json
 └── .env.example
 ```
 
 Ответственность и зависимости модулей — [docs/architecture/ARCHITECTURE.md §3.2](../../docs/architecture/ARCHITECTURE.md#32-модули);
 эндпоинты — [docs/api/endpoints/](../../docs/api/API_CONTRACT.md#2-эндпоинты-по-модулям).
+
+## Запуск
+
+1. Из корня репозитория: `npm install` (после установки автоматически выполняется `prisma generate`).
+2. Скопируйте `.env.example` в `apps/api/.env` и впишите свой пароль PostgreSQL в `DATABASE_URL`.
+3. Создайте БД `instagram` (и `instagram_test` для e2e). Запуск: `npm run dev -w api`, проверка: `GET http://localhost:4000/api/v1/health`.
+
+## Скрипты (`npm run <script> -w api`)
+
+| Скрипт | Что делает |
+|---|---|
+| `dev` / `build` / `start` | запуск с перезагрузкой / сборка в `dist` / запуск собранного |
+| `lint` / `typecheck` | ESLint / проверка типов TypeScript |
+| `test` | юнит-тесты (`src/**/*.spec.ts`) |
+| `test:e2e` | e2e-тесты (`test/*.e2e-spec.ts`) на отдельной БД, по одному файлу за раз |
+| `openapi:export` | собирает приложение и пишет `docs/api/openapi.json` (БД не нужна; не запускать вместе с `dev` — сборка очищает `dist`) |
+| `prisma:generate` / `prisma:migrate` / `prisma:seed` | клиент Prisma / миграция в dev / начальные данные |
+
+## Тестовая БД (e2e)
+
+`test/global-setup.ts` берёт `DATABASE_URL_TEST`; если она не задана — `DATABASE_URL` с именем БД `instagram_test`.
+Имя БД обязано оканчиваться на `_test` (тесты чистят таблицы), иначе тесты не запускаются. Перед тестами выполняется
+`prisma migrate deploy`.
