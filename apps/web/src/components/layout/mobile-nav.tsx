@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Heart, Send, User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
-import { BOTTOM_ITEMS, MESSAGES, NOTIFICATIONS } from '@/components/layout/nav-items';
+import { BOTTOM_ITEMS, MESSAGES, NOTIFICATIONS, isActivePath } from '@/components/layout/nav-items';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,12 @@ export function MobileTopBar() {
       </Link>
       <div className="flex items-center gap-2">
         {/* TODO(T3.A3, Студент A): панель уведомлений и точка */}
-        <button type="button" aria-label={NOTIFICATIONS.label} className={iconButton}>
+        <button
+          type="button"
+          aria-label={NOTIFICATIONS.label}
+          aria-disabled="true"
+          className={iconButton}
+        >
           <Heart className="size-6" />
         </button>
         {/* TODO(T3.A3, Студент A): счётчик непрочитанных сообщений */}
@@ -38,7 +43,7 @@ export function MobileTopBar() {
 export function MobileBottomBar({ me }: { me: Me }) {
   const pathname = usePathname();
   const profileHref = `/${me.userName}/`;
-  const profileActive = pathname.startsWith(profileHref);
+  const profileActive = isActivePath(pathname, profileHref, true);
   const tab = 'flex flex-1 items-center justify-center';
 
   return (
@@ -49,7 +54,7 @@ export function MobileBottomBar({ me }: { me: Me }) {
     >
       {BOTTOM_ITEMS.map((item) => {
         const Icon = item.icon;
-        const active = item.href === pathname;
+        const active = !!item.href && isActivePath(pathname, item.href);
         const icon = <Icon className={cn('size-6', active && 'fill-current')} />;
         return item.href ? (
           <Link
@@ -63,7 +68,13 @@ export function MobileBottomBar({ me }: { me: Me }) {
           </Link>
         ) : (
           // TODO(T3.B2): окно создания публикации
-          <button key={item.key} type="button" aria-label={item.label} className={tab}>
+          <button
+            key={item.key}
+            type="button"
+            aria-label={item.label}
+            aria-disabled="true"
+            className={tab}
+          >
             {icon}
           </button>
         );

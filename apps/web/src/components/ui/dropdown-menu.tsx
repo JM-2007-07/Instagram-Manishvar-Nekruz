@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { DropdownMenu as Menu } from 'radix-ui';
+import { Check, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Тонкая обёртка над radix DropdownMenu на наших токенах. Esc и стрелки даёт radix.
@@ -44,16 +45,24 @@ export function DropdownMenuRadioItem({
   return (
     <Menu.RadioItem className={cn(itemClass, 'justify-between', className)} {...props}>
       {children}
-      <Menu.ItemIndicator>✓</Menu.ItemIndicator>
+      <Menu.ItemIndicator>
+        <Check className="size-4" />
+      </Menu.ItemIndicator>
     </Menu.RadioItem>
   );
 }
 
 export function DropdownMenuSubTrigger({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof Menu.SubTrigger>) {
-  return <Menu.SubTrigger className={cn(itemClass, className)} {...props} />;
+  return (
+    <Menu.SubTrigger className={cn(itemClass, className)} {...props}>
+      {children}
+      <ChevronRight className="ml-auto size-4" />
+    </Menu.SubTrigger>
+  );
 }
 
 export function DropdownMenuSubContent({

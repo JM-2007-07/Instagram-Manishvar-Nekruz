@@ -5,19 +5,20 @@ import { usePathname } from 'next/navigation';
 import { User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { MoreMenu } from '@/components/layout/more-menu';
-import { SIDEBAR_ITEMS, type NavItem } from '@/components/layout/nav-items';
+import { SIDEBAR_ITEMS, isActivePath, type NavItem } from '@/components/layout/nav-items';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
 import type { Theme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
-// Пункт: иконка 24 px, подпись с x = 64 px; фон при наведении — --hover-overlay.
+// Пункт: иконка 24 px, подпись 16 px с x = 64 px; фон при наведении — --hover-overlay.
 const itemClass =
-  'group flex h-14 w-full items-center gap-4 rounded-lg px-3 text-14 transition-colors duration-100 ease-[var(--ease-hover)] hover:bg-hover-overlay';
+  'group flex h-14 w-full items-center gap-4 rounded-lg px-3 text-16 outline-none transition-colors duration-100 ease-[var(--ease-hover)] hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring';
 
-// Подпись видна только в раскрытом меню.
+// Подпись видна только в раскрытом меню. Меню остаётся раскрытым, пока открыто «Ещё»
+// (radix уводит фокус и наведение в выпадающий список, и без has-[…] меню бы свернулось).
 const labelClass =
-  'whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100';
+  'whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100 group-has-[[data-state=open]]/sidebar:opacity-100';
 
 function SidebarItem({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = item.icon;
@@ -30,7 +31,7 @@ function SidebarItem({ item, active }: { item: NavItem; active: boolean }) {
   // В свёрнутом виде подписи не видно, поэтому aria-label обязателен.
   if (!item.href) {
     return (
-      <button type="button" aria-label={item.label} className={itemClass}>
+      <button type="button" aria-label={item.label} aria-disabled="true" className={itemClass}>
         {content}
       </button>
     );
@@ -52,20 +53,20 @@ function SidebarItem({ item, active }: { item: NavItem; active: boolean }) {
 export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
   const pathname = usePathname();
   const profileHref = `/${me.userName}/`;
-  const profileActive = pathname.startsWith(profileHref);
+  const profileActive = isActivePath(pathname, profileHref, true);
 
   return (
     <aside className="hidden shrink-0 md:block" style={{ width: DESIGN.sidebarCollapsed }}>
       <nav
         aria-label="Основная навигация"
-        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-border bg-background px-3 pt-6 pb-5 transition-[width] duration-100 ease-[var(--ease-hover)] focus-within:w-[238px] hover:w-[238px]"
+        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-border bg-background px-3 pt-6 pb-5 transition-[width] duration-100 ease-[var(--ease-hover)] focus-within:w-[238px] hover:w-[238px] has-[[data-state=open]]:w-[238px]"
         style={{ width: DESIGN.sidebarCollapsed }}
       >
         <Link href="/" aria-label="Главная" className="mb-6 flex h-14 items-center px-3">
-          <span className="group-hover/sidebar:hidden group-focus-within/sidebar:hidden">
+          <span className="group-hover/sidebar:hidden group-focus-within/sidebar:hidden group-has-[[data-state=open]]/sidebar:hidden">
             <BrandLogo variant="mark" />
           </span>
-          <span className="hidden group-hover/sidebar:block group-focus-within/sidebar:block">
+          <span className="hidden group-hover/sidebar:block group-focus-within/sidebar:block group-has-[[data-state=open]]/sidebar:block">
             <BrandLogo />
           </span>
         </Link>
@@ -74,8 +75,7 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
           {SIDEBAR_ITEMS.map((item) => (
             <li key={item.key}>
               {/* TODO(T3.A3, Студент A): счётчик на «Сообщения» и точка на «Уведомления» */}
-              {/* «Поиск» ведёт на тот же /explore/, подсвечиваем только «Интересное» */}
-              <SidebarItem item={item} active={item.href === pathname} />
+              <SidebarItem item={item} active={!!item.href && isActivePath(pathname, item.href)} />
             </li>
           ))}
           <li>
