@@ -1,22 +1,36 @@
 # Работа в команде
 
-Проект ведут два студента в одном GitHub-репозитории. Цель правил — работать параллельно,
-не ломая друг другу код, и чтобы каждый мог объяснить всё приложение.
+Проект ведут два студента в одном GitHub-репозитории `JM-2007-07/Instagram-Manishvar-Nekruz`:
+**Студент A — `JM-2007-07`**, **Студент B — `nek-yt`** (логины проверены через GitHub API 2026-10-22).
+Цель правил — работать параллельно, не ломая друг другу код, и чтобы каждый мог объяснить всё приложение.
+Первый раз — пройдите [ONBOARDING.md](docs/development/ONBOARDING.md) (Git-логин, клонирование, Claude Code).
 
 ## Ветки
 
-- **`main`** — всегда рабочее состояние. Прямые коммиты запрещены (защита ветки в GitHub после Phase 0).
-- **Feature-ветки** — короткие (1–3 дня), от свежего `main`:
+- **`main`** — только интегрированные и работающие изменения. Прямые коммиты запрещены (защита ветки — T0.6).
+- **Каждый студент работает в своих ветках.** Общей рабочей ветки нет. Одна задача `Tx.y` — одна ветка от свежего `main`:
 
 | Тип | Пример |
 |---|---|
-| `feat/<модуль>-<кратко>` | `feat/posts-create` |
+| `feat/<модуль>-<кратко>` | `feat/media-upload` (T1.B1), `feat/auth-sessions` (T1.A1) |
 | `fix/<модуль>-<кратко>` | `fix/auth-session-expiry` |
-| `chore/<кратко>` | `chore/ci` |
+| `chore/<кратко>` | `chore/root-tooling`, `chore/ci` |
 | `docs/<кратко>` | `docs/api-contract-chats` |
 
-- Перед PR и при долгой работе: `git fetch && git rebase origin/main`.
+- Ежедневно и перед PR: `git fetch && git rebase origin/main` (интеграция — постоянно, а не в конце).
+- Ветку не держать дольше 3–4 дней: большая задача делится на несколько PR (например, T1.B4: создание → ленты → лайки).
+- В своей ветке студент меняет **только файлы своих модулей** и общие файлы по правилам ниже. Чужие файлы — нет.
 - Влитая ветка удаляется.
+
+## Процесс задачи
+
+1. Взять задачу своей буквы из [STATUS.md](docs/STATUS.md) (зависимости выполнены) → отметить 🟨 и ветку.
+2. Прочитать карточку модуля в [IMPLEMENTATION_PLAN.md §4](docs/IMPLEMENTATION_PLAN.md#4-карточки-модулей), спецификацию,
+   `docs/api/endpoints/<module>.md`, свой раздел [DATA_MODEL.md](docs/database/DATA_MODEL.md).
+3. Нужно изменить общий файл → сначала написать второму (что и зачем), изменение — отдельным коммитом в PR.
+4. Небольшие понятные коммиты; PR с шаблоном: что сделано, модули, общие файлы, **какая проверка выполнена**.
+5. CI зелёный, ревью второго (CODEOWNERS) → Squash and merge → STATUS ✅ + история.
+6. Достигнута контрольная точка (C0, MA-1, MB-1…) → короткий совместный прогон (IMPLEMENTATION_PLAN §7).
 
 ## Коммиты
 
@@ -42,40 +56,54 @@ chore(ci): add contract check
 
 ## Владельцы модулей
 
-Распределение — [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md#2-распределение-модулей).
-Владелец модуля пишет его backend и frontend и отвечает за его спецификацию. Изменения в чужом модуле —
-только по договорённости с владельцем (небольшие правки — через PR с ревью владельца).
+Распределение модулей и задач — [IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md#2-потоки-работ). Владелец модуля
+пишет его backend и frontend и отвечает за его спецификацию, файл эндпоинтов и файл схемы. Ревью второго студента
+обеспечивает [`.github/CODEOWNERS`](.github/CODEOWNERS) вместе с защитой `main` (T0.6).
+Изменения в чужом модуле — только по договорённости с владельцем, через PR с его ревью.
 
 ## Общие файлы
 
-Эти файлы влияют на обоих. Их **нельзя менять одновременно** без договорённости — перед изменением
-напишите второму разработчику.
+У каждого общего файла **один владелец**. Второй студент меняет его только так, как указано в колонке «Как менять».
 
-| Файл / каталог | Правило |
-|---|---|
-| `apps/api/prisma/schema.prisma`, `prisma/migrations/` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-schemaprisma-и-миграции) |
-| `docs/api/API_CONTRACT.md`, `docs/api/openapi.json`, `apps/web/src/lib/api/schema.d.ts` | [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-api-контракта) |
-| корневые `package.json`, `package-lock.json` | при конфликте lockfile — взять версию `main`, затем `npm install` заново |
-| `apps/api/src/common/`, `config/`, `prisma/`, `storage/`, `main.ts`, `app.module.ts` | владелец фундамента backend (A) или по договорённости |
-| `apps/web/src/lib/`, `app/layout.tsx`, `app/(main)/layout.tsx`, `components/layout/`, `next.config.ts`, `proxy.ts` | владелец фундамента frontend (B) или по договорённости |
-| `apps/web/src/components/ui/` | добавлять компоненты через CLI shadcn можно обоим; правки существующих — по договорённости |
-| `.github/`, `.claude/agents/`, `.env.example`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `docs/architecture/`, `docs/decisions/` | только через PR с ревью второго |
-| `docs/STATUS.md` | меняют оба: каждый — только строки своих задач; строки оглавления историй добавляются сверху. При конфликте слияния сохраняются **обе** строки |
-| `docs/stories/` | только добавление новых файлов; чужие истории не редактируются (конфликтов не бывает) |
-
-Регистрация модуля в `app.module.ts` — одна строка; конфликт решается простым объединением обеих строк.
+| Файл / каталог | Владелец | Как менять второму |
+|---|---|---|
+| корневые `package.json`, `.nvmrc`, `.editorconfig`, `.gitattributes`, `.gitignore` | A | сообщение A, затем PR с ревью A |
+| `package-lock.json` | — | меняется при `npm install <pkg> -w <app>` в своей задаче; при конфликте — взять версию `main` и выполнить `npm install` |
+| `apps/api/{package.json,tsconfig*.json,nest-cli.json,prisma.config.ts}` | A | новые зависимости своего модуля — `npm install <pkg> -w api` в своём PR (упомянуть в описании) |
+| `apps/api/src/{main.ts,config,common,prisma,mail,health}` | A | новые переменные env своего модуля — в своём PR: поле в схеме `config` + `.env.example`, ревью A |
+| `apps/api/src/app.module.ts` | A | **разрешено** добавить строку импорта своего модуля |
+| `apps/api/src/{realtime,privacy,notifications}` (заглушки и реализация) | A | только через A: нужна новая сигнатура — сообщение A |
+| `apps/api/src/{storage,media,tags}` | B | только через B |
+| `apps/api/prisma/schema/base.prisma` (generator, datasource) | A | только через A |
+| `apps/api/prisma/schema/<module>.prisma` | владелец модуля | — |
+| модель `User` в `account.prisma` | A | **разрешено** добавить обратные связи своих моделей (`posts Post[]`) в свой блок-комментарий `// --- <module> (B) ---`; ничего больше |
+| `apps/api/prisma/migrations/` | каждый — свои миграции | по [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-schemaprisma-и-миграции) |
+| `apps/api/prisma/seed.ts` | A | данные своего модуля — в `prisma/seed/<module>.ts`; строку вызова в `seed.ts` разрешено добавить |
+| `apps/api/test/helpers/` | A | новые помощники своего модуля — в `test/helpers/<module>.ts` |
+| `docs/api/API_CONTRACT.md` (§1 соглашения, §1.4 модели), `docs/api/REALTIME.md` | A | по [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md#изменение-api-контракта) |
+| `docs/api/endpoints/<module>.md`, раздел модуля в `DATA_MODEL.md` | владелец модуля | — |
+| `docs/api/openapi.json`, `apps/web/src/lib/api/schema.d.ts` | генерируются | только `npm run contract`; при конфликте — взять `main` и сгенерировать заново |
+| `apps/web/{package.json,next.config.ts}`, `src/app/{layout.tsx,globals.css}`, `src/app/(main)/layout.tsx`, `src/proxy.ts` | B | сообщение B, затем PR с ревью B |
+| `apps/web/src/lib/` (кроме `realtime.ts`, `webrtc.ts` — A) | B | новый тег RTK Query (`tagTypes`) или тип в `types.ts` — **разрешено** добавить строку в своём PR |
+| `apps/web/src/components/{ui,layout,states}` | B | новый компонент shadcn через CLI — разрешено; правка существующих — через B |
+| `apps/web/src/features/<feature>`, страницы своих функций в `src/app/` | владелец функции | — |
+| `.github/workflows/`, `.claude/settings.json` | A (T0.6) | через A |
+| `.github/CODEOWNERS`, `CONTRIBUTING.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/agents/`, `docs/architecture/`, `docs/decisions/`, `docs/product/`, `docs/design/`, `docs/IMPLEMENTATION_PLAN.md` | оба | только через PR с ревью второго |
+| `docs/STATUS.md` | оба | каждый — только строки своих задач; строки оглавления историй — сверху; при конфликте сохраняются **обе** |
+| `docs/stories/` | оба | только новые файлы; чужие истории не редактируются |
 
 ## Параллельная работа
 
-- Перед началом задачи сообщите, какой модуль и какие общие файлы затронете.
-- Нужен endpoint чужого модуля, которого ещё нет: сначала договоритесь о контракте в `API_CONTRACT.md`,
-  затем пишите UI по нему; до влития можно использовать временные данные внутри своей ветки.
-- Миграции — по очереди, см. [CHANGE_PROCESS.md](docs/development/CHANGE_PROCESS.md).
+- Вызов модуля второго студента — **только через его опубликованный интерфейс** (таблица заглушек в
+  [IMPLEMENTATION_PLAN.md §3.1](docs/IMPLEMENTATION_PLAN.md#31-как-не-ждать-друг-друга-заглушки-и-контракты)). Свою копию
+  чужого модуля, «временную» альтернативную реализацию или прямые запросы к чужим таблицам в обход сервиса не писать.
+- Чужого endpoint'а ещё нет → работать по `docs/api/endpoints/<module>.md`; в тестах — заглушка (`jest.mock`) или фабрика данных.
+- Нужен новый метод в чужом интерфейсе → сообщение владельцу; владелец добавляет сигнатуру (можно с простейшим телом) первым коротким PR.
 - Сгенерированные файлы (`openapi.json`, `schema.d.ts`, миграции) не правятся вручную.
 
 ## Изменения контракта
 
-1. Небольшие (новый endpoint, новое необязательное поле) — PR с обновлённым `API_CONTRACT.md` и `npm run contract`.
+1. Небольшие (новый endpoint, новое необязательное поле) — PR с обновлённым `docs/api/endpoints/<module>.md` и `npm run contract`.
 2. Ломающие (переименование, удаление, смена типа или обязательности) — сначала сообщение второму, затем PR.
 3. Изменение общих соглашений — ADR в `docs/decisions/`.
 

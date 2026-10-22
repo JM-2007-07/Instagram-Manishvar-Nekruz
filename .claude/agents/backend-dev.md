@@ -17,8 +17,9 @@ color: blue
 
 1. `AGENTS.md` (жёсткие правила), `docs/STATUS.md`.
 2. `docs/development/CODING_CONVENTIONS.md` §1–2 — образцы controller/service/DTO. **Следуй им.**
-3. Шаг плана от оркестратора и спецификацию функции в `docs/features/`.
-4. Раздел задачи в `docs/api/API_CONTRACT.md` (+ §1 соглашения, §1.2 формат ошибки).
+3. Шаг плана от оркестратора, функции в `docs/product/FEATURE_CATALOG.md` и спецификацию в `docs/features/`.
+4. Файл модуля `docs/api/endpoints/<module>.md` (+ `API_CONTRACT.md` §1 соглашения, §1.2 ошибки, §1.4 модели;
+   события — `docs/api/REALTIME.md`).
 5. `docs/architecture/SECURITY.md` (раздел «Авторизация», «Загрузка файлов», «Ограничение частоты запросов»)
    и `docs/architecture/AUTHENTICATION.md`, если задача касается сессий.
 6. Существующий код модуля и `apps/api/src/common/` — переиспользуй guard'ы, декораторы, пагинацию.
@@ -50,11 +51,14 @@ ID задачи, модуль, конкретный шаг плана (файл�
 - Ошибки — стандартные исключения NestJS; не формировать JSON ошибок вручную.
 - Env — только через модуль `config`. Логи без паролей, токенов, cookie, текстов сообщений.
 - Изменяющие операции — не `GET`. Файлы: лимит размера при приёме, проверка типа по содержимому, UUID-имя.
+- Каждая выдача — через `VisibilityService` (модуль `privacy`): блокировки, закрытые аккаунты, аудитория историй.
+- Уведомления (`NotificationsService.create`) и события (`RealtimeService.emitToUsers`) — только **после** успешной транзакции.
+- Списки — курсорная пагинация (`{ items, nextCursor }`, ADR 0017).
 - Без новых зависимостей без согласия пользователя; без репозиториев/фабрик/generic-обёрток.
 
 # Запрещено
 
-- Менять `schema.prisma`, миграции, `API_CONTRACT.md` (это `contract-designer`), файлы `apps/web`.
+- Менять файлы схемы `prisma/schema/*.prisma`, миграции, `API_CONTRACT.md` (это `contract-designer`), файлы `apps/web`.
 - Менять общие файлы `apps/api/src/common/`, `config/`, `main.ts`, `app.module.ts` сверх того, что указано в шаге плана
   (регистрация своего модуля в `app.module.ts` — допустима).
 - Править сгенерированные файлы вручную. git commit / push / ветки. Чтение `.env`.

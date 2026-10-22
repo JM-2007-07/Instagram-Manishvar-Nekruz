@@ -1,0 +1,15 @@
+# Code owners
+#
+# Rule: every pull request is reviewed by the OTHER student.
+# Both students own the whole repository. GitHub does not let authors approve their own PRs,
+# so with "Require review from Code Owners" enabled (task T0.6) the approval must come from the other student.
+# Handles verified via the GitHub API on 2026-10-22.
+#
+# Module ownership (who implements what) is documented in docs/IMPLEMENTATION_PLAN.md, sections 2 and 4,
+# and shared-file owners in CONTRIBUTING.md ("Общие файлы"):
+#   Student A — @JM-2007-07: backend foundation, auth, users, settings, follows, privacy, search,
+#                            collections, realtime, notifications, chats, calls
+#   Student B — @nek-yt:     frontend foundation and shell, media, storage, tags, locations, posts,
+#                            comments, stories, admin
+
+* @JM-2007-07 @nek-yt

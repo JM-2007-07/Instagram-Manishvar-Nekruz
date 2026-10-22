@@ -16,7 +16,8 @@
 | изменение общих соглашений (формат ошибок, пагинация, cookie) | ADR + согласование обоих |
 
 ### Шаги
-1. Обновить [API_CONTRACT.md](../api/API_CONTRACT.md) (таблица модуля, при необходимости — черновые модели).
+1. Обновить файл модуля `docs/api/endpoints/<module>.md` (и [API_CONTRACT.md](../api/API_CONTRACT.md) — если меняются
+   соглашения или общие модели §1.4; [REALTIME.md](../api/REALTIME.md) — если меняются события).
 2. Реализовать изменения в DTO/контроллере NestJS.
 3. `npm run contract` — обновит `docs/api/openapi.json` и `apps/web/src/lib/api/schema.d.ts`.
 4. `npm run typecheck` — исправить места во frontend, которые сломались (если это ваш модуль) или
@@ -30,10 +31,27 @@
 
 ## Изменение `schema.prisma` и миграции
 
+### Где лежит схема ([ADR 0018](../decisions/0018-parallel-backend-workstreams.md))
+Схема многофайловая (Prisma 7, `prisma.config.ts` → `schema: "prisma/schema"`):
+
+```
+apps/api/prisma/
+├── schema/
+│   ├── base.prisma          # generator, datasource — A
+│   ├── account.prisma       # User, Session, UserSettings — A
+│   ├── <module>.prisma      # модели модуля — владелец модуля (DATA_MODEL.md)
+│   └── …
+├── migrations/              # рядом с base.prisma — так требует Prisma
+├── seed.ts                  # A; вызывает seed/<module>.ts
+└── seed/<module>.ts         # данные модуля — владелец модуля
+```
+
 ### Правила
-1. Перед изменением схемы — сообщение второму разработчику: «меняю схему: добавляю модель X / поле Y».
-   Одновременно в работе — **не более одного** PR с миграцией от каждого, и они не трогают одни и те же модели.
-2. Модели своего модуля меняет владелец модуля. Связи с чужими моделями (например, `Post.locationId`) — по договорённости.
+1. Модели своего модуля — в своём файле `schema/<module>.prisma`; чужие файлы не трогать. Перед миграцией —
+   короткое сообщение второму: «добавляю миграцию add_posts». Одновременно в работе — не более одного PR с миграцией от каждого.
+2. Prisma требует обратную связь на обеих сторонах. Обратные связи своих моделей в модели `User` (`posts Post[]`)
+   разрешено добавить в свой блок-комментарий `// --- <module> (B) ---` в `account.prisma` — больше ничего в чужом файле.
+   Связь с моделью другого модуля, кроме `User` (например, `Post.locationId`), — по договорённости с владельцем.
 3. Один PR — одна миграция с понятным именем: `prisma migrate dev --name add_posts`.
 4. Сгенерированный SQL (`migrations/<timestamp>_<name>/migration.sql`) коммитится и **читается на ревью**.
 5. CHECK-ограничения и другие правила, которых нет в Prisma, — через `migrate dev --create-only` и правку SQL
@@ -51,6 +69,7 @@
 - `prisma migrate reset` на чьей-либо БД, кроме своей локальной.
 - Коммитить сгенерированный Prisma Client.
 
-### Порядок первых миграций (Phase 1)
-1. A: `User`, `Session`, `PasswordResetToken` → влито в `main`.
-2. B: `MediaFile` (ссылается на `User`) → после шага 1.
+### Порядок первых миграций
+1. A (T0.3): `User`, `Session`, `UserSettings` → влито в `main` (C0).
+2. Дальше — в любом порядке, каждый в своей ветке: A — `auth`, `users`, `follows`…; B — `media`, `tags`, `locations`, `posts`…
+   Если `main` ушёл вперёд — правило выше «Если `main` ушёл вперёд с новой миграцией».

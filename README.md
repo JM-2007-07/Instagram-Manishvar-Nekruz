@@ -1,7 +1,9 @@
 # Instagram-like Social Network
 
-Учебный экзаменационный проект двух студентов: социальная сеть по мотивам Instagram —
-профили, посты и reels, лайки и комментарии, stories, подписки, личные сообщения, поиск.
+Учебный экзаменационный проект двух студентов: социальная сеть с **паритетом функций и дизайна веб-Instagram**
+(свой бренд и собственный backend) —
+профили, публикации и reels, комментарии с ответами, истории и актуальное, Direct со звонками и голосовыми, уведомления,
+поиск, хэштеги, приватность. Каталог функций — [docs/product/FEATURE_CATALOG.md](docs/product/FEATURE_CATALOG.md).
 
 > **Статус: инициализация.** Есть документация, API-контракт и минимальная структура репозитория.
 > **Приложения ещё не созданы**, зависимости не установлены, команды запуска пока не работают.
@@ -11,12 +13,15 @@
 
 | Часть | Стек |
 |---|---|
-| Frontend (`apps/web`) | Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, openapi-fetch |
+| Frontend (`apps/web`) | Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, Redux Toolkit (RTK Query) |
 | Backend (`apps/api`) | NestJS, TypeScript, REST `/api/v1`, Swagger/OpenAPI |
 | База данных | PostgreSQL + Prisma |
 | Аутентификация | серверные сессии в PostgreSQL, HttpOnly cookie, Argon2id |
 | Медиа | локальный диск в разработке → Cloudflare R2 / Amazon S3 |
-| Позже, при обосновании | Socket.IO, Redis, BullMQ, Docker |
+| Реальное время и звонки | Socket.IO, WebRTC |
+| Обработка медиа | sharp, ffmpeg |
+| Соцвход | Google (OpenID Connect), Facebook Login |
+| Позже, при обосновании | Redis, BullMQ, Docker |
 | Инструменты | npm workspaces, ESLint, Prettier, Jest, Vitest, Playwright, GitHub Actions |
 
 ## Структура
@@ -47,6 +52,8 @@ npm run dev
 
 | Тема | Документ |
 |---|---|
+| Каталог функций (как в Instagram) | [docs/product/FEATURE_CATALOG.md](docs/product/FEATURE_CATALOG.md) |
+| Дизайн-система и экраны | [DESIGN_SYSTEM.md](docs/design/DESIGN_SYSTEM.md), [SCREENS.md](docs/design/SCREENS.md) |
 | Требования и открытые вопросы | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) |
 | Дорожная карта | [docs/ROADMAP.md](docs/ROADMAP.md) |
 | План и распределение работы | [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) |
@@ -54,7 +61,7 @@ npm run dev
 | Запросы frontend → backend | [docs/architecture/API_REQUEST_ARCHITECTURE.md](docs/architecture/API_REQUEST_ARCHITECTURE.md) |
 | Аутентификация / безопасность | [AUTHENTICATION.md](docs/architecture/AUTHENTICATION.md), [SECURITY.md](docs/architecture/SECURITY.md) |
 | Рендеринг в Next.js | [docs/architecture/RENDERING_STRATEGY.md](docs/architecture/RENDERING_STRATEGY.md) |
-| Исходный Swagger и наш контракт | [API_INVENTORY.md](docs/api/API_INVENTORY.md), [API_CONTRACT.md](docs/api/API_CONTRACT.md) |
+| Исходный Swagger и наш контракт | [API_INVENTORY.md](docs/api/API_INVENTORY.md), [API_CONTRACT.md](docs/api/API_CONTRACT.md) (+ `endpoints/`, [REALTIME.md](docs/api/REALTIME.md)) |
 | Модель данных | [DATA_MODEL.md](docs/database/DATA_MODEL.md), [DATABASE_DECISIONS.md](docs/database/DATABASE_DECISIONS.md) |
 | Спецификации функций | [docs/features/](docs/features/README.md) |
 | Архитектурные решения | [docs/decisions/](docs/decisions/README.md) |

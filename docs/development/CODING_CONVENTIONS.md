@@ -100,13 +100,15 @@ export class CreateCommentDto {
 - Переменные окружения читаются только через модуль `config` (валидация при старте), не через `process.env` в коде модулей.
 - `Logger` NestJS с именем класса; не логировать пароли, токены, cookie, тексты сообщений.
 
-## 3. Frontend (Next.js)
+## 3. Frontend (Next.js + RTK Query)
 
 ### 3.1 Структура функции
 
 ```
 src/features/posts/
-├── api.ts                 # ключи запросов, функции запросов, хуки TanStack Query
+├── api.ts                 # baseApi.injectEndpoints: эндпоинты, теги, экспорт хуков
+├── cache.ts               # (только posts) updatePostInCache для оптимистичных лайков и сохранения
+├── realtime.ts            # (если есть события) обработчики Socket.IO → кэш RTK Query
 ├── schemas.ts             # zod-схемы форм (только проверки для удобства)
 └── components/
     ├── post-card.tsx
@@ -116,39 +118,88 @@ src/features/posts/
 
 ### 3.2 `api.ts` — образец формы
 
+Полный образец с бесконечной лентой и оптимистичным лайком — [API_REQUEST_ARCHITECTURE.md §6.2, §6.5](../architecture/API_REQUEST_ARCHITECTURE.md#62-эндпоинты-функции--образец).
+Короткая форма, которой следуют все функции:
+
 ```ts
-export const postKeys = {
-  detail: (postId: string) => ['posts', postId] as const,
-  comments: (postId: string) => ['posts', postId, 'comments'] as const,
-};
+import { baseApi } from '@/lib/api/base-api';
+import type { Comment, Page } from '@/lib/api/types';
 
-export function usePost(postId: string, options?: { initialData?: Post }) {
-  return useQuery({
-    queryKey: postKeys.detail(postId),
-    queryFn: async () => unwrap(await api.GET('/posts/{postId}', { params: { path: { postId } } })),
-    initialData: options?.initialData,
-  });
-}
+export const commentsApi = baseApi.injectEndpoints({
+  endpoints: (build) => ({
+    getComments: build.infiniteQuery<Page<Comment>, string, string | null>({
+      infiniteQueryOptions: {
+        initialPageParam: null,
+        getNextPageParam: (last) => last.nextCursor ?? undefined,
+      },
+      query: ({ queryArg: postId, pageParam }) => ({
+        url: `/posts/${postId}/comments`,
+        params: { cursor: pageParam ?? undefined, limit: 20 },
+      }),
+      providesTags: (_result, _error, postId) => [{ type: 'Comment', id: postId }],
+    }),
 
-export function useDeletePost() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (postId: string) =>
-      unwrap(await api.DELETE('/posts/{postId}', { params: { path: { postId } } })),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['feed'] }),
-  });
+    createComment: build.mutation<Comment, { postId: string; text: string }>({
+      query: ({ postId, text }) => ({ url: `/posts/${postId}/comments`, method: 'POST', body: { text } }),
+      invalidatesTags: (_result, _error, { postId }) => [
+        { type: 'Comment', id: postId },
+        { type: 'Post', id: postId },
+      ],
+    }),
+  }),
+});
+
+export const { useGetCommentsInfiniteQuery, useCreateCommentMutation } = commentsApi;
+```
+
+Правила:
+
+| Правило | Почему |
+|---|---|
+| Один `api.ts` на функцию, один `injectEndpoints`, хуки экспортируются в конце | одинаковая форма во всех функциях |
+| Имена: `getX` для чтения, глагол для изменения (`createComment`, `likePost`, `followUser`) | по имени понятно, запрос это или мутация |
+| `query` возвращает только URL, метод, `params`, `body` — без логики | логика — в backend |
+| Каждый запрос — `providesTags`, каждая мутация — `invalidatesTags` по таблице API_REQUEST_ARCHITECTURE.md §6.3 | данные не устаревают |
+| Типы — только из `@/lib/api/types` | типы совпадают со Swagger |
+| `onQueryStarted` с `updateQueryData` — только лайки, сохранение, сообщения и реакции (API_REQUEST_ARCHITECTURE.md §6.5) | остальное проще и надёжнее через теги |
+| Списки — `infiniteQuery` с курсором: `initialPageParam: null`, `getNextPageParam: (last) => last.nextCursor ?? undefined` | ADR 0017 |
+| Загрузка файлов — только `uploadMedia()` из `lib/api/upload.ts`, затем мутация с `mediaIds` | прогресс загрузки (§9) |
+| Никаких `fetch`, `axios`, `useEffect` для загрузки данных | один способ запросов |
+
+### 3.3 Мутация в компоненте
+
+```tsx
+'use client';
+export function CommentForm({ postId }: { postId: string }) {
+  const [createComment, { isLoading }] = useCreateCommentMutation();
+
+  async function handleSubmit(values: { text: string }) {
+    try {
+      await createComment({ postId, text: values.text }).unwrap();   // unwrap: ошибка → catch
+      form.reset();
+    } catch (error) {
+      showApiError(error, form);   // VALIDATION_ERROR → у полей, остальное → toast
+    }
+  }
+  // …разметка формы; кнопка disabled={isLoading}
 }
 ```
 
-`unwrap` (в `lib/api/errors.ts`) возвращает `data` или бросает `ApiError`. Типы `Post` и др. —
-из сгенерированного `schema.d.ts`, не объявляются вручную.
-
-### 3.3 Компоненты
-- Server Component по умолчанию; `'use client'` — только для интерактивности.
-- Компонент не вызывает `api` и `fetch` напрямую — только хуки из `features/<name>/api.ts`.
-- Каждый компонент со списком/данными обрабатывает: загрузку (skeleton), пусто, ошибку.
+### 3.4 Компоненты
+- `page.tsx` — Server Component без загрузки данных; данные — в Client Component функции через хуки RTK Query.
+- Компонент не вызывает `fetch` и не обращается к store напрямую — только хуки из `features/<name>/api.ts`.
+- Каждый компонент с данными обрабатывает: загрузку (skeleton), пусто (текст из спецификации), ошибку («Повторить»).
 - UI-примитивы — из `components/ui` (shadcn/ui); стили — классы Tailwind, без отдельных CSS-файлов на компонент.
-- Пользовательский текст выводится как текст; `dangerouslySetInnerHTML` запрещён.
+- Локальное состояние UI — `useState`; Redux store содержит только кэш RTK Query.
+- Пользовательский текст выводится как текст; `dangerouslySetInnerHTML` запрещён. Хэштеги и упоминания в тексте
+  превращаются в ссылки одним компонентом `RichText` (разбор строки → массив текст/ссылка), без HTML.
+
+### 3.5 Дизайн
+- Цвета, шрифты, размеры, анимации — **только токены** из [DESIGN_SYSTEM.md](../design/DESIGN_SYSTEM.md)
+  (`bg-background`, `text-muted-foreground`); «сырые» `#…` в компонентах запрещены.
+- Повторяющиеся размеры (ширина ленты 630, карточки 470, меню 72/238, сетка 3:4) — константы в `src/lib/design.ts`.
+- Иконки — `lucide-react`, 24 px; логотип и название — компонент `BrandLogo` и `APP_NAME` из конфигурации.
+- Каждый экран сверяется с [SCREENS.md](../design/SCREENS.md) в светлой и тёмной теме и на ширине 375 / 1150 px.
 
 ## 4. Тесты
 
