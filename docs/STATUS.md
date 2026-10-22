@@ -53,7 +53,7 @@
 | T0.1 | Корневые инструменты | A | ✔ | 🟦 | `chore/root-tooling` → [PR #5](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/5) | ревью B |
 | T0.2 | Каркас NestJS, Prisma 7, common | A | ✔ | ⬜ | — | T0.1 |
 | T0.3 | Общие контракты и заглушки (C0) | A | ✔ | ⬜ | — | T0.2 |
-| T0.4 | Каркас Next.js + токены | B | ✔ | ⬜ | — | T0.1 |
+| T0.4 | Каркас Next.js + токены | B | ✔ | 🟨 | `feat/web-foundation` (PR ещё не открыт) | PR #5 (T0.1) в `main`; затем rebase |
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | ⬜ | — | T0.2, T0.4 |
 | T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
 | T0.7 | Оболочка `(main)` | B | ✔ | ⬜ | — | T0.4 |
@@ -156,6 +156,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 15:40 | [web-foundation](stories/2026-10-22_1540_web-foundation.md) | T0.4: каркас `apps/web` — Next.js 16, токены, RTK Query baseApi, Vitest; ветка от T0.1 |
 | 2026-10-22 10:39 | [root-tooling](stories/2026-10-22_1039_root-tooling.md) | T0.1: Prettier и `concurrently` в корне; PR #4 влит, Phase −1 завершена |
 | 2026-10-22 10:40 | [pr-and-onboarding](stories/2026-10-22_1040_pr-and-onboarding.md) | PR #4 с планом; онбординг для Студента B; роль студента по `git config user.name` |
 | 2026-10-22 09:53 | [backend-first-plan](stories/2026-10-22_0953_backend-first-plan.md) | план перестроен: два независимых backend-потока, точки MA-1/MB-1, заглушки, многофайловая схема Prisma (ADR 0018) |
