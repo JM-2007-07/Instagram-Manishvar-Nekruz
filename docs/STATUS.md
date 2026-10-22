@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-22 14:33.
+> Последнее обновление: 2026-10-22 15:13.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -57,9 +57,9 @@
 | T0.5 | Цепочка контракта, проверка прокси | B | ✔ | ⬜ | — | T0.2, T0.4 |
 | T0.6 | CI, защита `main`, harness | A | ✔ | ⬜ | — | T0.5 |
 | T0.7 | Оболочка `(main)` | B | ✔ | ⬜ | — | T0.4 |
-| T1.A1 | `auth` | A | ✔ | 🟨 | `feat/backend-a` (коммит; ревью с T1.A3) | C0 в `main` |
+| T1.A1 | `auth` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | C0 в `main` |
 | T1.A2 | Frontend входа | A | ✔ | ⬜ | — | T1.A1, T0.4 |
-| T1.A3 | `users` + `settings` | A | ✔ | ⬜ | — | T1.A1; аватар — T1.B1 |
+| T1.A3 | `users` + `settings` | A | ✔ | 🟨 | `feat/backend-a` (коммит без аватара) | аватар — T1.B1 |
 | T1.A4 | `follows` | A | ✔ | ⬜ | — | T1.A3 |
 | T1.A5 | `privacy`, `VisibilityService` | A | ✔ | ⬜ | — | T1.A4 |
 | T1.A6 | `search` + история | A | ✔ | ⬜ | — | T1.A5 |
@@ -158,6 +158,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-22 15:13 | [users-settings](stories/2026-10-22_1513_users-settings.md) | T1.A3: `/me`, профиль, имя, email, ссылки, настройки; ревью T1.A1+T1.A3, разделение сервисов auth |
 | 2026-10-22 14:33 | [auth](stories/2026-10-22_1433_auth.md) | T1.A1: регистрация с кодом, вход, выход, сброс и смена пароля, сессии, лимиты; PR #6 для C0 |
 | 2026-10-22 14:14 | [api-core-contracts](stories/2026-10-22_1414_api-core-contracts.md) | T0.3 (C0): User/Session/UserSettings, сессии, SessionGuard, заглушки общих сервисов, тестовые помощники, seed |
 | 2026-10-22 12:15 | [api-foundation](stories/2026-10-22_1215_api-foundation.md) | T0.2: каркас NestJS 11 + Prisma 7, формат ошибок, Origin-guard, курсоры, Swagger, ESLint, Jest; весь backend A — в `feat/backend-a` |

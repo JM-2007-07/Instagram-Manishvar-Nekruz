@@ -5,8 +5,8 @@
 | Метод и путь | Доступ | Запрос | Ответ | Ошибки | F / # |
 |---|---|---|---|---|---|
 | `GET /me` | User | — | `Me` — также проверка сессии | 401 | F-PRF-12 / #53 |
-| `PATCH /me` | User | `{ fullName?, bio?, pronouns?, gender?, genderCustom?, isPrivate? }` | `Me` | 400, 429 (смена имени чаще лимита) | F-PRF-02, 04, F-PRV-01 / #54 |
-| `PUT /me/username` | User | `{ userName }` | `Me` | 400, 409, 429 (2 раза за 14 дней 📝) | F-ACC-11 |
+| `PATCH /me` | User | `{ fullName?, bio?, pronouns?, gender?, genderCustom?, isPrivate? }` | `Me` | 400 (лимит смены `fullName` пока не реализован — Q-new-1, T1.A3) | F-PRF-02, 04, F-PRV-01 / #54 |
+| `PUT /me/username` | User | `{ userName }` | `Me` | 400, 409, 429 + `Retry-After` (2 раза за 14 дней; освободившееся имя закреплено за прежним владельцем 14 дней) | F-ACC-11 |
 | `PUT /me/email` | User | `{ email, password? }` | `202` — код на новый адрес | 400, 409, 429 | F-ACC-12 |
 | `POST /me/email/verify` | User | `{ code }` | `Me` | 400 `VERIFICATION_CODE_INVALID` | F-ACC-12 |
 | `PUT /me/avatar` | User | `{ mediaId }` (изображение, загруженное через `POST /media`) | `Me` | 409 `MEDIA_NOT_READY`, 415 | F-PRF-06 / #56 |

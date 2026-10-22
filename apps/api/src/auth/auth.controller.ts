@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   Param,
-  ParseUUIDPipe,
   Post,
   Query,
   Req,
@@ -27,12 +26,15 @@ import {
 import { Throttle, hours, minutes } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { Public } from '@/common/decorators/public.decorator';
+import { ParseUuidPipe } from '@/common/pipes/parse-uuid.pipe';
 import { CurrentUser } from '@/common/session/current-user.decorator';
 import type { SessionUser } from '@/common/session/session-user';
 import { SessionService, type SessionMeta } from '@/common/session/session.service';
 import { HOURLY } from '@/common/throttler/app-throttler';
 import { MeDto } from '@/users/dto/me.dto';
 import { AuthService } from './auth.service';
+import { PasswordService } from './password.service';
+import { RegistrationService } from './registration.service';
 import { ipAndLogin } from './auth.throttle';
 import {
   ChangePasswordDto,
@@ -57,6 +59,8 @@ const PER_15_MIN_5 = { default: { limit: 5, ttl: minutes(15) } };
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly registration: RegistrationService,
+    private readonly passwords: PasswordService,
     private readonly sessions: SessionService,
   ) {}
 
@@ -67,7 +71,7 @@ export class AuthController {
   usernameAvailability(
     @Query() query: UserNameAvailabilityQueryDto,
   ): Promise<UserNameAvailabilityDto> {
-    return this.auth.checkUserName(query.userName);
+    return this.registration.checkUserName(query.userName);
   }
 
   @Public()
@@ -78,7 +82,7 @@ export class AuthController {
   @ApiConflictResponse({ description: 'Имя пользователя или email заняты' })
   @ApiTooManyRequestsResponse()
   register(@Body() dto: RegisterDto): Promise<RegisterResponseDto> {
-    return this.auth.register(dto);
+    return this.registration.register(dto);
   }
 
   @Public()
@@ -93,7 +97,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<MeDto> {
-    const { token, me } = await this.auth.verifyEmail(dto, sessionMeta(req));
+    const { token, me } = await this.registration.verifyEmail(dto, sessionMeta(req));
     this.sessions.setSessionCookie(res, token);
     return me;
   }
@@ -105,7 +109,7 @@ export class AuthController {
   @ApiAcceptedResponse({ description: 'Всегда 202, даже если email неизвестен' })
   @ApiTooManyRequestsResponse()
   resendCode(@Body() dto: EmailDto): Promise<void> {
-    return this.auth.resendCode(dto.email);
+    return this.registration.resendCode(dto.email);
   }
 
   @Public()
@@ -147,7 +151,7 @@ export class AuthController {
   @ApiAcceptedResponse({ description: 'Всегда 202, даже если аккаунта нет' })
   @ApiTooManyRequestsResponse()
   forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
-    return this.auth.forgotPassword(dto);
+    return this.passwords.forgotPassword(dto);
   }
 
   @Public()
@@ -158,7 +162,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Ссылка недействительна или слабый пароль' })
   @ApiTooManyRequestsResponse()
   resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
-    return this.auth.resetPassword(dto);
+    return this.passwords.resetPassword(dto);
   }
 
   @Post('password/change')
@@ -168,7 +172,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Неверный текущий пароль или слабый новый' })
   @ApiTooManyRequestsResponse()
   changePassword(@CurrentUser() user: SessionUser, @Body() dto: ChangePasswordDto): Promise<void> {
-    return this.auth.changePassword(user.id, user.sessionId, dto);
+    return this.passwords.changePassword(user.id, user.sessionId, dto);
   }
 
   @Get('sessions')
@@ -183,7 +187,7 @@ export class AuthController {
   @ApiNotFoundResponse({ description: 'Сессия не найдена или принадлежит другому пользователю' })
   async revokeSession(
     @CurrentUser() user: SessionUser,
-    @Param('sessionId', ParseUUIDPipe) sessionId: string,
+    @Param('sessionId', ParseUuidPipe) sessionId: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     const wasCurrent = await this.auth.revokeSession(user.id, sessionId, user.sessionId);

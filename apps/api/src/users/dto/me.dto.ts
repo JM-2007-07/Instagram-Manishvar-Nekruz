@@ -25,9 +25,9 @@ export class MutualFollowersDto {
   total!: number;
 }
 
-// Me = Profile & { email, emailVerified, birthday, gender, genderCustom, hasPassword, role } (API_CONTRACT §1.4).
-// Поля «отношений» (followStatus, isBlocked…) для себя фиксированные; счётчики подписок и постов — 0 до T1.A4 / PostsService.
-export class MeDto extends UserSummaryDto {
+// Profile (API_CONTRACT §1.4): то, что видят все. Поля «отношений» (followStatus, isBlocked…) и счётчики
+// подписок/постов — значения по умолчанию до T1.A4 / PostsService.
+export class ProfileDto extends UserSummaryDto {
   @ApiProperty({ type: String, nullable: true })
   bio!: string | null;
 
@@ -69,7 +69,10 @@ export class MeDto extends UserSummaryDto {
 
   @ApiProperty()
   isMe!: boolean;
+}
 
+// Me = Profile & { email, emailVerified, birthday, gender, genderCustom, hasPassword, role }: только владельцу.
+export class MeDto extends ProfileDto {
   @ApiProperty()
   email!: string;
 

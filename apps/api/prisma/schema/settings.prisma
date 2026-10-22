@@ -1,0 +1,13 @@
+// Настройки уведомлений (владелец — Студент A). UserSettings лежит в account.prisma.
+
+// Переключатель типа уведомления (F-NTF-06). Нет строки — тип включён.
+model NotificationPreference {
+  userId  String           @db.Uuid
+  type    NotificationType
+  enabled Boolean
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
+  @@map("notification_preferences")
+}

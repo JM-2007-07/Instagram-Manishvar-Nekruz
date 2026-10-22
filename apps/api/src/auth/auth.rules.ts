@@ -1,4 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import * as argon2 from 'argon2';
+import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
+import { validationError } from '@/common/validation';
 
 // Сегменты, которые занимают маршруты веб-приложения (RENDERING_STRATEGY.md §2): такими не могут быть имена пользователей.
 export const RESERVED_USER_NAMES = new Set([
@@ -61,14 +64,6 @@ export const CODE_TTL_MS = 15 * 60 * 1000;
 export const CODE_MAX_ATTEMPTS = 5;
 export const UNVERIFIED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-function validationError(field: string, message: string): BadRequestException {
-  return new BadRequestException({
-    code: 'VALIDATION_ERROR',
-    message: 'Request validation failed',
-    details: [{ field, message }],
-  });
-}
-
 // Пароль не из списка частых, не равен имени пользователя и email. Длину проверяет DTO.
 export function assertPasswordAllowed(
   password: string,
@@ -105,4 +100,44 @@ export function assertUserNameAllowed(userName: string): void {
   }
 }
 
-export { validationError };
+// Код из 6 цифр легко перебрать, поэтому хеш привязан к пользователю; защита от перебора — лимит попыток.
+export function hashCode(userId: string, code: string): string {
+  return createHash('sha256').update(`${userId}:${code}`).digest('hex');
+}
+
+export function safeEqual(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+// Сколько дней старое имя пользователя остаётся за прежним владельцем (F-ACC-11).
+export const OLD_USER_NAME_HOLD_MS = 14 * 24 * 60 * 60 * 1000;
+
+// Шестизначный код для письма.
+export function generateCode(): string {
+  return randomInt(0, 10 ** CODE_LENGTH)
+    .toString()
+    .padStart(CODE_LENGTH, '0');
+}
+
+export function invalidCode(): BadRequestException {
+  return new BadRequestException({
+    code: 'VERIFICATION_CODE_INVALID',
+    message: 'Verification code is invalid or expired',
+  });
+}
+
+export function conflictError(field: string, message: string): ConflictException {
+  return new ConflictException({ code: 'CONFLICT', message, details: [{ field, message }] });
+}
+
+// Параметры Argon2id по OWASP: память 19 MiB, 2 прохода (AUTHENTICATION.md §6).
+export function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password, {
+    type: argon2.argon2id,
+    memoryCost: 19456,
+    timeCost: 2,
+    parallelism: 1,
+  });
+}

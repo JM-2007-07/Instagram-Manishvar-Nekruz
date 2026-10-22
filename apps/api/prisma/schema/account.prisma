@@ -59,6 +59,11 @@ model User {
   sessions Session[]
   settings UserSettings?
 
+  // --- users / settings (A) ---
+  links                   UserLink[]
+  usernameChanges         UsernameChange[]
+  notificationPreferences NotificationPreference[]
+
   // --- auth (A) ---
   emailCodes  EmailVerificationCode[]
   resetTokens PasswordResetToken[]

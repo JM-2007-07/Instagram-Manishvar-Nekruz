@@ -1,5 +1,5 @@
 // Вход и подтверждения: EmailVerificationCode, PasswordResetToken (владелец — Студент A).
-// OAuthAccount, UsernameChange, TwoFactorSecret появятся в T4.A1 / T4.A4.
+// OAuthAccount, TwoFactorSecret появятся в T4.A1 / T4.A4.
 
 enum VerificationPurpose {
   SIGNUP
@@ -37,4 +37,20 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// Смена имени пользователя (F-ACC-11): по записям считаем лимит «2 раза за 14 дней»
+// и держим старое имя за владельцем 14 дней.
+model UsernameChange {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  oldUserName String
+  newUserName String
+  changedAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, changedAt])
+  @@index([oldUserName])
+  @@map("username_changes")
 }

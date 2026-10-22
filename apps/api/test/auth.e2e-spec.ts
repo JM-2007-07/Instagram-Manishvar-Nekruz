@@ -447,6 +447,19 @@ describe('Auth', () => {
         .expect(200);
     });
 
+    it('удаляет неиспользованные ссылки сброса пароля', async () => {
+      const alice = await createUser(app);
+      const current = await loginAs(app, alice);
+      await prisma.passwordResetToken.create({
+        data: { userId: alice.id, tokenHash: 'h1', expiresAt: new Date(Date.now() + MINUTE) },
+      });
+      await post('/auth/password/change')
+        .set('Cookie', current)
+        .send({ currentPassword: alice.password, newPassword: 'Brand-new-pass-9' })
+        .expect(204);
+      expect(await prisma.passwordResetToken.count({ where: { userId: alice.id } })).toBe(0);
+    });
+
     it('неверный currentPassword: 400, пароль и сессии не тронуты', async () => {
       const alice = await createUser(app);
       const current = await loginAs(app, alice);

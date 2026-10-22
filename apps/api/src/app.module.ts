@@ -12,6 +12,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrivacyModule } from './privacy/privacy.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { SettingsModule } from './settings/settings.module';
 import { UsersModule } from './users/users.module';
 
 // Модули общих сервисов (Session, Users, Privacy, Notifications, Realtime) глобальные: их сервисы
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
     RealtimeModule,
     HealthModule,
     AuthModule,
+    SettingsModule,
   ],
   providers: [
     // Порядок глобальных guard'ов: Origin -> Session -> Throttler.
