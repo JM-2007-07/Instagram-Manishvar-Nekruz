@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { AuthHeroArt } from './auth-hero-art';
 
 // Экраны входа повторяют instagram.com (2026): кнопки-«таблетки» 44 px, поля 60 px, синий #0064e0.
-// Значения — DESIGN_SYSTEM.md §2.6 и §4.6. Ширины: телефон < 640, планшет 640–1063, компьютер ≥ 1064.
+// Значения — DESIGN_SYSTEM.md §2.5 и §4.6. Ширины: телефон < 640, планшет 640–1063, компьютер ≥ 1064.
 
 const pill =
   'inline-flex h-11 w-full items-center justify-center gap-2 rounded-[22px] px-5 text-15 font-medium outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-40';
