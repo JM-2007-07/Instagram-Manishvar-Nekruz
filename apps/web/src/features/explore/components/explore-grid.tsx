@@ -3,7 +3,7 @@
 import { useGetExploreInfiniteQuery } from '../api';
 import { PostGrid } from './post-grid';
 
-// Сетка «Интересного»: ширина 840 на десктопе, на мобильном — во всю ширину.
+// Сетка «Интересного»: на компьютере 5 колонок плиток 3:4 (как instagram.com), на мобильном — 3.
 export function ExploreGrid() {
   const { data, isLoading, isFetching, isError, hasNextPage, fetchNextPage, refetch } =
     useGetExploreInfiniteQuery();
@@ -17,6 +17,7 @@ export function ExploreGrid() {
       onLoadMore={() => void fetchNextPage()}
       onRetry={refetch}
       emptyText="Пока здесь ничего нет."
+      columns={5}
     />
   );
 }

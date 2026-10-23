@@ -23,6 +23,9 @@ if (!apiInternalUrl) {
 }
 
 const nextConfig: NextConfig = {
+  // Значок Next.js (только в разработке) — справа вверху: внизу справа кнопка «Сообщения» и свёрнутый звонок,
+  // внизу слева — пункт меню «Ещё».
+  devIndicators: { position: 'top-right' },
   env: {
     NEXT_PUBLIC_BRAND_LOGO: brandFile('logo'),
     NEXT_PUBLIC_BRAND_MARK: brandFile('mark'),

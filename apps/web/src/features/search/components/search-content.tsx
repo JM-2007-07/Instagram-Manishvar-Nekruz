@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Clock, Hash, MapPin, X } from 'lucide-react';
+import { ChevronLeft, Clock, Hash, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchField } from '@/features/users/components/search-field';
 import {
@@ -98,7 +98,10 @@ export function SearchContent({
   autoFocus,
 }: {
   onNavigate?: () => void;
-  /** Что показать при пустом поле вместо «Недавнего». */
+  /**
+   * Вид «Интересного» (сверено с instagram.com 2026-10-23): поле «Поиск» над сеткой (idle). Фокус на поле —
+   * режим поиска: сетка скрывается, слева от поля «‹», ниже «Недавнее» или результаты; «‹» или Esc — назад к сетке.
+   */
   idle?: React.ReactNode;
   autoFocus?: boolean;
 }) {
@@ -106,17 +109,38 @@ export function SearchContent({
   const q = useDebouncedValue(text.trim().slice(0, MAX_QUERY), 300);
   const typing = text.trim().length > 0;
   const showResults = typing && q.length > 0;
+  const dropdown = !!idle; // вид «Интересного»
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // Выход из режима поиска: поле очищается, снова видна сетка.
+  function closeSearch() {
+    setOpen(false);
+    setText('');
+    box.current?.querySelector('input')?.blur();
+  }
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeSearch();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   const accounts = useAccountSearch(showResults ? q : '');
   const hashtags = useFindHashtagsQuery(q, { skip: !showResults });
   const locations = useFindLocationsQuery(q, { skip: !showResults });
-  const history = useGetRecentSearchesInfiniteQuery(undefined, { skip: typing || !!idle });
+  const history = useGetRecentSearchesInfiniteQuery(undefined, {
+    skip: typing || (dropdown && !open),
+  });
   const [addHistory] = useAddRecentSearchMutation();
   const [removeEntry] = useRemoveRecentSearchMutation();
   const [clearHistory, { isLoading: clearing }] = useClearRecentSearchesMutation();
 
   function remember(body: Parameters<typeof addHistory>[0]) {
     void addHistory(body); // запись истории второстепенна: ошибка не должна мешать переходу
+    setOpen(false);
     onNavigate?.();
   }
 
@@ -261,6 +285,53 @@ export function SearchContent({
     );
   }
 
+  if (dropdown) {
+    // Размеры с instagram.com (1366 px): поле 40 px, над сеткой — 56 % её ширины; в режиме поиска
+    // колонка 552 px: «‹» 24 px, поле 500 px, строки 60 px.
+    return (
+      <div ref={box} className="flex flex-col">
+        <div
+          className={
+            open
+              ? 'mx-auto flex w-full max-w-[552px] items-center gap-3 px-4 md:px-2'
+              : 'mx-auto w-full px-4 md:w-[56%] md:px-0'
+          }
+        >
+          {open && (
+            <button
+              type="button"
+              aria-label="Назад"
+              onClick={closeSearch}
+              className="flex size-6 shrink-0 items-center justify-center"
+            >
+              <ChevronLeft className="size-6" />
+            </button>
+          )}
+          <form onSubmit={handleSubmit} className="min-w-0 flex-1">
+            <SearchField
+              value={text}
+              onChange={(value) => {
+                setText(value.slice(0, MAX_QUERY));
+                setOpen(true);
+              }}
+              onFocus={() => setOpen(true)}
+              label="Поиск"
+              placeholder="Поиск"
+              autoFocus={autoFocus}
+            />
+          </form>
+        </div>
+        {open ? (
+          <div className="mx-auto mt-5 w-full max-w-[552px]">
+            {typing ? renderResults() : renderHistory()}
+          </div>
+        ) : (
+          <div className="mt-6">{idle}</div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
       <form onSubmit={handleSubmit} className="px-4 pb-3">
@@ -272,7 +343,7 @@ export function SearchContent({
           autoFocus={autoFocus}
         />
       </form>
-      <div>{typing ? renderResults() : (idle ?? renderHistory())}</div>
+      <div>{typing ? renderResults() : renderHistory()}</div>
     </div>
   );
 }

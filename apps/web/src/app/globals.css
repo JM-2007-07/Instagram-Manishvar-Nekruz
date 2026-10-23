@@ -91,7 +91,8 @@
   /* Текст на тёмном фоне тоста; в DESIGN_SYSTEM явно не задан — белый, как у Instagram */
   --toast-foreground: #ffffff;
   --shadow-strong: 0 4px 32px 0 rgba(11, 16, 20, 0.16);
-  --story-ring: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); /* 📝 */
+  /* Сверено со скриншотом Instagram 2026: снизу слева жёлтый, сверху справа малиновый, без синего */
+  --story-ring: linear-gradient(45deg, #ffd600 0%, #ff7a00 28%, #ff0069 62%, #d300c5 100%);
   --story-ring-seen: var(--stroke); /* 📝 */
   /* затемнение за модальным окном и фон просмотра историй — одинаковы в обеих темах 📝 */
   --overlay: rgba(0, 0, 0, 0.65);

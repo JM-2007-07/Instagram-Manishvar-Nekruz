@@ -29,35 +29,39 @@ export function FollowButton({
   isPrivate = false,
   variant = 'button',
   className,
+  onStatusChange,
 }: {
   userId: string;
   followStatus?: FollowStatus; // не знаем статус (рекомендации) — начинаем с «Подписаться»
   isPrivate?: boolean;
   variant?: 'button' | 'link'; // link — текстовая кнопка 12/16 вес 600, как в рекомендациях
   className?: string;
+  /** Новое состояние — чтобы две кнопки одного человека (строка и карточка) показывали одно и то же. */
+  onStatusChange?: (status: FollowStatus) => void;
 }) {
   const [follow, { isLoading: following }] = useFollowUserMutation();
   const [unfollow, { isLoading: unfollowing }] = useUnfollowUserMutation();
   // Локальное состояние поверх пропса; перестаёт действовать, когда сервер прислал новое значение пропса.
   const [local, setLocal] = useState<{ base: FollowStatus; value: FollowStatus } | null>(null);
   const status = local && local.base === followStatus ? local.value : followStatus;
+  function show(value: FollowStatus) {
+    setLocal({ base: followStatus, value });
+    onStatusChange?.(value);
+  }
 
   async function handleClick() {
     const previous = status;
     try {
       if (previous === 'NONE') {
-        setLocal({ base: followStatus, value: isPrivate ? 'REQUESTED' : 'FOLLOWING' });
+        show(isPrivate ? 'REQUESTED' : 'FOLLOWING');
         const result = await follow(userId).unwrap();
-        setLocal({
-          base: followStatus,
-          value: result.status === 'PENDING' ? 'REQUESTED' : 'FOLLOWING',
-        });
+        show(result.status === 'PENDING' ? 'REQUESTED' : 'FOLLOWING');
       } else {
-        setLocal({ base: followStatus, value: 'NONE' });
+        show('NONE');
         await unfollow(userId).unwrap();
       }
     } catch (error) {
-      setLocal({ base: followStatus, value: previous });
+      show(previous);
       showApiError(error);
     }
   }

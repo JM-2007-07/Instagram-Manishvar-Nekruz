@@ -333,7 +333,7 @@ export function CallWindow({
       <div
         role="dialog"
         aria-label="Звонок (свёрнут)"
-        className="fixed right-4 bottom-20 z-50 w-[260px] overflow-hidden rounded-2xl bg-black text-white shadow-[var(--shadow-strong)] md:bottom-16"
+        className="fixed right-4 bottom-20 z-50 w-[260px] overflow-hidden rounded-2xl bg-black text-white shadow-[var(--shadow-strong)] md:bottom-24"
       >
         {isVideo ? (
           <button
@@ -388,8 +388,13 @@ export function CallWindow({
       aria-label="Звонок"
       className="fixed inset-0 z-50 flex flex-col bg-black text-white"
     >
-      <div className="relative flex-1">
-        <VideoView stream={session.remoteStream} className="size-full object-contain" />
+      {/* min-h-0 и absolute: иначе видео высотой с камеру (720–1080 px) растягивает блок и
+          выталкивает кнопки за нижний край экрана */}
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <VideoView
+          stream={session.remoteStream}
+          className="absolute inset-0 size-full object-contain"
+        />
         {(!session.remoteStream || !isVideo) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <p className="text-20 font-semibold">{session.remoteName}</p>
@@ -412,7 +417,7 @@ export function CallWindow({
           />
         )}
       </div>
-      <div className="flex justify-center gap-4 p-5">
+      <div className="flex shrink-0 justify-center gap-4 p-5 pb-[max(20px,env(safe-area-inset-bottom))]">
         <button
           type="button"
           aria-label={micOn ? 'Выключить микрофон' : 'Включить микрофон'}

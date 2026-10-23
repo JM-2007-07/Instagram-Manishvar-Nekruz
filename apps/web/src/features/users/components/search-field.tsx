@@ -9,6 +9,7 @@ export function SearchField({
   placeholder = 'Поиск',
   className,
   autoFocus,
+  onFocus,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -16,6 +17,7 @@ export function SearchField({
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
+  onFocus?: () => void;
 }) {
   return (
     <label className={cn('relative block', className)}>
@@ -29,8 +31,9 @@ export function SearchField({
         value={value}
         autoFocus={autoFocus}
         placeholder={placeholder}
+        onFocus={onFocus}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-[25px] bg-background-secondary pr-4 pl-10 text-16 outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+        className="h-10 w-full rounded-[25px] bg-background-secondary pr-4 pl-10 text-16 outline-none placeholder:text-muted-foreground"
       />
     </label>
   );

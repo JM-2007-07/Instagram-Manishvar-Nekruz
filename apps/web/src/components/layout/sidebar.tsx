@@ -14,7 +14,6 @@ import {
 } from '@/components/layout/nav-items';
 import { NavBadge } from '@/features/notifications/components/nav-badge';
 import { NotificationsPanel } from '@/features/notifications/components/notifications-panel';
-import { SearchPanel } from '@/features/search/components/search-panel';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
 import type { Theme } from '@/lib/theme';
@@ -83,7 +82,6 @@ function SidebarItem({
 export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
   const pathname = usePathname();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const profileHref = `/${me.userName}/`;
   const profileActive = isActivePath(pathname, profileHref, true);
 
@@ -92,7 +90,6 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
   if (shownPath !== pathname) {
     setShownPath(pathname);
     setNotificationsOpen(false);
-    setSearchOpen(false);
   }
   useEffect(() => {
     const active = document.activeElement;
@@ -119,16 +116,10 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
                 active={
                   item.key === 'notifications'
                     ? notificationsOpen
-                    : item.key === 'search'
-                      ? searchOpen
-                      : !!item.href && isActivePath(pathname, item.href)
+                    : !!item.href && isActivePath(pathname, item.href, item.key === 'search')
                 }
                 onClick={
-                  item.key === 'notifications'
-                    ? () => setNotificationsOpen(true)
-                    : item.key === 'search'
-                      ? () => setSearchOpen(true)
-                      : undefined
+                  item.key === 'notifications' ? () => setNotificationsOpen(true) : undefined
                 }
               />
             </li>
@@ -163,7 +154,6 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
         </div>
       </nav>
       <NotificationsPanel open={notificationsOpen} onOpenChange={setNotificationsOpen} />
-      <SearchPanel open={searchOpen} onOpenChange={setSearchOpen} />
     </aside>
   );
 }

@@ -14,6 +14,7 @@ import { CreateStoryDialog } from './create-story-dialog';
 type RingKind = 'unseen' | 'close-friends' | 'seen' | 'none';
 
 // Кольцо 89 px вокруг аватара 74 px: градиент — есть непросмотренные, зелёное — близкие друзья.
+// Толщина цветного кольца 3 px (как у Instagram), просмотренного серого — 1 px; остальное — зазор цвета фона.
 function Ring({ kind, children }: { kind: RingKind; children: React.ReactNode }) {
   const gap = (DESIGN.storyRing - DESIGN.storyAvatar) / 2; // отступ от края до аватара
   return (
@@ -29,7 +30,7 @@ function Ring({ kind, children }: { kind: RingKind; children: React.ReactNode })
     >
       <span
         className="rounded-full bg-background"
-        style={{ padding: kind === 'none' ? gap : gap - 2 }}
+        style={{ padding: kind === 'none' ? gap : gap - (kind === 'seen' ? 1 : 3) }}
       >
         {children}
       </span>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import { Clapperboard, Copy, Heart, MessageCircle } from 'lucide-react';
+import { Copy, Heart, MessageCircle, Play } from 'lucide-react';
 import type { Post } from '@/features/posts/types';
 
 // Сетка плиток 3:4, 3 колонки, промежуток 1 px (SCREENS §3.8).
@@ -15,6 +15,8 @@ type Props = {
   onLoadMore: () => void;
   onRetry: () => void;
   emptyText?: string;
+  /** 5 — «Интересное» на компьютере (instagram.com 2026: 5 колонок 3:4 на 1024–1808 px), иначе 3 */
+  columns?: 3 | 5;
 };
 
 function Tile({ post }: { post: Post }) {
@@ -39,9 +41,16 @@ function Tile({ post }: { post: Post }) {
         />
       )}
       {(isVideo || isCarousel) && (
-        <span className="absolute right-2 top-2 text-white drop-shadow" data-testid="tile-badge">
+        <span className="absolute top-3 right-3 text-white drop-shadow" data-testid="tile-badge">
           {isVideo ? (
-            <Clapperboard className="size-6" aria-label="Видео" />
+            // Значок Reels как у Instagram: белый скруглённый квадрат с чёрным ▶
+            <span
+              role="img"
+              aria-label="Видео"
+              className="flex size-6 items-center justify-center rounded-[6px] bg-white"
+            >
+              <Play className="size-3.5 fill-black text-black" />
+            </span>
           ) : (
             <Copy className="size-6" aria-label="Карусель" />
           )}
@@ -70,7 +79,10 @@ export function PostGrid({
   onLoadMore,
   onRetry,
   emptyText = 'Публикаций пока нет.',
+  columns = 3,
 }: Props) {
+  const gridClass =
+    columns === 5 ? 'grid grid-cols-3 gap-px md:grid-cols-5' : 'grid grid-cols-3 gap-px';
   const sentinel = useRef<HTMLDivElement>(null);
 
   // Бесконечная прокрутка: когда метка внизу видна — просим следующую страницу.
@@ -86,7 +98,7 @@ export function PostGrid({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-px" aria-busy="true" data-testid="grid-skeleton">
+      <div className={gridClass} aria-busy="true" data-testid="grid-skeleton">
         {Array.from({ length: 12 }, (_, i) => (
           <div key={i} className="aspect-[3/4] animate-pulse bg-background-secondary" />
         ))}
@@ -108,7 +120,7 @@ export function PostGrid({
   }
   return (
     <>
-      <div className="grid grid-cols-3 gap-px">
+      <div className={gridClass}>
         {posts.map((post) => (
           <Tile key={post.id} post={post} />
         ))}

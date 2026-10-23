@@ -10,8 +10,8 @@ export type NavItem = {
 };
 
 export const HOME: NavItem = { key: 'home', label: 'Главная', icon: House, href: '/' };
-// «Поисковый запрос» — кнопка без href: открывает панель поиска (features/search); на мобильном поиск — /explore/search/.
-export const SEARCH: NavItem = { key: 'search', label: 'Поисковый запрос', icon: Search };
+// «Поиск» ведёт на «Интересное»: там поле поиска сверху и сетка (Instagram 2026). На мобильном поиск — /explore/search/.
+export const SEARCH: NavItem = { key: 'search', label: 'Поиск', icon: Search, href: '/explore/' };
 export const EXPLORE: NavItem = {
   key: 'explore',
   label: 'Интересное',

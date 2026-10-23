@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
+import { ProfileHoverCard } from '@/features/profile/components/profile-hover-card';
+import type { FollowStatus } from '@/lib/api/types';
 import { useGetPeopleSuggestionsQuery } from '../api';
 import { useStableList } from '../use-stable-list';
 import { FollowButton } from './follow-button';
@@ -40,18 +43,40 @@ export function SuggestionsPanel({
         )}
       </div>
       {data.map((user) => (
-        <UserListItem
-          key={user.id}
-          user={user}
-          avatarSize={44}
-          subtitle={
-            user.reason === 'FOLLOWED_BY' && user.followedBy
-              ? `Подписаны: ${user.followedBy.userName}`
-              : 'Популярное'
-          }
-          action={<FollowButton userId={user.id} followStatus="NONE" isPrivate={user.isPrivate} />}
-        />
+        <SuggestionRow key={user.id} user={user} />
       ))}
     </section>
+  );
+}
+
+type Suggestion = NonNullable<ReturnType<typeof useGetPeopleSuggestionsQuery>['data']>[number];
+
+// Строка рекомендации: при наведении на фото или имя — карточка профиля; кнопка в строке
+// и в карточке показывают одно состояние подписки.
+function SuggestionRow({ user }: { user: Suggestion }) {
+  const [status, setStatus] = useState<FollowStatus>('NONE');
+  return (
+    <UserListItem
+      user={user}
+      avatarSize={44}
+      subtitle={
+        user.reason === 'FOLLOWED_BY' && user.followedBy
+          ? `Подписаны: ${user.followedBy.userName}`
+          : 'Популярное'
+      }
+      wrapLink={(link) => (
+        <ProfileHoverCard userName={user.userName} followStatus={status} onFollowChange={setStatus}>
+          {link}
+        </ProfileHoverCard>
+      )}
+      action={
+        <FollowButton
+          userId={user.id}
+          followStatus={status}
+          isPrivate={user.isPrivate}
+          onStatusChange={setStatus}
+        />
+      }
+    />
   );
 }

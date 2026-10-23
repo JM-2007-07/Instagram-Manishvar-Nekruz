@@ -4,12 +4,15 @@ import { SearchContent } from '@/features/search/components/search-content';
 
 export const metadata: Metadata = { title: 'Интересное' };
 
-// «Интересное»: сверху поиск на всю ширину; пока поле пустое — сетка, при вводе — результаты
-// (аккаунты, хэштеги, места). Данные грузят Client Components, страница — только каркас.
+// «Интересное» (сверено с instagram.com 2026-10-23): сверху поле «Поиск», ниже сетка 5 колонок.
+// Ширина как у Instagram: 74,2vw − 14 px (1000 px на экране 1366), центр смещён влево на 43 px —
+// справа место под кнопкой «Сообщения». Данные грузят Client Components, страница — только каркас.
 export default function ExplorePage() {
   return (
-    <div className="mx-auto w-full pt-4 md:max-w-[840px] md:px-5 md:pt-6">
-      <SearchContent idle={<ExploreGrid />} />
+    <div className="pt-2 md:pt-6 md:pr-[87px]">
+      <div className="mx-auto w-full md:w-[calc(74.2vw-14px)]">
+        <SearchContent idle={<ExploreGrid />} />
+      </div>
     </div>
   );
 }
