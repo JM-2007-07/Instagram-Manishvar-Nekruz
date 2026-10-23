@@ -3,6 +3,10 @@
 // Нужны запущенный API и пользователи из prisma/seed.ts (alice, bob, carol).
 // Запуск: npm run demo-data -w api   (API_URL и WEB_ORIGIN — как в apps/api/.env, по умолчанию localhost)
 // Повторный запуск ничего не дублирует: части, которые уже есть (публикации, чаты), пропускаются.
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import sharp from 'sharp';
 
 const API = (process.env.API_URL ?? 'http://localhost:4000') + '/api/v1';
@@ -168,6 +172,10 @@ async function main(): Promise<void> {
   const chats = await call<{ items: unknown[] }>(alice, 'GET', '/chats?folder=PRIMARY&limit=1');
   if (chats.items.length === 0) await seedChats(alice, bob, carol);
   else console.log('Чаты уже есть — пропускаю.');
+
+  const reels = await call<{ items: unknown[] }>(alice, 'GET', '/reels?limit=1');
+  if (reels.items.length === 0) await seedReels(alice, bob, carol);
+  else console.log('Reels уже есть — пропускаю.');
 
   console.log('Готово.');
 }
@@ -340,6 +348,119 @@ async function seedChats(alice: Session, bob: Session, carol: Session): Promise<
     await pause(150);
   }
   await call(alice, 'POST', `/chats/${group.id}/read`, { messageId: lastGroup });
+}
+
+// ---------- Reels: ролики рисует сам ffmpeg (встроенные генераторы, без чужого видео) ----------
+
+const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg';
+
+// Вертикальные 720×1280, 8 с, 30 кадров/с, H.264. Каждый — свой генератор ffmpeg (lavfi).
+const REEL_SOURCES: { source: string; caption: string }[] = [
+  {
+    source:
+      'gradients=s=720x1280:r=30:d=8:speed=0.015:c0=0x833ab4:c1=0xfd1d1d:c2=0xfcb045:c3=0x5851db:nb_colors=4',
+    caption: 'Закат в движении 🌅',
+  },
+  {
+    source: 'mandelbrot=s=720x1280:r=30:end_scale=0.02:start_scale=3:inner=mincol',
+    caption: 'Погружение в фрактал 🌀',
+  },
+  {
+    source:
+      'life=s=720x1280:r=30:mold=25:ratio=0.12:life_color=#ff0069:death_color=#1a0b2e:mold_color=#7638fa',
+    caption: 'Игра «Жизнь» — клеточный автомат 🧬',
+  },
+  {
+    source:
+      'gradients=s=720x1280:r=30:d=8:speed=0.02:type=radial:c0=0x00c6ff:c1=0x0072ff:c2=0x1cd14f',
+    caption: 'Морская волна 🌊',
+  },
+  {
+    source:
+      'gradients=s=720x1280:r=30:d=8:speed=0.025:type=circular:c0=0xffd600:c1=0xff7a00:c2=0xd300c5:c3=0x7638fa:nb_colors=4',
+    caption: 'Цвета Instagram 🎨',
+  },
+];
+
+function run(file: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) =>
+    execFile(file, args, { windowsHide: true }, (error, _out, stderr) =>
+      error ? reject(new Error(`${file}: ${error.message} ${stderr.slice(-400)}`)) : resolve(),
+    ),
+  );
+}
+
+async function renderReel(dir: string, index: number): Promise<Buffer> {
+  const out = join(dir, `reel${index}.mp4`);
+  const { source } = REEL_SOURCES[index]!;
+  await run(FFMPEG, [
+    '-y',
+    '-f',
+    'lavfi',
+    '-i',
+    source,
+    '-t',
+    '8',
+    '-pix_fmt',
+    'yuv420p',
+    '-c:v',
+    'libx264',
+    '-preset',
+    'veryfast',
+    '-crf',
+    '26',
+    '-movflags',
+    '+faststart',
+    out,
+  ]);
+  return readFile(out);
+}
+
+// Видео обрабатывается на сервере в фоне — ждём READY (до ~2 минут).
+async function waitReady(s: Session, mediaId: string): Promise<void> {
+  for (let i = 0; i < 60; i++) {
+    const st = await call<{ status: string }>(s, 'GET', `/media/${mediaId}/status`);
+    if (st.status === 'READY') return;
+    if (st.status === 'FAILED') throw new Error(`media ${mediaId} FAILED (есть ли ffmpeg у API?)`);
+    await pause(2000);
+  }
+  throw new Error(`media ${mediaId}: обработка не закончилась за 2 минуты`);
+}
+
+async function seedReels(alice: Session, bob: Session, carol: Session): Promise<void> {
+  console.log('Reels (ffmpeg рисует ролики)…');
+  const authors = [bob, carol, alice, bob, carol];
+  const dir = await mkdtemp(join(tmpdir(), 'demo-reels-'));
+  try {
+    for (let i = 0; i < REEL_SOURCES.length; i++) {
+      let mp4: Buffer;
+      try {
+        mp4 = await renderReel(dir, i);
+      } catch (error) {
+        console.warn(
+          `  ffmpeg недоступен (${String(error).split(String.fromCharCode(10))[0]}) — Reels пропущены`,
+        );
+        return;
+      }
+      const s = authors[i]!;
+      const form = new FormData();
+      form.append('purpose', 'REEL');
+      form.append('file', new Blob([new Uint8Array(mp4)], { type: 'video/mp4' }), `reel${i}.mp4`);
+      const media = await call<{ id: string }>(s, 'POST', '/media', form);
+      await waitReady(s, media.id);
+      const post = await call<{ id: string }>(s, 'POST', '/posts', {
+        type: 'REEL',
+        items: [{ mediaId: media.id }],
+        caption: REEL_SOURCES[i]!.caption,
+      });
+      for (const fan of [alice, bob, carol].filter((u) => u.id !== s.id)) {
+        await call(fan, 'PUT', `/posts/${post.id}/like`);
+      }
+      console.log(`  ${s.userName}: ${REEL_SOURCES[i]!.caption}`);
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 }
 
 main().catch((error: unknown) => {

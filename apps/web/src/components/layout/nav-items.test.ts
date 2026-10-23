@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isActivePath } from './nav-items';
+import { activeIconClass, isActivePath } from './nav-items';
 
 describe('isActivePath', () => {
   it('совпадает с «/» в конце и без него (Next.js убирает «/»)', () => {
@@ -17,5 +17,14 @@ describe('isActivePath', () => {
     expect(isActivePath('/alice/saved', '/alice/', true)).toBe(true);
     expect(isActivePath('/alice', '/alice/', true)).toBe(true);
     expect(isActivePath('/alicebob', '/alice/', true)).toBe(false);
+  });
+});
+
+describe('activeIconClass', () => {
+  it('заливает только значки, где заливка читается; остальные — жирнее', () => {
+    expect(activeIconClass('home', true)).toBe('fill-current');
+    expect(activeIconClass('explore', true)).toBe('[stroke-width:2.75]');
+    expect(activeIconClass('create', true)).toBe('[stroke-width:2.75]');
+    expect(activeIconClass('home', false)).toBe('');
   });
 });

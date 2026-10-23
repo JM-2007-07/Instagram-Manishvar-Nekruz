@@ -35,6 +35,14 @@ export const CREATE: NavItem = {
   href: '/create/',
 };
 
+// Активный значок: как у Instagram — залитый, но только там, где заливка читается (дом, сердце…).
+// У компаса, лупы и «плюса» заливка дала бы сплошной круг или квадрат, поэтому они просто жирнее.
+const FILLABLE = new Set(['home', 'reels', 'messages', 'notifications']);
+export function activeIconClass(key: string, active: boolean): string {
+  if (!active) return '';
+  return FILLABLE.has(key) ? 'fill-current' : '[stroke-width:2.75]';
+}
+
 // Next.js открывает /explore/ как /explore (trailingSlash выключен), поэтому сравниваем пути без «/» в конце.
 const trimSlash = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
 

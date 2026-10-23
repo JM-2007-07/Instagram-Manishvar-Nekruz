@@ -121,7 +121,7 @@ export function PostMedia({ items, onDoubleLike, className, aspect }: Props) {
           <Heart
             key={heartKey}
             data-testid="big-heart"
-            className="size-24 fill-white text-white drop-shadow-lg animate-in zoom-in-0 fade-in duration-300"
+            className="animate-heart-burst size-24 fill-white text-white drop-shadow-lg"
           />
         </div>
       )}

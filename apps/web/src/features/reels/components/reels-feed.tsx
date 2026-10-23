@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Clapperboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGetReelsInfiniteQuery } from '../api';
 import { ReelItem } from './reel-item';
 import { ReelSkeleton } from './reel-skeleton';
 
-// Высота ленты: на мобильном вычитаем верхнюю (60) и нижнюю (50) панели.
-export const reelsHeight = 'h-[calc(100dvh-110px)] md:h-dvh';
+// Высота ленты: на телефоне вычитаем нижнюю панель (50); верхней панели вне ленты нет.
+export const reelsHeight = 'h-[calc(100dvh-50px)] md:h-dvh';
 
 export function ReelsFeed() {
   const { data, isLoading, isFetching, isError, hasNextPage, fetchNextPage, refetch } =
@@ -61,8 +61,16 @@ export function ReelsFeed() {
   }
   if (!reels || reels.length === 0) {
     return (
-      <div className={`${reelsHeight} flex items-center justify-center`}>
-        <p className="text-14 text-muted-foreground">Пока нет Reels</p>
+      <div
+        className={`${reelsHeight} flex flex-col items-center justify-center gap-3 px-6 text-center`}
+      >
+        <span className="flex size-24 items-center justify-center rounded-full border-2 border-foreground">
+          <Clapperboard className="size-12" aria-hidden />
+        </span>
+        <p className="text-20 font-semibold">Пока нет Reels</p>
+        <p className="max-w-[320px] text-14 text-muted-foreground">
+          Здесь появятся короткие видео от людей, на которых вы подписаны.
+        </p>
       </div>
     );
   }

@@ -2,11 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { MoreMenu } from '@/components/layout/more-menu';
-import { SIDEBAR_ITEMS, isActivePath, type NavItem } from '@/components/layout/nav-items';
+import {
+  SIDEBAR_ITEMS,
+  activeIconClass,
+  isActivePath,
+  type NavItem,
+} from '@/components/layout/nav-items';
 import { NavBadge } from '@/features/notifications/components/nav-badge';
 import { NotificationsPanel } from '@/features/notifications/components/notifications-panel';
 import { SearchPanel } from '@/features/search/components/search-panel';
@@ -22,8 +27,10 @@ const itemClass =
 
 // Подпись видна только в раскрытом меню. Меню остаётся раскрытым, пока открыто «Ещё»
 // (radix уводит фокус и наведение в выпадающий список, и без has-[…] меню бы свернулось).
+// Фокус раскрывает меню только с клавиатуры (:focus-visible): после клика мышью ссылка остаётся в фокусе,
+// и с focus-within меню не сворачивалось бы после перехода на другую страницу.
 const labelClass =
-  'whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100 group-has-[[data-state=open]]/sidebar:opacity-100';
+  'whitespace-nowrap opacity-0 transition-opacity duration-150 ease-(--ease-hover) group-hover/sidebar:opacity-100 group-has-[:focus-visible]/sidebar:opacity-100 group-has-[[data-state=open]]/sidebar:opacity-100';
 
 function SidebarItem({
   item,
@@ -38,7 +45,7 @@ function SidebarItem({
   const content = (
     <>
       <span className="relative shrink-0">
-        <Icon className={cn('size-6', active && 'fill-current')} />
+        <Icon className={cn('size-6', activeIconClass(item.key, active))} />
         {item.key === 'notifications' && <NavBadge kind="notifications" />}
         {item.key === 'messages' && <NavBadge kind="messages" />}
       </span>
@@ -80,11 +87,24 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
   const profileHref = `/${me.userName}/`;
   const profileActive = isActivePath(pathname, profileHref, true);
 
+  // Перешли на другую страницу — закрываем панели и снимаем фокус с пункта, чтобы меню свернулось.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (shownPath !== pathname) {
+    setShownPath(pathname);
+    setNotificationsOpen(false);
+    setSearchOpen(false);
+  }
+  useEffect(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.closest('[data-sidebar]')) active.blur();
+  }, [pathname]);
+
   return (
     <aside className="hidden shrink-0 md:block" style={{ width: DESIGN.sidebarCollapsed }}>
       <nav
         aria-label="Основная навигация"
-        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden bg-background px-3 pt-6 pb-5 w-[72px] transition-[width] duration-100 ease-[var(--ease-hover)] focus-within:w-[238px] hover:w-[238px] has-[[data-state=open]]:w-[238px]"
+        data-sidebar
+        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden bg-background px-3 pt-6 pb-5 w-[72px] transition-[width] duration-150 ease-(--ease-move) hover:w-[238px] has-[:focus-visible]:w-[238px] has-[[data-state=open]]:w-[238px] motion-reduce:transition-none"
       >
         {/* У Instagram знак 24 px остаётся и в раскрытом меню, без рамки справа */}
         <Link href="/" aria-label="Главная" className="flex h-14 shrink-0 items-center px-3">

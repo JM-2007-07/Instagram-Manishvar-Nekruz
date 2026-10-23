@@ -44,7 +44,7 @@ export function PostActions({
         onClick={onLike}
         className={btn}
       >
-        <Heart className={cn('size-6', liked && 'fill-badge text-badge')} />
+        <Heart className={cn('size-6', liked && 'animate-like-pop fill-badge text-badge')} />
       </button>
       {!post.commentsDisabled &&
         (commentHref ? (

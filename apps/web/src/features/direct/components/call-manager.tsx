@@ -202,7 +202,7 @@ export function CallManager({ children }: { children: React.ReactNode }) {
         <div
           role="alertdialog"
           aria-label="Входящий звонок"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
         >
           <div className="flex w-full max-w-[400px] flex-col items-center gap-3 rounded-2xl bg-background-elevated p-6 text-center">
             <ChatAvatar

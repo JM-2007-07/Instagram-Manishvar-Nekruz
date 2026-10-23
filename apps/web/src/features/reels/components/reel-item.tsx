@@ -4,7 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Heart, MessageCircle, MoreHorizontal, Play, Send, Volume2, VolumeX } from 'lucide-react';
+import {
+  Heart,
+  Loader2,
+  MessageCircle,
+  MoreHorizontal,
+  Play,
+  RotateCcw,
+  Send,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { SaveButton, UserAvatar } from '@/components/temp/student-a';
 import {
   DropdownMenu,
@@ -38,6 +48,8 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [bigHeart, setBigHeart] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  // Состояние видео: загружается (или буферизуется), готово, ошибка — у каждого свой вид поверх ролика.
+  const [videoState, setVideoState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [likePost] = useLikePostMutation();
   const [sendPlay] = usePlayReelMutation();
 
@@ -63,6 +75,17 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
     else video.pause();
   }, [active, userPaused]);
 
+  // Ушли со страницы — видео остановлено (не играет в фоне).
+  useEffect(() => {
+    const video = videoRef.current;
+    return () => video?.pause();
+  }, []);
+
+  function retry() {
+    setVideoState('loading');
+    videoRef.current?.load();
+  }
+
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted]);
@@ -81,7 +104,7 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
 
   function onDoubleClick() {
     setBigHeart(true);
-    setTimeout(() => setBigHeart(false), 800);
+    setTimeout(() => setBigHeart(false), 900);
     if (!liked) void setLike(true);
   }
 
@@ -106,7 +129,7 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
         className={actionClass}
         onClick={() => void setLike(!liked)}
       >
-        <Heart className={cn('size-6', liked && 'fill-badge text-badge')} />
+        <Heart className={cn('size-6', liked && 'animate-like-pop fill-badge text-badge')} />
         {likeCount !== null && <span>{likeCount}</span>}
       </button>
       <Link href={postUrl} aria-label="Комментировать" className={actionClass}>
@@ -155,7 +178,36 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
             }}
             onClick={() => setUserPaused((p) => !p)}
             onDoubleClick={onDoubleClick}
+            onWaiting={() => setVideoState('loading')}
+            onCanPlay={() => setVideoState('ready')}
+            onPlaying={() => setVideoState('ready')}
+            onError={() => setVideoState('error')}
           />
+        )}
+
+        {videoState === 'loading' && active && !userPaused && (
+          <span
+            role="status"
+            aria-label="Видео загружается"
+            className="pointer-events-none absolute inset-0 flex items-center justify-center"
+          >
+            <Loader2 className="size-10 animate-spin text-white/80 drop-shadow" aria-hidden />
+          </span>
+        )}
+        {videoState === 'error' && (
+          <div
+            role="alert"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-media-backdrop text-center text-white"
+          >
+            <p className="text-14">Не удалось загрузить видео</p>
+            <button
+              type="button"
+              onClick={retry}
+              className="flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-14 font-semibold hover:bg-white/25"
+            >
+              <RotateCcw className="size-4" aria-hidden /> Повторить
+            </button>
+          </div>
         )}
 
         {userPaused && (
@@ -166,8 +218,11 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
           </span>
         )}
         {bigHeart && (
-          <span className="pointer-events-none absolute inset-0 flex animate-ping items-center justify-center">
-            <Heart className="size-24 fill-white text-white drop-shadow-lg" aria-hidden />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <Heart
+              className="animate-heart-burst size-24 fill-white text-white drop-shadow-lg"
+              aria-hidden
+            />
           </span>
         )}
 

@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Heart, Send, User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
-import { BOTTOM_ITEMS, MESSAGES, NOTIFICATIONS, isActivePath } from '@/components/layout/nav-items';
+import {
+  BOTTOM_ITEMS,
+  MESSAGES,
+  NOTIFICATIONS,
+  activeIconClass,
+  isActivePath,
+} from '@/components/layout/nav-items';
 import { NavBadge } from '@/features/notifications/components/nav-badge';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
@@ -62,7 +68,7 @@ export function MobileBottomBar({ me }: { me: Me }) {
       {BOTTOM_ITEMS.map((item) => {
         const Icon = item.icon;
         const active = !!item.href && isActivePath(pathname, item.href);
-        const icon = <Icon className={cn('size-6', active && 'fill-current')} />;
+        const icon = <Icon className={cn('size-6', activeIconClass(item.key, active))} />;
         return item.href ? (
           <Link
             key={item.key}

@@ -58,7 +58,7 @@ export function MoreMenu({
     <DropdownMenu>
       <DropdownMenuTrigger aria-label="Ещё" className={triggerClassName}>
         <Menu className="size-6 shrink-0" />
-        <span className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
+        <span className="whitespace-nowrap opacity-0 transition-opacity duration-150 group-hover/sidebar:opacity-100 group-has-[:focus-visible]/sidebar:opacity-100 group-has-[[data-state=open]]/sidebar:opacity-100">
           Ещё
         </span>
       </DropdownMenuTrigger>

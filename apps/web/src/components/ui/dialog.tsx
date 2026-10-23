@@ -20,7 +20,10 @@ export function DialogOverlay({
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
-      className={cn('fixed inset-0 z-50 bg-overlay', className)}
+      className={cn(
+        'fixed inset-0 z-50 bg-overlay data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150',
+        className,
+      )}
       {...props}
     />
   );
@@ -42,7 +45,7 @@ export function DialogContent({
     <DialogPrimitive.Portal>
       <DialogOverlay />
       <DialogPrimitive.Content
-        className="fixed inset-0 z-50 flex items-center justify-center outline-none"
+        className="group/dialog fixed inset-0 z-50 flex items-center justify-center outline-none"
         {...props}
       >
         <DialogPrimitive.Close asChild>
@@ -58,7 +61,8 @@ export function DialogContent({
         )}
         <div
           className={cn(
-            'relative max-h-[calc(100vh-40px)] max-w-[calc(100vw-32px)] overflow-hidden rounded-xl bg-background-elevated text-foreground',
+            // Окно появляется с лёгким увеличением (как у Instagram), закрывается быстрее (DESIGN_SYSTEM §5).
+            'relative max-h-[calc(100vh-40px)] max-w-[calc(100vw-32px)] overflow-hidden rounded-xl bg-background-elevated text-foreground group-data-[state=open]/dialog:animate-in group-data-[state=open]/dialog:fade-in-0 group-data-[state=open]/dialog:zoom-in-[0.97] group-data-[state=open]/dialog:duration-200 group-data-[state=closed]/dialog:animate-out group-data-[state=closed]/dialog:fade-out-0 group-data-[state=closed]/dialog:zoom-out-[0.97] group-data-[state=closed]/dialog:duration-150',
             className,
           )}
         >

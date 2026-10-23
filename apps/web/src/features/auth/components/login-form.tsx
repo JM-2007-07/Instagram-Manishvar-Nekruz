@@ -108,8 +108,10 @@ export function LoginForm({ oauthFailed = false }: { oauthFailed?: boolean }) {
   return (
     <AuthHeroPage>
       <div className="flex w-full flex-1 flex-col min-[640px]:max-w-[546px] min-[640px]:flex-none min-[1064px]:max-w-[529px]">
-        <div className="flex justify-center pt-[121px] pb-[107px] min-[640px]:hidden">
+        {/* Телефон: знак и надпись по центру (на компьютере знак — в левой колонке, надпись не нужна) */}
+        <div className="flex flex-col items-center gap-5 pt-[96px] pb-[56px] min-[640px]:hidden">
           <BrandLogo variant="mark" className="size-[60px] text-30" />
+          <BrandLogo className="text-[42px] text-auth-text" />
         </div>
         <h1 className="mb-6 hidden text-17 font-semibold text-auth-text min-[640px]:block">
           Войти в {APP_NAME}

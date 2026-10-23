@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 // Основная кнопка: высота 32 px, отступы 7/16, скругление 8 px, текст 14/18 вес 600 (DESIGN_SYSTEM §4).
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg text-14 font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg text-14 font-semibold transition-[color,background-color,opacity,transform] duration-100 ease-(--ease-hover) outline-none active:scale-[0.98] motion-reduce:active:scale-100 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
