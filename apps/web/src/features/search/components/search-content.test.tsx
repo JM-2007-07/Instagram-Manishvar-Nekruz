@@ -11,11 +11,11 @@ let history: Q;
 let search: Q;
 
 vi.mock('../api', () => ({
-  useGetSearchHistoryInfiniteQuery: () => history,
-  useSearchQuery: () => search,
-  useAddSearchHistoryMutation: () => [addHistory, {}],
-  useRemoveSearchHistoryEntryMutation: () => [removeEntry, {}],
-  useClearSearchHistoryMutation: () => [clearHistory, { isLoading: false }],
+  useGetRecentSearchesInfiniteQuery: () => history,
+  useGlobalSearchQuery: () => search,
+  useAddRecentSearchMutation: () => [addHistory, {}],
+  useRemoveRecentSearchMutation: () => [removeEntry, {}],
+  useClearRecentSearchesMutation: () => [clearHistory, { isLoading: false }],
 }));
 // Без ожидания 300 мс: значение сразу равно введённому.
 vi.mock('@/features/users/use-debounced-value', () => ({ useDebouncedValue: <T,>(v: T) => v }));

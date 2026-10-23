@@ -7,7 +7,8 @@ import { APP_NAME } from '@/lib/config';
 import { THEME_COOKIE, THEME_SCRIPT, parseTheme } from '@/lib/theme';
 import './globals.css';
 
-export const metadata: Metadata = { title: APP_NAME };
+// Заголовок вкладки: «Страница • Название», как в Instagram.
+export const metadata: Metadata = { title: { default: APP_NAME, template: `%s • ${APP_NAME}` } };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Тема хранится в cookie `theme`. dark — класс сразу на сервере;

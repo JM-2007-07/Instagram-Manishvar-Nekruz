@@ -15,13 +15,15 @@ type AvatarUser = {
 export function UserAvatar({
   user,
   size = 44,
+  ring: showRing = true,
   className,
 }: {
   user: AvatarUser;
   size?: number;
+  ring?: boolean; // false — без кольца истории (лента историй рисует его сама)
   className?: string;
 }) {
-  const ring = !!user.hasActiveStory;
+  const ring = showRing && !!user.hasActiveStory;
   const gap = size >= 64 ? 5.5 : 2; // зазор между кольцом и фото
   const ringWidth = 2;
   const outer = ring ? size + 2 * (gap + ringWidth) : size;

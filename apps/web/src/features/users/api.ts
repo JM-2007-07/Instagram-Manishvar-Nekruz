@@ -124,7 +124,7 @@ export const usersApi = baseApi.injectEndpoints({
       invalidatesTags: ['CloseFriend', 'Feed'],
     }),
 
-    getSuggestions: build.query<Suggestion[], number | void>({
+    getPeopleSuggestions: build.query<Suggestion[], number | void>({
       query: (limit) => ({ url: '/users/suggestions', params: { limit: limit || undefined } }),
       providesTags: [{ type: 'User', id: 'SUGGESTIONS' }],
     }),
@@ -146,5 +146,5 @@ export const {
   useGetFavoriteAccountsQuery,
   useAddFavoriteAccountMutation,
   useRemoveFavoriteAccountMutation,
-  useGetSuggestionsQuery,
+  useGetPeopleSuggestionsQuery,
 } = usersApi;

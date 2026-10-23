@@ -8,11 +8,11 @@ const PAGE_SIZE = 20;
 export const searchApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     // Аккаунты, хэштеги, места — до 10 каждого. Пустая строка: вызывающий передаёт skip.
-    search: build.query<SearchResult, string>({
+    globalSearch: build.query<SearchResult, string>({
       query: (q) => ({ url: '/search', params: { q } }),
     }),
 
-    getSearchHistory: build.infiniteQuery<Page<SearchHistoryEntry>, void, string | null>({
+    getRecentSearches: build.infiniteQuery<Page<SearchHistoryEntry>, void, string | null>({
       infiniteQueryOptions: {
         initialPageParam: null,
         getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -24,17 +24,17 @@ export const searchApi = baseApi.injectEndpoints({
       providesTags: [{ type: 'SearchHistory', id: 'ALL' }],
     }),
 
-    addSearchHistory: build.mutation<SearchHistoryEntry, AddHistoryBody>({
+    addRecentSearch: build.mutation<SearchHistoryEntry, AddHistoryBody>({
       query: (body) => ({ url: '/me/search-history', method: 'POST', body }),
       invalidatesTags: ['SearchHistory'],
     }),
 
-    removeSearchHistoryEntry: build.mutation<void, string>({
+    removeRecentSearch: build.mutation<void, string>({
       query: (entryId) => ({ url: `/me/search-history/${entryId}`, method: 'DELETE' }),
       invalidatesTags: ['SearchHistory'],
     }),
 
-    clearSearchHistory: build.mutation<void, void>({
+    clearRecentSearches: build.mutation<void, void>({
       query: () => ({ url: '/me/search-history', method: 'DELETE' }),
       invalidatesTags: ['SearchHistory'],
     }),
@@ -42,9 +42,9 @@ export const searchApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useSearchQuery,
-  useGetSearchHistoryInfiniteQuery,
-  useAddSearchHistoryMutation,
-  useRemoveSearchHistoryEntryMutation,
-  useClearSearchHistoryMutation,
+  useGlobalSearchQuery,
+  useGetRecentSearchesInfiniteQuery,
+  useAddRecentSearchMutation,
+  useRemoveRecentSearchMutation,
+  useClearRecentSearchesMutation,
 } = searchApi;

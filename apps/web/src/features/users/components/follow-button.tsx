@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { showApiError } from '@/lib/api/errors';
 import type { FollowStatus } from '@/lib/api/types';
 import { useFollowUserMutation, useUnfollowUserMutation } from '../api';
@@ -17,13 +18,15 @@ const LABELS: Record<FollowStatus, string> = {
 // Для закрытого аккаунта ответ сервера (PENDING) уточняет итоговое состояние.
 export function FollowButton({
   userId,
-  followStatus,
+  followStatus = 'NONE',
   isPrivate = false,
+  variant = 'button',
   className,
 }: {
   userId: string;
-  followStatus: FollowStatus;
+  followStatus?: FollowStatus; // не знаем статус (рекомендации) — начинаем с «Подписаться»
   isPrivate?: boolean;
+  variant?: 'button' | 'link'; // link — текстовая кнопка 12/16 вес 600, как в рекомендациях
   className?: string;
 }) {
   const [follow, { isLoading: following }] = useFollowUserMutation();
@@ -50,6 +53,25 @@ export function FollowButton({
       setLocal({ base: followStatus, value: previous });
       showApiError(error);
     }
+  }
+
+  if (variant === 'link') {
+    return (
+      <button
+        type="button"
+        disabled={following || unfollowing}
+        onClick={handleClick}
+        className={cn(
+          'text-12 font-semibold outline-none focus-visible:underline',
+          status === 'NONE'
+            ? 'text-button-borderless hover:text-button-borderless-hover'
+            : 'text-foreground hover:opacity-70',
+          className,
+        )}
+      >
+        {LABELS[status]}
+      </button>
+    );
   }
 
   return (

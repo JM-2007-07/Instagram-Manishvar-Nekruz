@@ -11,7 +11,7 @@ export default async function MainLayout({
   modal,
 }: {
   children: React.ReactNode;
-  modal?: React.ReactNode; // слот @modal: окна поверх страницы (подписчики, публикация)
+  modal: React.ReactNode;
 }) {
   const res = await serverFetch<Me>('/me');
 
@@ -21,11 +21,9 @@ export default async function MainLayout({
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
 
   return (
-    <>
-      <AppShell me={res.data} theme={theme}>
-        {children}
-      </AppShell>
+    <AppShell me={res.data} theme={theme}>
+      {children}
       {modal}
-    </>
+    </AppShell>
   );
 }

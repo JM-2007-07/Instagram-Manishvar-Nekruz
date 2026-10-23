@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useGetSuggestionsQuery } from '../api';
+import { useGetPeopleSuggestionsQuery } from '../api';
 import { FollowButton } from './follow-button';
 import { ListError, UserListSkeleton } from './list-states';
 import { UserListItem } from './user-list-item';
@@ -15,7 +15,7 @@ export function SuggestionsPanel({
   limit?: number;
   showSeeAll?: boolean;
 }) {
-  const { data, isLoading, error, refetch } = useGetSuggestionsQuery(limit);
+  const { data, isLoading, error, refetch } = useGetPeopleSuggestionsQuery(limit);
 
   if (isLoading) return <UserListSkeleton rows={Math.min(limit, 5)} />;
   if (error) return <ListError error={error} onRetry={refetch} />;

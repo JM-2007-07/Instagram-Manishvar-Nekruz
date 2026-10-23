@@ -1,10 +1,11 @@
-/* eslint-disable @next/next/no-img-element -- локальные файлы бренда, оптимизация не нужна */
-import { APP_NAME, BRAND_MARK_SRC, BRAND_WORDMARK_SRC } from '@/lib/config';
+/* eslint-disable @next/next/no-img-element -- файлы бренда из public/brand, оптимизация не нужна */
+import { APP_NAME, BRAND_LOGO_URL, BRAND_MARK_URL } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
-// Логотип проекта (ADR 0012: свой бренд, без знаков и шрифта Instagram).
-// full — название; mark — знак для узкого меню: первая буква в круге (📝 пока Q31 открыт).
-// Если в .env.local указаны локальные картинки (NEXT_PUBLIC_BRAND_MARK / _WORDMARK), показываем их.
+// Логотип проекта (ADR 0012, «Изменение 2026-10-23»).
+// full — логотип: файл public/brand/logo.* или название рукописным шрифтом (Grand Hotel, DESIGN_SYSTEM §3.1);
+// mark — знак для узкого меню и заставки: файл public/brand/mark.* (скругление 22 %, как у иконки приложения)
+// или первая буква в круге.
 export function BrandLogo({
   className,
   variant = 'full',
@@ -13,13 +14,13 @@ export function BrandLogo({
   variant?: 'full' | 'mark';
 }) {
   if (variant === 'mark') {
-    if (BRAND_MARK_SRC) {
+    if (BRAND_MARK_URL) {
       return (
         <img
-          src={BRAND_MARK_SRC}
+          src={BRAND_MARK_URL}
           alt=""
           aria-hidden="true"
-          className={cn('size-8 rounded-[22%] object-cover', className)}
+          className={cn('size-6 rounded-[22%] object-cover', className)}
         />
       );
     }
@@ -35,10 +36,11 @@ export function BrandLogo({
       </span>
     );
   }
-  if (BRAND_WORDMARK_SRC) {
+  if (BRAND_LOGO_URL) {
+    // Высота логотипа в меню Instagram — 29 px 📝; логотип чёрный на прозрачном — в тёмной теме инвертируем.
     return (
       <img
-        src={BRAND_WORDMARK_SRC}
+        src={BRAND_LOGO_URL}
         alt={APP_NAME}
         className={cn('h-[29px] w-auto dark:invert', className)}
       />

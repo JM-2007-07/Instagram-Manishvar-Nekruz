@@ -13,6 +13,7 @@ import {
   useGetUserTaggedInfiniteQuery,
 } from '../api';
 import { SavedTab } from '@/features/saved/components/saved-page';
+import { HighlightsRow } from '@/features/stories/components/highlights-row';
 import { EmptyOrError } from './empty-or-error';
 import { PostTiles } from './post-tiles';
 import { ProfileHeader } from './profile-header';
@@ -148,7 +149,14 @@ export function ProfilePage({ userName, tab }: { userName: string; tab: ProfileT
   return (
     <div className="mx-auto w-full pb-10" style={{ maxWidth: DESIGN.profileContainer }}>
       <ProfileHeader profile={profile} />
-      <div className="h-6 md:h-[42px]" />
+      {/* «Актуальное» (компонент Студента B) — под кнопками, в колонке шапки, как у Instagram */}
+      {locked ? (
+        <div className="h-6 md:h-[42px]" />
+      ) : (
+        <div className="mx-auto w-full max-w-[636px] px-4 pt-2 pb-2 md:px-0 md:pt-[26px] md:pb-[18px]">
+          <HighlightsRow userId={profile.id} isMe={profile.isMe} />
+        </div>
+      )}
       {locked ? (
         <div className="border-t-[0.8px] border-separator">
           <EmptyOrError

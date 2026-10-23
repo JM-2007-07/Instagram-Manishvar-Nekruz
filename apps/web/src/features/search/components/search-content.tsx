@@ -15,11 +15,11 @@ import { UserListItem } from '@/features/users/components/user-list-item';
 import { useDebouncedValue } from '@/features/users/use-debounced-value';
 import type { Hashtag, Location, SearchHistoryEntry } from '@/lib/api/types';
 import {
-  useAddSearchHistoryMutation,
-  useClearSearchHistoryMutation,
-  useGetSearchHistoryInfiniteQuery,
-  useRemoveSearchHistoryEntryMutation,
-  useSearchQuery,
+  useAddRecentSearchMutation,
+  useClearRecentSearchesMutation,
+  useGetRecentSearchesInfiniteQuery,
+  useRemoveRecentSearchMutation,
+  useGlobalSearchQuery,
 } from '../api';
 
 const MAX_QUERY = 50;
@@ -95,11 +95,11 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
   const typing = text.trim().length > 0;
   const showResults = typing && q.length > 0;
 
-  const results = useSearchQuery(q, { skip: !showResults });
-  const history = useGetSearchHistoryInfiniteQuery(undefined, { skip: typing });
-  const [addHistory] = useAddSearchHistoryMutation();
-  const [removeEntry] = useRemoveSearchHistoryEntryMutation();
-  const [clearHistory, { isLoading: clearing }] = useClearSearchHistoryMutation();
+  const results = useGlobalSearchQuery(q, { skip: !showResults });
+  const history = useGetRecentSearchesInfiniteQuery(undefined, { skip: typing });
+  const [addHistory] = useAddRecentSearchMutation();
+  const [removeEntry] = useRemoveRecentSearchMutation();
+  const [clearHistory, { isLoading: clearing }] = useClearRecentSearchesMutation();
 
   function remember(body: Parameters<typeof addHistory>[0]) {
     void addHistory(body); // запись истории второстепенна: ошибка не должна мешать переходу
