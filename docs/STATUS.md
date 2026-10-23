@@ -74,17 +74,17 @@
 | T2.A4 | `chats` | A | ✔ | 🟨 | в `main` (PR #9) + медиа, голосовые, «поделиться» в `feat/a-integrations` | — |
 | T2.B1 | `stories` + актуальное | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T2.B2 | Ответы на истории → Direct | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
-| T3.A1 | UI профиля и настроек | A | ✔ | 🟨 | `feat/web-a` | — |
-| T3.A2 | UI подписок, блокировки, поиска | A | ✔ | 🟨 | `feat/web-a` | — |
-| T3.A3 | UI уведомлений | A | ✔ | 🟨 | `feat/web-a` | — |
-| T3.A4 | UI «Сохранённое» | A | ✔ | 🟨 | `feat/web-a` | — |
-| T3.A5 | UI Direct | A | ✔ | 🟨 | `feat/web-a` | — |
-| T3.B1 | UI ленты, карточки, окна поста | B | ✔ | 🟦 | `feat/web-b` (PR — будет) | — |
-| T3.B2 | UI создания публикации | B | ✔ | 🟦 | `feat/web-b` (PR — будет) | — |
-| T3.B3 | UI «Интересного», хэштега, места | B | ✔ | 🟦 | `feat/web-b` (PR — будет) | — |
-| T3.B4 | UI Reels | B | ✔ | 🟦 | `feat/web-b` (PR — будет) | — |
-| T3.B5 | UI комментариев | B | ✔ | 🟦 | `feat/web-b` (PR — будет) | — |
-| T3.B6 | UI историй | B | ✔ | 🟦 | `feat/web-b` (PR — будет) | — |
+| T3.A1 | UI профиля и настроек | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A2 | UI подписок, блокировки, поиска | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A3 | UI уведомлений | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A4 | UI «Сохранённое» | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A5 | UI Direct | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B1 | UI ленты, карточки, окна поста | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B2 | UI создания публикации | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B3 | UI «Интересного», хэштега, места | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B4 | UI Reels | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B5 | UI комментариев | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B6 | UI историй | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
 | T4.A1 | Соцвход | A | — | 🟨 | `feat/backend-a` (backend; ключи — Q32) | Q32 |
 | T4.A2 | Звонки 1:1 | A | — | 🟨 | `feat/backend-a` (backend и сигнализация; UI — T3.A5) | T3.A5 |
 | T4.A3 | Ограничение, скрытие, близкие друзья | A | — | 🟨 | `feat/backend-a` (backend) | — |
