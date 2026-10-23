@@ -333,7 +333,7 @@ export function CallWindow({
       <div
         role="dialog"
         aria-label="Звонок (свёрнут)"
-        className="fixed right-4 bottom-20 z-50 w-[260px] overflow-hidden rounded-2xl bg-black text-white shadow-[var(--shadow-strong)] md:bottom-4"
+        className="fixed right-4 bottom-20 z-50 w-[260px] overflow-hidden rounded-2xl bg-black text-white shadow-[var(--shadow-strong)] md:bottom-16"
       >
         {isVideo ? (
           <button
