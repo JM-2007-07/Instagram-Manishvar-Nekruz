@@ -1,21 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useGetExploreQuery } from '../api';
+import { useGetExploreInfiniteQuery } from '../api';
 import { PostGrid } from './post-grid';
 
 // Сетка «Интересного»: ширина 840 на десктопе, на мобильном — во всю ширину.
 export function ExploreGrid() {
-  const [cursor, setCursor] = useState<string | null>(null);
-  const { data, isLoading, isFetching, isError, refetch } = useGetExploreQuery({ cursor });
+  const { data, isLoading, isFetching, isError, hasNextPage, fetchNextPage, refetch } =
+    useGetExploreInfiniteQuery();
   return (
     <PostGrid
-      posts={data?.items}
+      posts={data?.pages.flatMap((p) => p.items)}
       isLoading={isLoading}
       isError={isError}
-      nextCursor={data?.nextCursor}
+      hasNextPage={hasNextPage}
       isFetching={isFetching}
-      onLoadMore={setCursor}
+      onLoadMore={() => void fetchNextPage()}
       onRetry={refetch}
       emptyText="Пока здесь ничего нет."
     />

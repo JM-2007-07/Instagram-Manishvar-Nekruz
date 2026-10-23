@@ -19,6 +19,7 @@ export type DraftItem = {
   offset: { x: number; y: number }; // сдвиг при перетаскивании, только вид
   altText: string;
   tags: DraftTag[];
+  ready?: boolean; // true, когда сервер закончил обработку (status READY)
   mediaId?: string; // заполняется после загрузки, чтобы «Повторить» не грузило файл заново
 };
 

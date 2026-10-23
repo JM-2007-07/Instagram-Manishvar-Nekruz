@@ -1,21 +1,20 @@
 'use client';
 
-import { useState } from 'react';
 import { Hash } from 'lucide-react';
 import { getApiError } from '@/lib/api/errors';
-import { useGetHashtagPostsQuery, useGetHashtagQuery } from '../api';
+import { useGetHashtagPostsInfiniteQuery, useGetHashtagQuery } from '../api';
 import { NotAvailable } from './not-available';
 import { PostGrid } from './post-grid';
 
 // Страница хэштега /explore/tags/{tag}/ (F-SRC-04).
 export function HashtagPage({ tag }: { tag: string }) {
   const name = tag.toLowerCase();
-  const [cursor, setCursor] = useState<string | null>(null);
   const info = useGetHashtagQuery(name);
-  const posts = useGetHashtagPostsQuery({ name, cursor });
+  const posts = useGetHashtagPostsInfiniteQuery(name);
+  const items = posts.data?.pages.flatMap((p) => p.items);
 
   if (info.error && getApiError(info.error).status === 404) return <NotAvailable />;
-  const preview = posts.data?.items[0]?.items[0]?.media;
+  const preview = items?.[0]?.items[0]?.media;
   const previewUrl = preview?.kind === 'VIDEO' ? preview.thumbnailUrl : preview?.url;
 
   return (
@@ -40,12 +39,12 @@ export function HashtagPage({ tag }: { tag: string }) {
       </header>
       <h2 className="mb-3 text-14 font-semibold text-muted-foreground">Популярные публикации</h2>
       <PostGrid
-        posts={posts.data?.items}
+        posts={items}
         isLoading={posts.isLoading}
         isError={posts.isError}
-        nextCursor={posts.data?.nextCursor}
+        hasNextPage={posts.hasNextPage}
         isFetching={posts.isFetching}
-        onLoadMore={setCursor}
+        onLoadMore={() => void posts.fetchNextPage()}
         onRetry={posts.refetch}
       />
     </div>

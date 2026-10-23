@@ -1,10 +1,9 @@
 'use client';
 
-import { useGetCurrentUserQuery } from '@/features/posts/api';
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useGetReelsQuery } from '../api';
+import { useGetReelsInfiniteQuery } from '../api';
 import { ReelItem } from './reel-item';
 import { ReelSkeleton } from './reel-skeleton';
 
@@ -12,25 +11,23 @@ import { ReelSkeleton } from './reel-skeleton';
 export const reelsHeight = 'h-[calc(100dvh-110px)] md:h-dvh';
 
 export function ReelsFeed() {
-  const [cursor, setCursor] = useState<string | null>(null);
-  const { data, isLoading, isFetching, isError, refetch } = useGetReelsQuery({ cursor });
-  const { data: me } = useGetCurrentUserQuery();
+  const { data, isLoading, isFetching, isError, hasNextPage, fetchNextPage, refetch } =
+    useGetReelsInfiniteQuery();
+  const reels = data?.pages.flatMap((p) => p.items);
   const [muted, setMuted] = useState(true); // звук общий для всех роликов
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const nextCursor = data?.nextCursor ?? null;
-
   // Подгрузка следующей страницы, когда дошли до конца списка.
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el || !nextCursor || isFetching) return;
+    if (!el || !hasNextPage || isFetching) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) setCursor(nextCursor);
+      if (entry.isIntersecting) void fetchNextPage();
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [nextCursor, isFetching]);
+  }, [hasNextPage, isFetching, fetchNextPage, reels?.length]);
 
   function step(direction: 1 | -1) {
     const el = scrollRef.current;
@@ -54,7 +51,7 @@ export function ReelsFeed() {
       </div>
     );
   }
-  if (isError && !data) {
+  if (isError && !reels) {
     return (
       <div className={`${reelsHeight} flex flex-col items-center justify-center gap-4`}>
         <p className="text-14 text-muted-foreground">Не удалось загрузить Reels.</p>
@@ -62,7 +59,7 @@ export function ReelsFeed() {
       </div>
     );
   }
-  if (!data || data.items.length === 0) {
+  if (!reels || reels.length === 0) {
     return (
       <div className={`${reelsHeight} flex items-center justify-center`}>
         <p className="text-14 text-muted-foreground">Пока нет Reels</p>
@@ -79,11 +76,10 @@ export function ReelsFeed() {
         onKeyDown={onKeyDown}
         className={`${reelsHeight} snap-y snap-mandatory overflow-y-scroll outline-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
       >
-        {data.items.map((post) => (
+        {reels.map((post) => (
           <ReelItem
             key={post.id}
             post={post}
-            myId={me?.id}
             muted={muted}
             onToggleMute={() => setMuted((m) => !m)}
           />

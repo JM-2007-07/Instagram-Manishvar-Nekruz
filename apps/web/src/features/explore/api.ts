@@ -10,46 +10,41 @@ export type SearchHistoryPage = Schemas['SearchHistoryPageDto'];
 export type AddSearchHistory = Schemas['AddSearchHistoryDto'];
 
 // «Интересное», хэштег, место, поиск — endpoints/posts.md, tags.md, locations.md, search.md.
-type CursorArgs = { cursor?: string | null };
-
-const withCursor = (cursor?: string | null) =>
-  cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-
-// Склейка страниц в один кэш: первая страница заменяет, следующие — дописываются.
-const mergePages = (cache: PostPage, page: PostPage, cursor?: string | null): PostPage =>
-  cursor ? { items: [...cache.items, ...page.items], nextCursor: page.nextCursor } : page;
+const pageOptions = {
+  initialPageParam: null as string | null,
+  getNextPageParam: (last: { nextCursor: string | null }) => last.nextCursor ?? undefined,
+};
 
 export const exploreApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getExplore: build.query<PostPage, CursorArgs>({
-      query: ({ cursor }) => `/explore${withCursor(cursor)}`,
-      serializeQueryArgs: ({ endpointName }) => endpointName,
-      merge: (cache, page, { arg }) => mergePages(cache, page, arg.cursor),
-      forceRefetch: ({ currentArg, previousArg }) => currentArg?.cursor !== previousArg?.cursor,
+    getExplore: build.infiniteQuery<PostPage, void, string | null>({
+      infiniteQueryOptions: pageOptions,
+      query: ({ pageParam }) => ({ url: '/explore', params: { cursor: pageParam ?? undefined } }),
       providesTags: ['Feed'],
     }),
     getHashtag: build.query<Hashtag, string>({
       query: (name) => `/hashtags/${encodeURIComponent(name)}`,
       providesTags: (_r, _e, name) => [{ type: 'Hashtag', id: name }],
     }),
-    getHashtagPosts: build.query<PostPage, { name: string } & CursorArgs>({
-      query: ({ name, cursor }) =>
-        `/hashtags/${encodeURIComponent(name)}/posts${withCursor(cursor)}`,
-      serializeQueryArgs: ({ endpointName, queryArgs }) => `${endpointName}-${queryArgs.name}`,
-      merge: (cache, page, { arg }) => mergePages(cache, page, arg.cursor),
-      forceRefetch: ({ currentArg, previousArg }) => currentArg?.cursor !== previousArg?.cursor,
-      providesTags: (_r, _e, { name }) => [{ type: 'Hashtag', id: name }],
+    getHashtagPosts: build.infiniteQuery<PostPage, string, string | null>({
+      infiniteQueryOptions: pageOptions,
+      query: ({ queryArg: name, pageParam }) => ({
+        url: `/hashtags/${encodeURIComponent(name)}/posts`,
+        params: { cursor: pageParam ?? undefined },
+      }),
+      providesTags: (_r, _e, name) => ['Feed', { type: 'Hashtag', id: name }],
     }),
     getLocation: build.query<LocationDetails, string>({
       query: (id) => `/locations/${encodeURIComponent(id)}`,
       providesTags: (_r, _e, id) => [{ type: 'Location', id }],
     }),
-    getLocationPosts: build.query<PostPage, { id: string } & CursorArgs>({
-      query: ({ id, cursor }) => `/locations/${encodeURIComponent(id)}/posts${withCursor(cursor)}`,
-      serializeQueryArgs: ({ endpointName, queryArgs }) => `${endpointName}-${queryArgs.id}`,
-      merge: (cache, page, { arg }) => mergePages(cache, page, arg.cursor),
-      forceRefetch: ({ currentArg, previousArg }) => currentArg?.cursor !== previousArg?.cursor,
-      providesTags: (_r, _e, { id }) => [{ type: 'Location', id }],
+    getLocationPosts: build.infiniteQuery<PostPage, string, string | null>({
+      infiniteQueryOptions: pageOptions,
+      query: ({ queryArg: id, pageParam }) => ({
+        url: `/locations/${encodeURIComponent(id)}/posts`,
+        params: { cursor: pageParam ?? undefined },
+      }),
+      providesTags: (_r, _e, id) => ['Feed', { type: 'Location', id }],
     }),
     search: build.query<SearchResult, string>({
       query: (q) => ({ url: '/search', params: { q } }),
@@ -74,11 +69,11 @@ export const exploreApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetExploreQuery,
+  useGetExploreInfiniteQuery,
   useGetHashtagQuery,
-  useGetHashtagPostsQuery,
+  useGetHashtagPostsInfiniteQuery,
   useGetLocationQuery,
-  useGetLocationPostsQuery,
+  useGetLocationPostsInfiniteQuery,
   useSearchQuery,
   useGetSearchHistoryQuery,
   useAddSearchHistoryMutation,

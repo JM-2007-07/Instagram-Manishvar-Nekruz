@@ -2,21 +2,16 @@ import { baseApi } from '@/lib/api/base-api';
 import type { Me } from '@/lib/api/types';
 import type { Post, PostPage } from './types';
 
-// Публикации и ленты — endpoints/posts.md. Списки с курсором склеиваются в один кэш (бесконечная прокрутка).
-const pageArgs = (cursor?: string | null) =>
-  cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-
+// Публикации и ленты — endpoints/posts.md. Постраничные списки — infiniteQuery (курсор nextCursor).
 export const postsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // Лента «Главная»; страницы склеиваются, следующая — передать nextCursor.
-    getFeed: build.query<PostPage, { cursor?: string | null } | void>({
-      query: (args) => `/feed${pageArgs(args?.cursor)}`,
-      serializeQueryArgs: ({ endpointName }) => endpointName,
-      merge: (cache, page, { arg }) =>
-        arg?.cursor
-          ? { items: [...cache.items, ...page.items], nextCursor: page.nextCursor }
-          : page,
-      forceRefetch: ({ currentArg, previousArg }) => currentArg?.cursor !== previousArg?.cursor,
+    // Лента «Главная».
+    getFeed: build.infiniteQuery<PostPage, void, string | null>({
+      infiniteQueryOptions: {
+        initialPageParam: null,
+        getNextPageParam: (last) => last.nextCursor ?? undefined,
+      },
+      query: ({ pageParam }) => ({ url: '/feed', params: { cursor: pageParam ?? undefined } }),
       providesTags: ['Feed'],
     }),
     // Текущий пользователь — чтобы понять, свой ли это пост.
@@ -43,7 +38,7 @@ export const postsApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetFeedQuery,
+  useGetFeedInfiniteQuery,
   useGetCurrentUserQuery,
   useGetPostByShortcodeQuery,
   useLikePostMutation,

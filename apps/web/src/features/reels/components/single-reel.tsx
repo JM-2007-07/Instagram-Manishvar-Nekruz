@@ -1,6 +1,5 @@
 'use client';
 
-import { useGetCurrentUserQuery } from '@/features/posts/api';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useGetPostByShortcodeQuery } from '@/features/posts/api';
@@ -11,7 +10,6 @@ import { reelsHeight } from './reels-feed';
 // /reel/{shortcode}/ — один ролик в том же виде.
 export function SingleReel({ shortcode }: { shortcode: string }) {
   const { data: post, isLoading, error, refetch } = useGetPostByShortcodeQuery(shortcode);
-  const { data: me } = useGetCurrentUserQuery();
   const [muted, setMuted] = useState(true);
 
   if (isLoading) {
@@ -34,7 +32,7 @@ export function SingleReel({ shortcode }: { shortcode: string }) {
   }
   return (
     <div className={reelsHeight}>
-      <ReelItem post={post} myId={me?.id} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
+      <ReelItem post={post} muted={muted} onToggleMute={() => setMuted((m) => !m)} />
     </div>
   );
 }

@@ -10,9 +10,6 @@ import type {
 } from './types';
 
 // Истории и «Актуальное» — endpoints/stories.md.
-const pageArgs = (cursor?: string | null) =>
-  cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-
 export const storiesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getStoryTray: build.query<StoryTrayItem[], void>({
@@ -31,15 +28,16 @@ export const storiesApi = baseApi.injectEndpoints({
       query: (storyId) => `/stories/${storyId}/viewers`,
       providesTags: ['Story'],
     }),
-    // Архив историй (для выбора в «Актуальное»); страницы склеиваются.
-    getArchivedStories: build.query<StoryPage, { cursor?: string | null } | void>({
-      query: (args) => `/me/archive/stories${pageArgs(args?.cursor)}`,
-      serializeQueryArgs: ({ endpointName }) => endpointName,
-      merge: (cache, page, { arg }) =>
-        arg?.cursor
-          ? { items: [...cache.items, ...page.items], nextCursor: page.nextCursor }
-          : page,
-      forceRefetch: ({ currentArg, previousArg }) => currentArg?.cursor !== previousArg?.cursor,
+    // Архив историй (для выбора в «Актуальное»).
+    getArchivedStories: build.infiniteQuery<StoryPage, void, string | null>({
+      infiniteQueryOptions: {
+        initialPageParam: null,
+        getNextPageParam: (last) => last.nextCursor ?? undefined,
+      },
+      query: ({ pageParam }) => ({
+        url: '/me/archive/stories',
+        params: { cursor: pageParam ?? undefined },
+      }),
       providesTags: ['Story'],
     }),
     createStory: build.mutation<Story, Schemas['CreateStoryDto']>({
@@ -131,7 +129,7 @@ export const {
   useGetUserStoriesQuery,
   useGetStoryQuery,
   useGetStoryViewersQuery,
-  useGetArchivedStoriesQuery,
+  useGetArchivedStoriesInfiniteQuery,
   useCreateStoryMutation,
   useDeleteStoryMutation,
   useViewStoryMutation,

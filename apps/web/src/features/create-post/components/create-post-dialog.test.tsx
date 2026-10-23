@@ -74,6 +74,68 @@ describe('CreatePostDialog', () => {
     expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument();
   });
 
+  it('видео в обработке: опрашивает статус до READY и только потом шлёт POST /posts', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.mocked(uploadMedia).mockResolvedValue({
+        ...media,
+        kind: 'VIDEO',
+        status: 'PROCESSING',
+      } as never);
+      const statuses = ['PROCESSING', 'READY'];
+      const statusRoute = {
+        path: '/media/m1/status',
+        get body() {
+          return { ...media, status: statuses.shift() ?? 'READY' };
+        },
+      };
+      const fetchMock = mockFetch([
+        { path: '/me', body: me },
+        statusRoute,
+        { method: 'POST', path: '/posts', status: 201, body: { id: 'p1' } },
+      ]);
+      renderWithStore(<CreatePostDialog onClose={vi.fn()} />);
+      fireEvent.change(screen.getByLabelText('Выбрать файлы'), {
+        target: { files: [new File(['a'], 'a.mp4', { type: 'video/mp4' })] },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Далее' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Поделиться' }));
+      expect(await screen.findByText('Обработка видео…')).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(await screen.findByText('Ваша публикация опубликована')).toBeInTheDocument();
+      const urls = fetchMock.mock.calls.map(
+        ([r]) => `${(r as Request).method} ${(r as Request).url}`,
+      );
+      expect(urls.filter((u) => u.includes('/media/m1/status'))).toHaveLength(2);
+      expect(urls.some((u) => u.startsWith('POST') && u.endsWith('/posts'))).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('видео FAILED: ошибка и «Повторить» без повторной загрузки файла', async () => {
+    vi.mocked(uploadMedia).mockClear();
+    vi.mocked(uploadMedia).mockResolvedValue({
+      ...media,
+      kind: 'VIDEO',
+      status: 'PROCESSING',
+    } as never);
+    mockFetch([
+      { path: '/me', body: me },
+      { path: '/media/m1/status', body: { ...media, status: 'FAILED' } },
+    ]);
+    renderWithStore(<CreatePostDialog onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Выбрать файлы'), {
+      target: { files: [new File(['a'], 'a.mp4', { type: 'video/mp4' })] },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Далее' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Поделиться' }));
+    expect(await screen.findByText('Не удалось обработать видео')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+    expect(await screen.findByText('Не удалось обработать видео')).toBeInTheDocument();
+    expect(uploadMedia).toHaveBeenCalledTimes(1);
+  });
+
   it('закрытие с файлами спрашивает подтверждение', async () => {
     const { onClose } = setup();
     await pick();

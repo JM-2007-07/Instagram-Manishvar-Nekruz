@@ -10,9 +10,9 @@ type Props = {
   posts: Post[] | undefined;
   isLoading: boolean;
   isError: boolean;
-  nextCursor: string | null | undefined;
+  hasNextPage: boolean;
   isFetching: boolean;
-  onLoadMore: (cursor: string) => void;
+  onLoadMore: () => void;
   onRetry: () => void;
   emptyText?: string;
 };
@@ -65,7 +65,7 @@ export function PostGrid({
   posts,
   isLoading,
   isError,
-  nextCursor,
+  hasNextPage,
   isFetching,
   onLoadMore,
   onRetry,
@@ -76,13 +76,13 @@ export function PostGrid({
   // Бесконечная прокрутка: когда метка внизу видна — просим следующую страницу.
   useEffect(() => {
     const node = sentinel.current;
-    if (!node || !nextCursor || isFetching || typeof IntersectionObserver === 'undefined') return;
+    if (!node || !hasNextPage || isFetching || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) onLoadMore(nextCursor);
+      if (entries[0]?.isIntersecting) onLoadMore();
     });
     observer.observe(node);
     return () => observer.disconnect();
-  }, [nextCursor, isFetching, onLoadMore]);
+  }, [hasNextPage, isFetching, onLoadMore]);
 
   if (isLoading) {
     return (

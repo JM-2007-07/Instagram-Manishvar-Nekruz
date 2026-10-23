@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('CreateStoryDialog', () => {
   it('загружает файл как STORY и создаёт историю', async () => {
-    vi.mocked(uploadMedia).mockResolvedValue({ id: 'media-1' } as never);
+    vi.mocked(uploadMedia).mockResolvedValue({ id: 'media-1', status: 'READY' } as never);
     const fetchMock = mockFetch([{ method: 'POST', path: '/stories', status: 201, body: {} }]);
     const onOpenChange = vi.fn();
     renderWithStore(<CreateStoryDialog open onOpenChange={onOpenChange} />);
@@ -49,5 +49,35 @@ describe('CreateStoryDialog', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Поделиться' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument();
+  });
+
+  it('«Повторить» не загружает файл заново', async () => {
+    vi.mocked(uploadMedia).mockClear();
+    vi.mocked(uploadMedia).mockResolvedValue({ id: 'media-1', status: 'READY' } as never);
+    // Первый POST /stories падает, второй проходит.
+    const results = [
+      { status: 500, body: { statusCode: 500, code: 'INTERNAL_ERROR', message: 'Сбой' } },
+      { status: 201, body: {} },
+    ];
+    const route = {
+      method: 'POST',
+      path: '/stories',
+      get status() {
+        return results[0].status;
+      },
+      get body() {
+        return (results.length > 1 ? results.shift()! : results[0]).body;
+      },
+    };
+    mockFetch([route]);
+    const onOpenChange = vi.fn();
+    renderWithStore(<CreateStoryDialog open onOpenChange={onOpenChange} />);
+    fireEvent.change(screen.getByLabelText('Выбрать фото или видео'), {
+      target: { files: [new File(['x'], 'a.png', { type: 'image/png' })] },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Поделиться' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Повторить' }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(uploadMedia).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,17 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { getApiError } from '@/lib/api/errors';
-import { useGetLocationPostsQuery, useGetLocationQuery } from '../api';
+import { useGetLocationPostsInfiniteQuery, useGetLocationQuery } from '../api';
 import { NotAvailable } from './not-available';
 import { PostGrid } from './post-grid';
 
 // Страница места /explore/locations/{id}/ (F-SRC-05).
 export function LocationPage({ id }: { id: string }) {
-  const [cursor, setCursor] = useState<string | null>(null);
   const info = useGetLocationQuery(id);
-  const posts = useGetLocationPostsQuery({ id, cursor });
+  const posts = useGetLocationPostsInfiniteQuery(id);
 
   if (info.error && getApiError(info.error).status === 404) return <NotAvailable />;
   const place = info.data;
@@ -34,12 +32,12 @@ export function LocationPage({ id }: { id: string }) {
         </div>
       </header>
       <PostGrid
-        posts={posts.data?.items}
+        posts={posts.data?.pages.flatMap((p) => p.items)}
         isLoading={posts.isLoading}
         isError={posts.isError}
-        nextCursor={posts.data?.nextCursor}
+        hasNextPage={posts.hasNextPage}
         isFetching={posts.isFetching}
-        onLoadMore={setCursor}
+        onLoadMore={() => void posts.fetchNextPage()}
         onRetry={posts.refetch}
       />
     </div>

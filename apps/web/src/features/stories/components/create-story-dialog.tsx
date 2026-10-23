@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
+import { useDispatch } from 'react-redux';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { getApiError } from '@/lib/api/errors';
+import { getApiError, getErrorText } from '@/lib/api/errors';
 import { uploadMedia } from '@/lib/api/upload';
 import { cn } from '@/lib/utils';
 import { useCreateStoryMutation } from '../api';
-import type { MediaItem } from '../types';
+import type { AppDispatch } from '@/lib/store';
+import { waitForMediaReady } from '@/features/create-post/api';
 
 type Audience = 'EVERYONE' | 'CLOSE_FRIENDS';
 
@@ -26,6 +28,10 @@ export function CreateStoryDialog({
   const [audience, setAudience] = useState<Audience>('EVERYONE');
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
+  // Загруженный файл помним между «Повторить», чтобы не грузить его заново.
+  const [uploaded, setUploaded] = useState<{ id: string; ready: boolean } | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
   const inputRef = useRef<HTMLInputElement>(null);
   const [createStory] = useCreateStoryMutation();
   const busy = progress !== null;
@@ -42,11 +48,14 @@ export function CreateStoryDialog({
     setAudience('EVERYONE');
     setProgress(null);
     setError(null);
+    setProcessing(false);
+    setUploaded(null);
   }
 
   function pick(selected: File | undefined) {
     if (!selected) return;
     setFile(selected);
+    setUploaded(null);
     setPreviewUrl(URL.createObjectURL(selected));
     setError(null);
   }
@@ -56,13 +65,31 @@ export function CreateStoryDialog({
     setError(null);
     setProgress(0);
     try {
-      const media = (await uploadMedia(file, 'STORY', setProgress)) as MediaItem;
+      let media = uploaded;
+      if (!media) {
+        const result = await uploadMedia(file, 'STORY', setProgress);
+        media = { id: result.id, ready: result.status === 'READY' };
+        setUploaded(media);
+      }
+      // Видео обрабатывается на сервере — ждём READY, иначе POST /stories вернёт 409.
+      if (!media.ready) {
+        setProcessing(true);
+        await waitForMediaReady(dispatch, media.id);
+        setProcessing(false);
+        setUploaded({ id: media.id, ready: true });
+      }
       await createStory({ mediaId: media.id, audience }).unwrap();
       toast.success('Ваша история опубликована');
       reset();
       onOpenChange(false);
     } catch (e) {
-      setError(getApiError(e).message || 'Не удалось опубликовать историю');
+      const apiError = getApiError(e);
+      setError(
+        apiError.code.startsWith('MEDIA_')
+          ? getErrorText(apiError.code)
+          : apiError.message || 'Не удалось опубликовать историю',
+      );
+      setProcessing(false);
       setProgress(null);
     }
   }
@@ -142,7 +169,11 @@ export function CreateStoryDialog({
             </div>
           )}
 
-          {busy && <p className="text-14 text-muted-foreground">Загрузка… {progress}%</p>}
+          {busy && (
+            <p className="text-14 text-muted-foreground">
+              {processing ? 'Обработка видео…' : `Загрузка… ${progress}%`}
+            </p>
+          )}
           {error && (
             <p role="alert" className="text-14 text-destructive">
               {error}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Heart, MessageCircle, MoreHorizontal, Play, Send, Volume2, VolumeX } from 'lucide-react';
-import { SaveButton, UserAvatar, FollowButton } from '@/components/temp/student-a';
+import { SaveButton, UserAvatar } from '@/components/temp/student-a';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,6 @@ import { usePlayReelMutation } from '../api';
 
 type Props = {
   post: Post;
-  myId?: string;
   muted: boolean;
   onToggleMute: () => void;
 };
@@ -28,7 +27,7 @@ const actionClass =
   'flex flex-col items-center gap-1 p-2 text-12 font-semibold drop-shadow md:text-foreground md:drop-shadow-none';
 
 // Один ролик: видео 9:16, справа столбец действий, внизу автор и подпись.
-export function ReelItem({ post, myId, muted, onToggleMute }: Props) {
+export function ReelItem({ post, muted, onToggleMute }: Props) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -188,12 +187,7 @@ export function ReelItem({ post, myId, muted, onToggleMute }: Props) {
             <Link href={`/${post.author.userName}/`} className="text-14 font-semibold drop-shadow">
               {post.author.userName}
             </Link>
-            {myId && myId !== post.author.id && (
-              <>
-                <span aria-hidden>•</span>
-                <FollowButton userId={post.author.id} />
-              </>
-            )}
+            {/* TODO(Студент A): «• Подписаться», когда FollowButton A будет знать статус подписки. */}
           </div>
           {caption && (
             <p

@@ -50,7 +50,7 @@ const grid = (posts: Post[] | undefined, extra = {}) => (
     posts={posts}
     isLoading={false}
     isError={false}
-    nextCursor={null}
+    hasNextPage={false}
     isFetching={false}
     onLoadMore={() => {}}
     onRetry={() => {}}

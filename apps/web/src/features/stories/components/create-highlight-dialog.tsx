@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getApiError } from '@/lib/api/errors';
 import { cn } from '@/lib/utils';
-import { useCreateHighlightMutation, useGetArchivedStoriesQuery } from '../api';
+import { useCreateHighlightMutation, useGetArchivedStoriesInfiniteQuery } from '../api';
 
 /** Новое актуальное: выбор историй из архива, название; обложка — первая выбранная (F-STR-20). */
 export function CreateHighlightDialog({
@@ -19,11 +19,9 @@ export function CreateHighlightDialog({
   onOpenChange: (open: boolean) => void;
   initialStoryIds?: string[];
 }) {
-  const [cursor, setCursor] = useState<string | null>(null);
-  const { data, isLoading, isError, refetch } = useGetArchivedStoriesQuery(
-    { cursor },
-    { skip: !open },
-  );
+  const { data, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
+    useGetArchivedStoriesInfiniteQuery(undefined, { skip: !open });
+  const stories = data?.pages.flatMap((p) => p.items);
   const [selected, setSelected] = useState<string[]>(initialStoryIds);
   const [title, setTitle] = useState('Актуальное');
   const [createHighlight, { isLoading: saving }] = useCreateHighlightMutation();
@@ -64,12 +62,12 @@ export function CreateHighlightDialog({
               <Button onClick={() => refetch()}>Повторить</Button>
             </div>
           )}
-          {data && data.items.length === 0 && (
+          {stories && stories.length === 0 && (
             <p className="text-center text-14 text-muted-foreground">В архиве пока нет историй</p>
           )}
 
           <ul className="grid max-h-[50vh] grid-cols-3 gap-1 overflow-y-auto">
-            {data?.items.map((story) => {
+            {stories?.map((story) => {
               const isSelected = selected.includes(story.id);
               return (
                 <li key={story.id}>
@@ -102,8 +100,12 @@ export function CreateHighlightDialog({
             })}
           </ul>
 
-          {data?.nextCursor && (
-            <Button variant="ghost" onClick={() => setCursor(data.nextCursor)}>
+          {hasNextPage && (
+            <Button
+              variant="ghost"
+              disabled={isFetchingNextPage}
+              onClick={() => void fetchNextPage()}
+            >
               Показать ещё
             </Button>
           )}

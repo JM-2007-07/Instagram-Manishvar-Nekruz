@@ -59,6 +59,8 @@ const MESSAGES: Record<string, string> = {
   EDIT_WINDOW_EXPIRED: 'Время для редактирования истекло',
   LIMIT_REACHED: 'Достигнут лимит',
   MEDIA_NOT_READY: 'Файл ещё обрабатывается',
+  MEDIA_FAILED: 'Не удалось обработать видео',
+  MEDIA_TIMEOUT: 'Обработка видео занимает слишком долго. Попробуйте ещё раз',
   PAYLOAD_TOO_LARGE: 'Файл слишком большой',
   UNSUPPORTED_MEDIA_TYPE: 'Этот тип файла не поддерживается',
   RATE_LIMITED: 'Слишком много запросов. Попробуйте позже',

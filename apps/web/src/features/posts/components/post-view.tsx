@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
-import { FollowButton, UserAvatar } from '@/components/temp/student-a';
+import { UserAvatar } from '@/components/temp/student-a';
 import {
   CommentForm,
   CommentThreadProvider,
@@ -10,7 +10,7 @@ import {
 } from '@/features/comments/components/post-comments';
 import { getApiError } from '@/lib/api/errors';
 import { cn } from '@/lib/utils';
-import { useGetCurrentUserQuery, useGetPostByShortcodeQuery } from '../api';
+import { useGetPostByShortcodeQuery } from '../api';
 import { formatPostDate, renderCaption, timeAgo } from '../lib';
 import type { Post } from '../types';
 import { usePostLike } from '../use-post-like';
@@ -72,7 +72,6 @@ function PostContent({
   variant: 'modal' | 'page';
   onDeleted?: () => void;
 }) {
-  const { data: me } = useGetCurrentUserQuery();
   const { liked, count, setLike } = usePostLike(post);
   const author = post.author;
 
@@ -108,12 +107,8 @@ function PostContent({
                   aria-label="Подтверждённый аккаунт"
                 />
               )}
-              {me && me.id !== author.id && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <FollowButton userId={author.id} />
-                </>
-              )}
+              {/* TODO(Студент A): «• Подписаться», когда FollowButton A будет знать статус подписки
+                  (в Post.author его нет — кнопка с «Подписаться» по умолчанию врала бы подписчикам). */}
             </div>
             <PostMenu post={post} onDeleted={onDeleted} />
           </header>

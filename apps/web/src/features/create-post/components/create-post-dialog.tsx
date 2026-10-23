@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, Crop, Images, Plus, X, ZoomIn } from 'lucide-react';
+import { useDispatch } from 'react-redux';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getApiError, getErrorText } from '@/lib/api/errors';
 import { uploadMedia } from '@/lib/api/upload';
-import { useCreatePostMutation } from '../api';
+import type { AppDispatch } from '@/lib/store';
+import { useCreatePostMutation, waitForMediaReady } from '../api';
 import { ASPECTS, MAX_FILES, type Aspect, type DraftItem, type DraftTag } from '../types';
 import { CaptionPanel, type CaptionState } from './caption-panel';
 import { MediaPreview } from './media-preview';
@@ -19,6 +21,7 @@ const headerButton =
 
 // Окно «Создать публикацию»: выбор → обрезка → подпись → отправка (CreatePostDialog).
 export function CreatePostDialog({ onClose }: { onClose: () => void }) {
+  const dispatch = useDispatch<AppDispatch>();
   const [createPost] = useCreatePostMutation();
   const [step, setStep] = useState<Step>('select');
   const [items, setItems] = useState<DraftItem[]>([]);
@@ -32,6 +35,7 @@ export function CreatePostDialog({ onClose }: { onClose: () => void }) {
     commentsDisabled: false,
   });
   const [progress, setProgress] = useState(0);
+  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [confirm, setConfirm] = useState<null | 'close' | 'back'>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -103,16 +107,25 @@ export function CreatePostDialog({ onClose }: { onClose: () => void }) {
     setStep('sending');
     setError('');
     setProgress(0);
+    setProcessing(false);
     try {
       const ids: string[] = [];
       for (let i = 0; i < items.length; i++) {
-        let mediaId = items[i].mediaId;
+        let { mediaId, ready } = items[i];
         if (!mediaId) {
           const media = await uploadMedia(items[i].file, isReel ? 'REEL' : 'POST', (p) =>
             setProgress(Math.min(99, Math.round(((i + p / 100) / items.length) * 100))),
           );
           mediaId = media.id;
-          patchItem(i, { mediaId }); // «Повторить» не загружает файл заново
+          ready = media.status === 'READY';
+          patchItem(i, { mediaId, ready }); // «Повторить» не загружает файл заново
+        }
+        // Видео обрабатывается на сервере — ждём READY, иначе POST /posts вернёт 409.
+        if (!ready) {
+          setProcessing(true);
+          await waitForMediaReady(dispatch, mediaId);
+          setProcessing(false);
+          patchItem(i, { ready: true });
         }
         ids.push(mediaId);
       }
@@ -132,6 +145,7 @@ export function CreatePostDialog({ onClose }: { onClose: () => void }) {
       setProgress(100);
       setStep('done');
     } catch (e) {
+      setProcessing(false);
       setError(getErrorText(getApiError(e).code));
       setStep('error');
     }
@@ -334,7 +348,12 @@ export function CreatePostDialog({ onClose }: { onClose: () => void }) {
             <div
               className={`flex aspect-square w-full flex-col items-center justify-center gap-4 px-6 text-center`}
             >
-              {step === 'sending' && <ProgressRing percent={progress} />}
+              {step === 'sending' && !processing && <ProgressRing percent={progress} />}
+              {step === 'sending' && processing && (
+                <p role="status" className="text-16">
+                  Обработка видео…
+                </p>
+              )}
               {step === 'done' && (
                 <>
                   <span className="flex size-24 items-center justify-center rounded-full border-2 border-success text-success">
