@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { SquarePen } from 'lucide-react';
+import { ChevronDown, Search, SquarePen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGetMeQuery } from '@/features/profile/api';
 import { getApiError } from '@/lib/api/errors';
@@ -47,7 +47,7 @@ export function ChatListItem({
         </span>
         <span
           className={cn(
-            'flex gap-1 text-12 text-muted-foreground',
+            'mt-1 flex gap-1 text-12 text-muted-foreground',
             unread && 'font-semibold text-foreground',
           )}
         >
@@ -107,8 +107,12 @@ export function ChatList({
 
   return (
     <section aria-label="Чаты" className="flex h-full min-h-0 flex-col">
-      <div className="flex h-[75px] shrink-0 items-center justify-between px-6">
-        <h1 className="truncate text-20 font-bold">{me?.userName ?? ''}</h1>
+      {/* Шапка как у Instagram: имя 20/25 жирное, значок «Новое сообщение», поиск-«пилюля» 40 px */}
+      <div className="flex shrink-0 items-center justify-between px-6 pt-9 pb-3">
+        <h1 className="flex min-w-0 items-center gap-1 text-20 leading-[25px] font-bold">
+          <span className="truncate">{me?.userName ?? ''}</span>
+          <ChevronDown className="size-3 shrink-0" strokeWidth={3} aria-hidden />
+        </h1>
         <Link
           href="/direct/new/"
           aria-label="Новое сообщение"
@@ -117,25 +121,25 @@ export function ChatList({
           <SquarePen className="size-6" />
         </Link>
       </div>
+      <Link
+        href="/direct/new/"
+        className="mx-4 flex h-10 shrink-0 items-center gap-2 rounded-full bg-background-secondary px-4 text-16 text-muted-foreground"
+      >
+        <Search className="size-4 text-icon-secondary" aria-hidden />
+        Поиск
+      </Link>
 
-      <div role="tablist" aria-label="Папка" className="flex shrink-0 gap-4 px-6 pb-2">
-        {(['PRIMARY', 'REQUESTS'] as const).map((value) => (
-          <button
-            key={value}
-            role="tab"
-            type="button"
-            aria-selected={folder === value}
-            onClick={() => setFolder(value)}
-            className={cn(
-              'pb-1 text-16 font-semibold',
-              folder === value
-                ? 'border-b border-foreground text-foreground'
-                : 'text-muted-foreground',
-            )}
-          >
-            {value === 'PRIMARY' ? 'Основное' : 'Запросы'}
-          </button>
-        ))}
+      <div className="flex shrink-0 items-center justify-between px-6 pt-4 pb-[10px]">
+        <h2 className="text-16 leading-5 font-bold">
+          {folder === 'PRIMARY' ? 'Сообщения' : 'Запросы'}
+        </h2>
+        <button
+          type="button"
+          onClick={() => setFolder(folder === 'PRIMARY' ? 'REQUESTS' : 'PRIMARY')}
+          className="rounded-xs text-14 font-medium text-foreground hover:text-muted-foreground"
+        >
+          {folder === 'PRIMARY' ? 'Запросы' : 'Сообщения'}
+        </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

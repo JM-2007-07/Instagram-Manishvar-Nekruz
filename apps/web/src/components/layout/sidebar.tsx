@@ -15,9 +15,10 @@ import { DESIGN } from '@/lib/design';
 import type { Theme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
-// Пункт: иконка 24 px, подпись 16 px с x = 64 px; фон при наведении — --hover-overlay.
+// Пункт как у Instagram (2026): 48 px + зазор 8, иконка 24 px, подпись 16/20 с x = 64 px;
+// фон при наведении — --hover-overlay (5 % чёрного), скругление 8.
 const itemClass =
-  'group flex h-14 w-full items-center gap-4 rounded-lg px-3 text-16 outline-none transition-colors duration-100 ease-[var(--ease-hover)] hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring';
+  'group flex h-12 w-full items-center gap-4 rounded-lg px-3 text-16 outline-none transition-colors duration-100 ease-[var(--ease-hover)] hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring';
 
 // Подпись видна только в раскрытом меню. Меню остаётся раскрытым, пока открыто «Ещё»
 // (radix уводит фокус и наведение в выпадающий список, и без has-[…] меню бы свернулось).
@@ -83,19 +84,14 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
     <aside className="hidden shrink-0 md:block" style={{ width: DESIGN.sidebarCollapsed }}>
       <nav
         aria-label="Основная навигация"
-        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-border bg-background px-3 pt-6 pb-5 transition-[width] duration-100 ease-[var(--ease-hover)] focus-within:w-[238px] hover:w-[238px] has-[[data-state=open]]:w-[238px]"
-        style={{ width: DESIGN.sidebarCollapsed }}
+        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden bg-background px-3 pt-6 pb-5 w-[72px] transition-[width] duration-100 ease-[var(--ease-hover)] focus-within:w-[238px] hover:w-[238px] has-[[data-state=open]]:w-[238px]"
       >
-        <Link href="/" aria-label="Главная" className="mb-6 flex h-14 items-center px-3">
-          <span className="group-hover/sidebar:hidden group-focus-within/sidebar:hidden group-has-[[data-state=open]]/sidebar:hidden">
-            <BrandLogo variant="mark" />
-          </span>
-          <span className="hidden group-hover/sidebar:block group-focus-within/sidebar:block group-has-[[data-state=open]]/sidebar:block">
-            <BrandLogo />
-          </span>
+        {/* У Instagram знак 24 px остаётся и в раскрытом меню, без рамки справа */}
+        <Link href="/" aria-label="Главная" className="flex h-14 shrink-0 items-center px-3">
+          <BrandLogo variant="mark" className="size-6 text-12" />
         </Link>
 
-        <ul className="flex flex-col gap-1">
+        <ul className="my-auto flex flex-col gap-2">
           {SIDEBAR_ITEMS.map((item) => (
             <li key={item.key}>
               <SidebarItem
@@ -142,7 +138,7 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
           </li>
         </ul>
 
-        <div className="mt-auto">
+        <div>
           <MoreMenu userName={me.userName} theme={theme} triggerClassName={itemClass} />
         </div>
       </nav>

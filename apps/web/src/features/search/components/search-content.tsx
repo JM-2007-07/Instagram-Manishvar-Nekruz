@@ -80,9 +80,9 @@ function RemoveEntryButton({ onClick }: { onClick: () => void }) {
       type="button"
       aria-label="Удалить из недавнего"
       onClick={onClick}
-      className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground outline-none hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <X className="size-5" />
+      <X className="size-4" />
     </button>
   );
 }
@@ -180,13 +180,13 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
     if (entries.length === 0) return <EmptyMessage>Нет недавних запросов</EmptyMessage>;
     return (
       <>
-        <div className="flex items-center justify-between px-4 py-2">
-          <h3 className="text-16 font-semibold">Недавнее</h3>
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+          <h3 className="text-16 leading-5 font-semibold">Недавнее</h3>
           <Button
             variant="link"
             disabled={clearing}
             onClick={() => void clearHistory()}
-            className="h-auto p-0"
+            className="h-auto p-0 font-medium text-link"
           >
             Очистить все
           </Button>
@@ -257,9 +257,7 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
           placeholder="Поисковый запрос"
         />
       </form>
-      <div className="border-t border-separator pt-2">
-        {typing ? renderResults() : renderHistory()}
-      </div>
+      <div>{typing ? renderResults() : renderHistory()}</div>
     </div>
   );
 }

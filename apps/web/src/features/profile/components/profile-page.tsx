@@ -12,11 +12,12 @@ import {
   useGetUserReelsInfiniteQuery,
   useGetUserTaggedInfiniteQuery,
 } from '../api';
+import { SavedTab } from '@/features/saved/components/saved-page';
 import { EmptyOrError } from './empty-or-error';
 import { PostTiles } from './post-tiles';
 import { ProfileHeader } from './profile-header';
 
-export type ProfileTab = 'posts' | 'reels' | 'tagged';
+export type ProfileTab = 'posts' | 'reels' | 'saved' | 'tagged';
 
 function PostsTab({ profile }: { profile: Profile }) {
   const q = useGetUserPostsInfiniteQuery(profile.id);
@@ -78,27 +79,28 @@ function Tabs({ profile, tab }: { profile: Profile; tab: ProfileTab }) {
       : []),
     { key: 'tagged', label: 'Отметки', href: `${base}tagged/`, icon: UserSquare2 },
   ];
+  // Как у Instagram: только значки 24 px; активная вкладка — линия 1.6 px снизу.
   return (
     <nav
       aria-label="Разделы профиля"
-      className="flex justify-center gap-12 border-t border-separator"
+      className="flex justify-around border-b-[0.8px] border-separator md:justify-center md:gap-[133px]"
     >
       {items.map(({ key, label, href, icon: Icon }) => (
         <Link
           key={key}
           href={href}
           aria-current={key === tab ? 'page' : undefined}
+          aria-label={label}
+          title={label}
           className={cn(
-            'flex items-center gap-1.5 border-t text-12 font-semibold tracking-wider uppercase',
+            'flex w-16 items-center justify-center border-b-[1.6px]',
             key === tab
-              ? '-mt-px border-foreground text-foreground'
-              : 'border-transparent text-muted-foreground',
+              ? 'border-foreground text-foreground'
+              : 'border-transparent text-icon-secondary hover:text-foreground',
           )}
           style={{ height: DESIGN.profileTabsHeight }}
         >
-          <Icon className="size-6 md:size-4" aria-hidden />
-          <span className="hidden md:inline">{label}</span>
-          <span className="sr-only md:hidden">{label}</span>
+          <Icon className="size-6" aria-hidden />
         </Link>
       ))}
     </nav>
@@ -115,8 +117,8 @@ export function ProfilePage({ userName, tab }: { userName: string; tab: ProfileT
         style={{ maxWidth: DESIGN.profileContainer }}
         aria-busy="true"
       >
-        <div className="flex gap-8">
-          <div className="size-[150px] animate-pulse rounded-full bg-background-secondary" />
+        <div className="mx-auto flex max-w-[636px] items-center gap-7">
+          <div className="size-[77px] shrink-0 animate-pulse rounded-full bg-background-secondary md:size-[150px]" />
           <div className="flex-1 space-y-4">
             <div className="h-6 w-48 animate-pulse rounded bg-background-secondary" />
             <div className="h-5 w-72 animate-pulse rounded bg-background-secondary" />
@@ -144,10 +146,11 @@ export function ProfilePage({ userName, tab }: { userName: string; tab: ProfileT
   const locked = profile.isPrivate && !profile.canViewContent;
 
   return (
-    <div className="mx-auto w-full" style={{ maxWidth: DESIGN.profileContainer }}>
+    <div className="mx-auto w-full pb-10" style={{ maxWidth: DESIGN.profileContainer }}>
       <ProfileHeader profile={profile} />
+      <div className="h-6 md:h-[42px]" />
       {locked ? (
-        <div className="border-t border-separator">
+        <div className="border-t-[0.8px] border-separator">
           <EmptyOrError
             icon={Lock}
             title="Это закрытый аккаунт"
@@ -159,6 +162,7 @@ export function ProfilePage({ userName, tab }: { userName: string; tab: ProfileT
           <Tabs profile={profile} tab={tab} />
           {tab === 'posts' && <PostsTab profile={profile} />}
           {tab === 'reels' && <ReelsTab profile={profile} />}
+          {tab === 'saved' && <SavedTab username={profile.userName} />}
           {tab === 'tagged' && <TaggedTab profile={profile} />}
         </>
       )}

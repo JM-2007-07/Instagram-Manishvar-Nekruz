@@ -58,10 +58,10 @@ function AvatarSection({ me }: { me: Me }) {
   }
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl bg-background-secondary p-4">
+    <div className="flex items-center gap-4 rounded-[20px] bg-background-secondary p-4">
       <UserAvatar user={me} size={56} />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-14 font-semibold">{me.userName}</div>
+        <div className="truncate text-16 leading-5 font-bold">{me.userName}</div>
         <div className="truncate text-14 text-muted-foreground">{me.fullName}</div>
       </div>
       <input
@@ -160,7 +160,11 @@ function ProfileFields({ me }: { me: Me }) {
           error={errors.genderCustom}
         />
       )}
-      <Button type="submit" disabled={isLoading || !fullName.trim()}>
+      <Button
+        type="submit"
+        className="h-11 w-full rounded-xl px-5"
+        disabled={isLoading || !fullName.trim()}
+      >
         Отправить
       </Button>
     </form>

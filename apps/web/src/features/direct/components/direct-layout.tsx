@@ -15,7 +15,7 @@ export function DirectLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-[calc(100dvh-110px)] md:h-screen">
       <div
         className={cn(
-          'w-full shrink-0 border-border md:block md:w-[397px] md:border-r',
+          'w-full shrink-0 border-separator md:block md:w-[400px] md:border-r-[0.8px]',
           listOnly ? 'block' : 'hidden',
         )}
       >

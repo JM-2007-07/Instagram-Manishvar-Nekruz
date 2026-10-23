@@ -1,6 +1,7 @@
-import { SavedPage } from '@/features/saved/components/saved-page';
+import { ProfilePage } from '@/features/profile/components/profile-page';
 
+// «Сохранённое» — вкладка профиля, как у Instagram.
 export default async function Page({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  return <SavedPage username={decodeURIComponent(username)} />;
+  return <ProfilePage userName={decodeURIComponent(username)} tab="saved" />;
 }

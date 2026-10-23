@@ -3,16 +3,19 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useGetCollectionsQuery, useGetSavedInfiniteQuery } from '../api';
 import { CollectionFormDialog } from './collection-form-dialog';
 import { postThumbnail } from './post-grid';
 import { SavedEmpty, SavedError, SavedOwnerGate, SavedSkeleton } from './saved-states';
 
+// Карточка подборки как у Instagram: квадрат 302 px, рамка 0.8 px, скругление 4,
+// мозаика 2×2, снизу затемнение и название 20/25 белым.
 const tileClass =
-  'relative block aspect-square overflow-hidden rounded-lg bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  'relative block aspect-square overflow-hidden rounded-[4px] border-[0.8px] border-stroke bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const titleClass =
+  'absolute inset-x-0 bottom-0 bg-linear-to-t from-black/50 to-transparent px-5 pt-10 pb-[15px] text-20 font-normal text-white';
 
-function SavedContent({ username }: { username: string }) {
+export function SavedContent({ username }: { username: string }) {
   const saved = useGetSavedInfiniteQuery();
   const collections = useGetCollectionsQuery();
   const [creating, setCreating] = useState(false);
@@ -38,12 +41,18 @@ function SavedContent({ username }: { username: string }) {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-14 text-muted-foreground">Видно только вам</p>
-        <Button variant="link" onClick={() => setCreating(true)}>
-          <Plus className="size-4" />
+      <div className="mt-[30px] mb-4 flex items-center justify-between px-4 md:px-0">
+        <p className="text-12 text-muted-foreground">
+          Видеть сохранённые материалы можете только вы
+        </p>
+        <button
+          type="button"
+          onClick={() => setCreating(true)}
+          className="flex items-center gap-0.5 rounded-xs text-14 font-medium text-link hover:opacity-70"
+        >
+          <Plus className="size-4" aria-hidden />
           Новая подборка
-        </Button>
+        </button>
       </div>
 
       {posts.length === 0 && collections.data?.length === 0 ? (
@@ -52,11 +61,11 @@ function SavedContent({ username }: { username: string }) {
           text="Сохраняйте фото и видео, которые хотите посмотреть ещё раз. Их никто не увидит, кроме вас."
         />
       ) : (
-        <ul className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-1 px-1 md:flex md:flex-wrap md:justify-center md:gap-[15px] md:px-0 md:[&>li]:w-[302px]">
           <li>
             <Link href={`${base}/all-posts/`} className={tileClass}>
               {/* Обложка 2×2 из последних сохранённых */}
-              <span className="grid size-full grid-cols-2 gap-px">
+              <span className="grid size-full grid-cols-2">
                 {[0, 1, 2, 3].map((i) =>
                   covers[i] ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -66,9 +75,7 @@ function SavedContent({ username }: { username: string }) {
                   ),
                 )}
               </span>
-              <span className="absolute inset-x-0 bottom-0 bg-black/50 px-3 py-2 text-14 font-semibold text-white">
-                Все публикации
-              </span>
+              <span className={titleClass}>Все публикации</span>
             </Link>
           </li>
           {collections.data?.map((collection) => (
@@ -78,9 +85,7 @@ function SavedContent({ username }: { username: string }) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={collection.coverUrl} alt="" className="size-full object-cover" />
                 )}
-                <span className="absolute inset-x-0 bottom-0 bg-black/50 px-3 py-2 text-14 font-semibold text-white">
-                  {collection.name}
-                </span>
+                <span className={titleClass}>{collection.name}</span>
               </Link>
             </li>
           ))}
@@ -92,13 +97,11 @@ function SavedContent({ username }: { username: string }) {
   );
 }
 
-export function SavedPage({ username }: { username: string }) {
+// Вкладка «Сохранённое» внутри профиля (как у Instagram): только владелец видит содержимое.
+export function SavedTab({ username }: { username: string }) {
   return (
-    <div className="mx-auto max-w-[935px] px-4 py-6">
-      <h1 className="mb-4 text-20 font-semibold">Сохранённое</h1>
-      <SavedOwnerGate username={username}>
-        <SavedContent username={username} />
-      </SavedOwnerGate>
-    </div>
+    <SavedOwnerGate username={username}>
+      <SavedContent username={username} />
+    </SavedOwnerGate>
   );
 }

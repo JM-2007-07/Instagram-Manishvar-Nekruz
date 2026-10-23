@@ -18,7 +18,7 @@ export const DESIGN = {
   storyStep: 104,
 
   // Профиль
-  profileContainer: 935,
+  profileContainer: 936,
   profileAvatar: 150,
   profileStoryRing: 165,
   highlightCircle: 77,

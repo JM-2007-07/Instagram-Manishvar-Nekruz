@@ -7,20 +7,21 @@ import { cn } from '@/lib/utils';
 // Общие элементы страниц настроек: простые, на токенах дизайн-системы.
 
 export function SettingsHeading({ children }: { children: React.ReactNode }) {
-  return <h1 className="mb-6 text-20 font-semibold">{children}</h1>;
+  return <h1 className="mb-6 text-20 leading-[25px] font-bold md:mb-11">{children}</h1>;
 }
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-8 space-y-4">
-      <h2 className="text-16 font-semibold">{title}</h2>
+      <h2 className="text-16 leading-5 font-bold">{title}</h2>
       {children}
     </section>
   );
 }
 
+// Как у Instagram (2026): поле 42 px, рамка 0.8 px, скругление 12, текст 16.
 const inputClass =
-  'w-full rounded-[var(--radius-input)] border border-input bg-background px-3 py-2 text-14 outline-none focus:border-[var(--input-border-focus)] disabled:bg-[var(--input-disabled)]';
+  'w-full rounded-xl border-[0.8px] border-separator bg-background px-4 py-2.5 text-16 leading-5 outline-none focus:border-(--input-border-focus) disabled:bg-(--input-disabled) disabled:text-muted-foreground';
 
 export function TextField({
   label,
@@ -35,7 +36,7 @@ export function TextField({
   const id = useId();
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-14 font-semibold">
+      <label htmlFor={id} className="block pb-3 text-16 leading-5 font-bold">
         {label}
       </label>
       {multiline ? (
@@ -73,12 +74,12 @@ export function SelectField({
   const id = useId();
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-14 font-semibold">
+      <label htmlFor={id} className="block pb-3 text-16 leading-5 font-bold">
         {label}
       </label>
       <select
         id={id}
-        className={inputClass}
+        className={cn(inputClass, 'h-[54px]')}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
@@ -108,9 +109,10 @@ export function Toggle({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2">
+    // Карточка-переключатель: рамка 0.8 px, скругление 20, переключатель 40×24 (вкл. — чёрный).
+    <div className="flex min-h-[62px] items-center justify-between gap-4 rounded-[20px] border-[0.8px] border-separator px-4 py-2.5">
       <div>
-        <div className="text-14 font-semibold">{label}</div>
+        <div className="text-16 leading-5">{label}</div>
         {hint && <div className="text-12 text-muted-foreground">{hint}</div>}
       </div>
       <button
@@ -121,14 +123,14 @@ export function Toggle({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative h-6 w-11 shrink-0 rounded-full transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50',
-          checked ? 'bg-primary' : 'bg-border',
+          'relative h-6 w-10 shrink-0 rounded-full transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50',
+          checked ? 'bg-foreground' : 'bg-muted-foreground',
         )}
       >
         <span
           className={cn(
-            'absolute top-0.5 left-0.5 size-5 rounded-full bg-white transition-transform',
-            checked && 'translate-x-5',
+            'absolute top-0.5 left-0.5 size-5 rounded-full bg-background transition-transform',
+            checked && 'translate-x-4',
           )}
         />
       </button>

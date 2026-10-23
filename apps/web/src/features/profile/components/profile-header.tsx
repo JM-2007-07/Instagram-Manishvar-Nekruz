@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { BadgeCheck } from 'lucide-react';
+import { BadgeCheck, Link2 } from 'lucide-react';
 import { DESIGN } from '@/lib/design';
 import type { Profile } from '@/lib/api/types';
 import { formatCount } from '../format';
-import { ProfileActions } from './profile-actions';
+import { ProfileActions, ProfileNameActions } from './profile-actions';
 import { UserAvatar } from '@/features/users/components/user-avatar';
 
 function mutualText(profile: Profile): string | null {
@@ -14,6 +14,9 @@ function mutualText(profile: Profile): string | null {
   return `Подписаны: ${names.join(', ')}${rest > 0 ? ` и ещё ${rest}` : ''}`;
 }
 
+// Шапка профиля как у Instagram (2026, SCREENS §профиль): на компьютере колонка 636 px —
+// фото 150 px, справа имя (24/30, жирное), полное имя, счётчики, описание; ниже кнопки 44 px.
+// На телефоне — фото 77 px, счётчики столбиками (число над подписью), кнопки 32 px.
 export function ProfileHeader({ profile }: { profile: Profile }) {
   const base = `/${profile.userName}/`;
   const mutual = mutualText(profile);
@@ -26,58 +29,87 @@ export function ProfileHeader({ profile }: { profile: Profile }) {
     { label: 'подписок', value: profile.followingCount, href: `${base}following/` },
   ];
 
+  const about = (
+    <>
+      {profile.pronouns && <div className="text-muted-foreground">{profile.pronouns}</div>}
+      {profile.bio && <p className="break-words whitespace-pre-line">{profile.bio}</p>}
+      {visibleLinks.map((link) => (
+        <a
+          key={link.url}
+          href={link.url}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          className="flex items-center gap-1 font-semibold break-all text-foreground hover:underline"
+        >
+          <Link2 className="size-4 shrink-0 -rotate-45" aria-hidden="true" />
+          {link.title || link.url.replace(/^https?:\/\//, '')}
+          {moreLinks > 0 && <span> и ещё {moreLinks}</span>}
+        </a>
+      ))}
+      {mutual && <div className="text-muted-foreground">{mutual}</div>}
+    </>
+  );
+
   return (
-    <header className="flex flex-col gap-6 px-4 py-6 md:flex-row md:gap-20 md:px-5 md:py-[30px]">
-      <div className="flex shrink-0 items-center justify-center md:w-[290px]">
-        <UserAvatar user={profile} size={DESIGN.profileAvatar} />
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <h1 className="flex items-center gap-1 text-20 font-normal">
-            {profile.userName}
-            {profile.isVerified && (
-              <BadgeCheck className="size-4 text-primary" aria-label="Подтверждённый аккаунт" />
-            )}
-          </h1>
-          <ProfileActions profile={profile} />
+    <header className="mx-auto w-full max-w-[636px] px-4 pt-5 md:px-0 md:pt-[37px]">
+      <div className="flex items-center gap-[37px] md:items-start md:gap-7">
+        <div className="shrink-0 pl-2.5 md:hidden">
+          <UserAvatar user={profile} size={77} />
+        </div>
+        <div className="hidden shrink-0 md:block">
+          <UserAvatar user={profile} size={DESIGN.profileAvatar} />
         </div>
 
-        <ul className="flex gap-6 text-16 md:gap-10">
-          {counters.map(({ label, value, href }) => (
-            <li key={label}>
-              {href ? (
-                <Link href={href} className="hover:opacity-80">
-                  <span className="font-semibold">{formatCount(value)}</span> {label}
-                </Link>
-              ) : (
-                <span>
-                  <span className="font-semibold">{formatCount(value)}</span> {label}
-                </span>
+        <div className="flex min-w-0 flex-1 flex-col md:pt-[10px]">
+          <div className="flex items-center gap-2">
+            <h1 className="flex min-w-0 items-center gap-1 text-14 font-semibold md:text-24 md:leading-[30px] md:font-bold">
+              <span className="truncate">{profile.userName}</span>
+              {profile.isVerified && (
+                <BadgeCheck
+                  className="size-[18px] shrink-0 fill-primary text-white"
+                  aria-label="Подтверждённый аккаунт"
+                />
               )}
-            </li>
-          ))}
-        </ul>
+            </h1>
+            <ProfileNameActions profile={profile} />
+          </div>
 
-        <div className="flex flex-col gap-1 text-14">
-          {profile.fullName && <div className="font-semibold">{profile.fullName}</div>}
-          {profile.pronouns && <div className="text-muted-foreground">{profile.pronouns}</div>}
-          {profile.bio && <p className="break-words whitespace-pre-line">{profile.bio}</p>}
-          {visibleLinks.map((link) => (
-            <a
-              key={link.url}
-              href={link.url}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-              className="font-semibold break-all text-link-profile"
-            >
-              {link.title || link.url.replace(/^https?:\/\//, '')}
-              {moreLinks > 0 && <span className="text-foreground"> и ещё {moreLinks}</span>}
-            </a>
-          ))}
-          {mutual && <div className="text-muted-foreground">{mutual}</div>}
+          {profile.fullName && (
+            <div className="mt-[7px] hidden text-14 md:block">{profile.fullName}</div>
+          )}
+
+          <ul className="mt-3 flex gap-4 text-14 md:mt-[12px]">
+            {counters.map(({ label, value, href }) => {
+              const content = (
+                <>
+                  <span className="font-semibold">{formatCount(value)}</span>
+                  <span className="max-md:block max-md:[overflow-wrap:anywhere]"> {label}</span>
+                </>
+              );
+              return (
+                <li key={label} className="min-w-0 max-md:flex-1">
+                  {href ? (
+                    <Link href={href} className="hover:opacity-80">
+                      {content}
+                    </Link>
+                  ) : (
+                    <span>{content}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-[19px] hidden flex-col gap-1 text-14 md:flex">{about}</div>
         </div>
       </div>
+
+      <div className="mt-4 flex flex-col gap-1 text-14 md:hidden">
+        {profile.fullName && <div className="font-semibold">{profile.fullName}</div>}
+        {about}
+      </div>
+
+      <ProfileActions profile={profile} />
     </header>
   );
 }
