@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { StoreProvider } from '@/lib/store-provider';
 import { Toaster } from '@/components/ui/sonner';
+import { NavigationProgress } from '@/components/layout/navigation-progress';
 import { APP_NAME } from '@/lib/config';
 import { THEME_COOKIE, THEME_SCRIPT, parseTheme } from '@/lib/theme';
 import './globals.css';
@@ -19,6 +20,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {theme === 'system' && <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />}
       </head>
       <body>
+        <NavigationProgress />
         <StoreProvider>{children}</StoreProvider>
         <Toaster />
       </body>

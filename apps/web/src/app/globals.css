@@ -315,3 +315,37 @@
     font-weight: 400;
   }
 }
+
+/* §5 полоса загрузки при переходе (как у Instagram): 3 px, градиент бежит слева направо за 2 с */
+.nav-progress-strip {
+  background-image: linear-gradient(
+    to right,
+    #7638fa,
+    #ffd600,
+    #ff7a00,
+    #ff0169,
+    #d300c5,
+    #7638fa,
+    #ffd600
+  );
+  transform-origin: left;
+  animation: nav-progress-slide 2s linear infinite;
+}
+
+@keyframes nav-progress-slide {
+  from {
+    transform: translateX(-500%) scaleX(6);
+  }
+  to {
+    transform: translateX(0) scaleX(6);
+  }
+}
+
+@keyframes nav-progress-enter {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(-15%);
+  }
+}

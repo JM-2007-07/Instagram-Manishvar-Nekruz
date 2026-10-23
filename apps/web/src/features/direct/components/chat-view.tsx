@@ -52,6 +52,17 @@ function ChatSkeleton() {
   );
 }
 
+const TIME_GAP_MS = 60 * 60 * 1000;
+
+function showTimeBefore(groups: ReturnType<typeof groupMessages>, index: number): boolean {
+  if (index === 0) return true;
+  const prev = groups[index - 1]!.messages;
+  const gap =
+    new Date(groups[index]!.messages[0]!.createdAt).getTime() -
+    new Date(prev[prev.length - 1]!.createdAt).getTime();
+  return gap > TIME_GAP_MS;
+}
+
 export function ChatView({ chatId }: { chatId: string }) {
   const router = useRouter();
   const { data: me } = useGetMeQuery();
@@ -228,11 +239,14 @@ export function ChatView({ chatId }: { chatId: string }) {
                   Показать предыдущие
                 </Button>
               )}
-              {groups.map((group) => (
+              {groups.map((group, index) => (
                 <div key={group.key} className="flex flex-col gap-0.5">
-                  <p className="my-3 text-center text-12 font-light text-muted-foreground">
-                    {formatClock(group.messages[0]!.createdAt)}
-                  </p>
+                  {/* Как у Instagram: время — только у первой группы и после перерыва больше часа */}
+                  {showTimeBefore(groups, index) && (
+                    <p className="my-3 text-center text-12 font-light text-muted-foreground">
+                      {formatClock(group.messages[0]!.createdAt)}
+                    </p>
+                  )}
                   {group.messages.map((message, i) => (
                     <div key={message.clientId ?? message.id}>
                       <MessageBubble

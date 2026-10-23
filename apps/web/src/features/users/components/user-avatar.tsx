@@ -1,4 +1,5 @@
 import { User } from 'lucide-react';
+import { DEFAULT_AVATAR_SRC } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
 type AvatarUser = {
@@ -29,6 +30,14 @@ export function UserAvatar({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={user.avatarUrl}
+      alt={`Фото профиля ${user.userName}`}
+      className="size-full rounded-full object-cover"
+    />
+  ) : DEFAULT_AVATAR_SRC ? (
+    // Локальная картинка «нет фото» для показа (NEXT_PUBLIC_DEFAULT_AVATAR в .env.local)
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={DEFAULT_AVATAR_SRC}
       alt={`Фото профиля ${user.userName}`}
       className="size-full rounded-full object-cover"
     />

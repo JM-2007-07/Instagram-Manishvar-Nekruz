@@ -14,14 +14,14 @@ import { useCreateChatMutation } from '@/features/direct/api';
 // Кнопки под шапкой: у Instagram высота 44 px и скругление 12 на компьютере, 32 px и 8 на телефоне.
 const actionClass = 'h-8 flex-1 rounded-lg px-4 md:h-11 md:rounded-xl md:px-5';
 
-// Значок рядом с именем: свои настройки или меню «…» для чужого профиля.
+// Значок рядом с именем: свои настройки (на телефоне они в шапке страницы) или меню «…» для чужого профиля.
 export function ProfileNameActions({ profile }: { profile: Profile }) {
   if (profile.isMe) {
     return (
       <Link
         href="/accounts/settings/"
         aria-label="Настройки"
-        className="flex size-8 shrink-0 items-center justify-center rounded-lg hover:bg-hover-overlay"
+        className="hidden size-8 shrink-0 items-center justify-center rounded-lg hover:bg-hover-overlay md:flex"
       >
         <Settings className="size-6" />
       </Link>
