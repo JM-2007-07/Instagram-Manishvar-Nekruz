@@ -15,7 +15,12 @@ export function BrandLogo({
   if (variant === 'mark') {
     if (BRAND_MARK_SRC) {
       return (
-        <img src={BRAND_MARK_SRC} alt="" aria-hidden="true" className={cn('size-8', className)} />
+        <img
+          src={BRAND_MARK_SRC}
+          alt=""
+          aria-hidden="true"
+          className={cn('size-8 rounded-[22%] object-cover', className)}
+        />
       );
     }
     return (

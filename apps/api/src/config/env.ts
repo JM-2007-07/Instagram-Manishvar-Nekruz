@@ -123,7 +123,7 @@ const defaults = {
   SESSION_ABSOLUTE_TTL_DAYS: 30,
   PASSWORD_RESET_TTL_MINUTES: 30,
   MAIL_DRIVER: 'log',
-  APP_NAME: 'Photogram',
+  APP_NAME: 'Instagram',
   MAIL_FROM: 'no-reply@example.com',
   STUN_URLS: 'stun:stun.l.google.com:19302',
 };
