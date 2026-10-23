@@ -311,7 +311,7 @@ type Page<T> = { items: T[]; nextCursor: string | null };
 | P19 обёртка ответа | убрана |
 | P20 файлы без ограничений | лимиты в [SECURITY.md](../architecture/SECURITY.md#загрузка-файлов) |
 | P21 confirmPassword | проверяется формой |
-| P22 отправка писем | `MAIL_DRIVER`; продакшен — Q23 |
+| P22 отправка писем | `MAIL_DRIVER=log` (журнал API) или `smtp` (`SMTP_HOST/PORT/USER/PASSWORD`, `MAIL_FROM`); сервис в продакшене — Q23 |
 | P23 лишние content types | только `application/json` и `multipart/form-data` (`POST /media`) |
 | P24 семантика чатов | `POST /chats` идемпотентен для личных; удаление — у себя |
 | P25 раздача медиа | `GET /media/{mediaId}` с проверкой прав |

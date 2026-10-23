@@ -66,6 +66,24 @@ describe('validateEnv', () => {
     ).toThrow(/MAIL_DRIVER/);
   });
 
+  it('MAIL_DRIVER=smtp без SMTP_HOST/SMTP_PORT -> ошибка; пустые строки = не задано', () => {
+    expect(() =>
+      validateEnv({
+        DATABASE_URL: VALID_DB_URL,
+        MAIL_DRIVER: 'smtp',
+        SMTP_HOST: '',
+        SMTP_PORT: '',
+      }),
+    ).toThrow(/SMTP_HOST, SMTP_PORT/);
+    const env = validateEnv({
+      DATABASE_URL: VALID_DB_URL,
+      MAIL_DRIVER: 'smtp',
+      SMTP_HOST: 'smtp.gmail.com',
+      SMTP_PORT: '465',
+    });
+    expect(env.SMTP_PORT).toBe(465);
+  });
+
   it('в production имя cookie без __Host- -> ошибка', () => {
     expect(() =>
       validateEnv({

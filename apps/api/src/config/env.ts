@@ -58,6 +58,24 @@ export class Env {
   @IsNotEmpty()
   MAIL_FROM!: string;
 
+  // Почта через SMTP (MAIL_DRIVER=smtp). Порт 465 — сразу TLS, 587 — STARTTLS.
+  @IsOptional()
+  @IsString()
+  SMTP_HOST?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  SMTP_PORT?: number;
+
+  @IsOptional()
+  @IsString()
+  SMTP_USER?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_PASSWORD?: string;
+
   // Ключ шифрования секретов 2FA (P2). Необязателен: без него 2FA выключена (эндпоинты отвечают 409).
   // Пустая строка из .env.example считается «не задан».
   @IsOptional()
@@ -114,6 +132,10 @@ const defaults = {
 export function validateEnv(raw: Record<string, unknown>): Env {
   const merged = { ...defaults, ...raw } as Record<string, unknown>;
   if (merged.TWO_FACTOR_ENCRYPTION_KEY === '') delete merged.TWO_FACTOR_ENCRYPTION_KEY;
+  // Пустые SMTP_* из .env.example считаются «не задан».
+  for (const key of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD']) {
+    if (merged[key] === '') delete merged[key];
+  }
   const env = plainToInstance(Env, merged, { enableImplicitConversion: true });
   const errors = validateSync(env);
   if (errors.length > 0) {
@@ -126,6 +148,9 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   const problems = [...checkDatabaseUrl(env.DATABASE_URL), ...checkWebOrigin(env.WEB_ORIGIN)];
   if (env.NODE_ENV === 'production' && env.MAIL_DRIVER === 'log') {
     problems.push('MAIL_DRIVER: "log" is not allowed in production');
+  }
+  if (env.MAIL_DRIVER === 'smtp' && (!env.SMTP_HOST || !env.SMTP_PORT)) {
+    problems.push('SMTP_HOST, SMTP_PORT: required when MAIL_DRIVER is "smtp"');
   }
   // В production cookie обязана иметь префикс __Host- (AUTHENTICATION.md §2).
   if (env.NODE_ENV === 'production' && !env.SESSION_COOKIE_NAME.startsWith('__Host-')) {
