@@ -5,6 +5,7 @@ import { BrandLogo } from '@/components/layout/brand-logo';
 import { APP_NAME, AUTH_HERO_SRC } from '@/lib/config';
 import { cn } from '@/lib/utils';
 import { AuthHeroArt } from './auth-hero-art';
+import { HeroHeading } from './hero-heading';
 
 // Экраны входа повторяют instagram.com (2026): кнопки-«таблетки» 44 px, поля 60 px, синий #0064e0.
 // Значения — DESIGN_SYSTEM.md §2.5 и §4.6. Ширины: телефон < 640, планшет 640–1063, компьютер ≥ 1064.
@@ -43,34 +44,41 @@ export function AuthFooter() {
 // иначе — своя иллюстрация (auth-hero-art.tsx).
 function HeroPicture() {
   if (AUTH_HERO_SRC) {
-    return <img src={AUTH_HERO_SRC} alt="" className="h-[530px] w-full object-contain" />;
+    return (
+      <img
+        src={AUTH_HERO_SRC}
+        alt=""
+        className="mx-auto aspect-[840/480] w-full max-w-[840px] object-contain"
+      />
+    );
   }
   return <AuthHeroArt />;
 }
 
 // Страница входа: на компьютере две колонки (слоган + картинка | форма), на телефоне — одна.
+// Размеры сверены с instagram.com на 1100–1903 px (2026-10-23): правая колонка min(652 px, ½ экрана)
+// с отступами 53 px; слоган 2,8vw / 64,8 px в блоке высотой 4 строки; картинка — ширина колонки − 40 px,
+// не больше 840×480. Слоган у Instagram набран Instagram Sans, в которой нет кириллицы, — браузер
+// показывает русский текст шрифтом с засечками по умолчанию (Times New Roman); повторяем это.
 export function AuthHeroPage({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-auth-panel font-auth min-[1064px]:bg-background">
-      <div className="flex min-h-dvh flex-1 min-[640px]:min-h-[calc(100dvh-70px)]">
-        <section className="relative hidden min-w-0 flex-1 basis-1/2 flex-col px-5 min-[1064px]:flex">
+      <div className="flex min-h-dvh flex-1 min-[640px]:min-h-[calc(100dvh-70px)] min-[1064px]:h-[calc(100dvh-70px)] min-[1064px]:min-h-[560px] min-[1064px]:flex-none">
+        <section className="relative hidden min-w-0 flex-1 flex-col overflow-hidden px-5 min-[1064px]:flex">
           <BrandLogo
             variant="mark"
             className="absolute top-[46px] left-[46px] size-[60px] text-30"
           />
-          <h2 className="mx-auto mt-[79px] max-w-[512px] text-center font-display text-hero font-normal text-auth-text">
+          <HeroHeading picture={<HeroPicture />}>
             Посмотрите, какими моментами из жизни поделились ваши{' '}
             <span className="bg-(image:--auth-gradient) bg-clip-text text-transparent">
               близкие друзья
             </span>
             .
-          </h2>
-          <div className="-mt-[9px] -mb-[29px]">
-            <HeroPicture />
-          </div>
+          </HeroHeading>
         </section>
-        <div aria-hidden="true" className="hidden w-[2px] bg-auth-divider min-[1064px]:block" />
-        <main className="flex min-w-0 flex-1 basis-1/2 flex-col bg-auth-panel px-4 min-[640px]:items-center min-[640px]:justify-center min-[1064px]:px-[52px]">
+        <div aria-hidden="true" className="hidden w-px bg-auth-divider min-[1064px]:block" />
+        <main className="flex min-w-0 flex-1 flex-col bg-auth-panel px-4 min-[640px]:items-center min-[640px]:justify-center min-[1064px]:w-[min(652px,50vw)] min-[1064px]:flex-none min-[1064px]:px-[53px]">
           {children}
         </main>
       </div>

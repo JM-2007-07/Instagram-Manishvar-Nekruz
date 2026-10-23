@@ -276,6 +276,8 @@
   /* §3.1 экраны входа и логотип (файлы — public/fonts, @font-face ниже) */
   --font-auth: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-display: 'Manrope', 'Segoe UI', sans-serif;
+  /* слоган страницы входа: у instagram.com русский текст выходит шрифтом с засечками по умолчанию */
+  --font-hero: 'Times New Roman', Times, serif;
   --font-wordmark: 'Grand Hotel', cursive;
   --text-10: 10px;
   --text-10--line-height: 12px;
