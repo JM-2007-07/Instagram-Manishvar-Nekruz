@@ -21,17 +21,28 @@ export async function copyPostLink(shortcode: string) {
 }
 
 const btn = 'flex size-10 items-center justify-center hover:opacity-50';
+const withCount = 'flex h-10 items-center gap-1.5 px-2 text-14 font-semibold hover:opacity-50';
+
+// 1234 → «1234», 12 500 → «12,5 тыс.» — как подписи у значков в ленте Instagram.
+export function compactCount(n: number): string {
+  return n < 10000 ? String(n) : new Intl.NumberFormat('ru-RU', { notation: 'compact' }).format(n);
+}
 
 // Ряд кнопок: Нравится, Комментировать, Поделиться, справа «Сохранить».
+// В ленте (counts) рядом со значками числа лайков и комментариев; у «Поделиться» числа нет —
+// API его не считает.
 export function PostActions({
   post,
   liked,
   onLike,
   commentHref,
+  counts,
 }: {
   post: Post;
   liked: boolean;
   onLike: () => void;
+  /** Числа рядом со значками (лента). likeCount = null — автор скрыл число. */
+  counts?: { likeCount: number | null; commentCount: number };
   /** Если не задан — кнопка «Комментировать» не ведёт никуда (мы уже в окне поста). */
   commentHref?: string;
 }) {
@@ -42,14 +53,24 @@ export function PostActions({
         aria-label={liked ? 'Не нравится' : 'Нравится'}
         aria-pressed={liked}
         onClick={onLike}
-        className={btn}
+        className={counts ? withCount : btn}
       >
         <Heart className={cn('size-6', liked && 'animate-like-pop fill-badge text-badge')} />
+        {!!counts?.likeCount && (
+          <span data-testid="like-count">{compactCount(counts.likeCount)}</span>
+        )}
       </button>
       {!post.commentsDisabled &&
         (commentHref ? (
-          <Link href={commentHref} aria-label="Комментировать" className={btn}>
+          <Link
+            href={commentHref}
+            aria-label="Комментировать"
+            className={counts ? withCount : btn}
+          >
             <MessageCircle className="size-6" />
+            {!!counts?.commentCount && (
+              <span data-testid="comment-count">{compactCount(counts.commentCount)}</span>
+            )}
           </Link>
         ) : (
           <span className={btn}>

@@ -48,22 +48,36 @@ export const storiesApi = baseApi.injectEndpoints({
       query: (storyId) => ({ url: `/stories/${storyId}`, method: 'DELETE' }),
       invalidatesTags: ['Story', 'Highlight'],
     }),
-    // Просмотр без инвалидации: кольцо в трее гасим вручную, когда просмотрена последняя история автора.
+    // Просмотр без инвалидации: отмечаем историю в кэше автора, а кольцо в трее гасим,
+    // когда у автора не осталось непросмотренных (без списка в кэше — по последней истории).
     viewStory: build.mutation<void, { storyId: string; authorId: string; isLast: boolean }>({
       query: ({ storyId }) => ({ url: `/stories/${storyId}/view`, method: 'PUT' }),
-      async onQueryStarted({ authorId, isLast }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ storyId, authorId, isLast }, { dispatch, getState, queryFulfilled }) {
         try {
           await queryFulfilled;
-          if (!isLast) return;
-          dispatch(
-            storiesApi.util.updateQueryData('getStoryTray', undefined, (tray) => {
-              const item = tray.find((t) => t.author.id === authorId);
-              if (item) item.hasUnseen = false;
-            }),
-          );
         } catch {
-          // просмотр не критичен
+          return; // просмотр не критичен
         }
+        dispatch(
+          storiesApi.util.updateQueryData('getUserStories', authorId, (list) => {
+            const story = list.find((s) => s.id === storyId);
+            if (story) story.isViewedByMe = true;
+          }),
+        );
+        dispatch(
+          storiesApi.util.updateQueryData('getStory', storyId, (story) => {
+            story.isViewedByMe = true;
+          }),
+        );
+        const list = storiesApi.endpoints.getUserStories.select(authorId)(getState()).data;
+        const allSeen = list ? list.every((s) => s.isViewedByMe) : isLast;
+        if (!allSeen) return;
+        dispatch(
+          storiesApi.util.updateQueryData('getStoryTray', undefined, (tray) => {
+            const item = tray.find((t) => t.author.id === authorId);
+            if (item) item.hasUnseen = false;
+          }),
+        );
       },
     }),
     likeStory: build.mutation<void, { storyId: string; liked: boolean }>({

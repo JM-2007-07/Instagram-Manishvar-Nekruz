@@ -41,7 +41,7 @@ describe('HomeFeed', () => {
     ]);
     renderWithStore(<HomeFeed />);
     expect(await screen.findByText('Вы всё посмотрели')).toBeInTheDocument();
-    expect(screen.getByText('5 отметок "Нравится"')).toBeInTheDocument();
+    expect(screen.getByTestId('like-count')).toHaveTextContent('5');
   });
 
   it('после инвалидации Feed в ленте нет дублей', async () => {

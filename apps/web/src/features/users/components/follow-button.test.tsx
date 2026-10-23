@@ -50,10 +50,12 @@ describe('FollowButton', () => {
     );
   });
 
-  it('FOLLOWING → NONE при отписке', async () => {
+  it('FOLLOWING → NONE: «Подписки» открывает меню, отписка — пунктом «Отменить подписку»', async () => {
     unfollow.mockReturnValue(ok());
     render(<FollowButton userId="u1" followStatus="FOLLOWING" />);
-    fireEvent.click(screen.getByRole('button'));
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Подписки' }), { key: 'Enter' });
+    expect(unfollow).not.toHaveBeenCalled(); // один клик по «Подписки» не отписывает
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Отменить подписку' }));
     expect(unfollow).toHaveBeenCalledWith('u1');
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Подписаться' })).toBeInTheDocument(),

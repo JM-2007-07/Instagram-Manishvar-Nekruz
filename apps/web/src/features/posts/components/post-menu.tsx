@@ -15,12 +15,14 @@ import { showApiError } from '@/lib/api/errors';
 import { useDeletePostMutation, useGetCurrentUserQuery } from '../api';
 import type { Post } from '../types';
 import { copyPostLink } from './post-actions';
+import { EditPostDialog } from './edit-post-dialog';
 
-// Меню «…»: для своего поста «Удалить» (с подтверждением), для всех — «Перейти к публикации», «Копировать ссылку».
+// Меню «…»: для своего поста «Удалить» (с подтверждением) и «Редактировать», для всех — «Перейти к публикации», «Копировать ссылку».
 export function PostMenu({ post, onDeleted }: { post: Post; onDeleted?: () => void }) {
   const { data: me } = useGetCurrentUserQuery();
   const [deletePost, { isLoading }] = useDeletePostMutation();
   const [confirm, setConfirm] = useState(false);
+  const [editing, setEditing] = useState(false);
   const isMine = me?.id === post.author.id;
 
   async function remove() {
@@ -53,6 +55,11 @@ export function PostMenu({ post, onDeleted }: { post: Post; onDeleted?: () => vo
               Удалить
             </DropdownMenuItem>
           )}
+          {isMine && (
+            <DropdownMenuItem className={rowClass} onSelect={() => setEditing(true)}>
+              Редактировать
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem asChild className={rowClass}>
             <Link href={`/p/${post.shortcode}/`}>Перейти к публикации</Link>
           </DropdownMenuItem>
@@ -61,6 +68,8 @@ export function PostMenu({ post, onDeleted }: { post: Post; onDeleted?: () => vo
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {isMine && <EditPostDialog post={post} open={editing} onOpenChange={setEditing} />}
 
       <Dialog open={confirm} onOpenChange={setConfirm}>
         <DialogContent showClose={false} className="w-[400px] text-center">

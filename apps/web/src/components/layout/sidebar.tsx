@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
-import { BrandLogo } from '@/components/layout/brand-logo';
+import { BrandGlyph } from '@/components/layout/brand-logo';
 import { MoreMenu } from '@/components/layout/more-menu';
 import {
   SIDEBAR_ITEMS,
@@ -108,7 +108,7 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
       >
         {/* У Instagram знак 24 px остаётся и в раскрытом меню, без рамки справа */}
         <Link href="/" aria-label="Главная" className="flex h-14 shrink-0 items-center px-3">
-          <BrandLogo variant="mark" className="size-6 text-12" />
+          <BrandGlyph className="text-foreground" />
         </Link>
 
         <ul className="my-auto flex flex-col gap-2">

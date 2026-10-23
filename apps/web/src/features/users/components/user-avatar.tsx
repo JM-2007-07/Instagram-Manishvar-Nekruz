@@ -16,16 +16,18 @@ export function UserAvatar({
   user,
   size = 44,
   ring: showRing = true,
+  seen = false,
   className,
 }: {
   user: AvatarUser;
   size?: number;
   ring?: boolean; // false — без кольца истории (лента историй рисует его сама)
+  seen?: boolean; // все истории просмотрены — тонкое серое кольцо, как в Instagram
   className?: string;
 }) {
   const ring = showRing && !!user.hasActiveStory;
   const gap = size >= 64 ? 5.5 : 2; // зазор между кольцом и фото
-  const ringWidth = 2;
+  const ringWidth = seen ? 1 : 2;
   const outer = ring ? size + 2 * (gap + ringWidth) : size;
 
   const photo = user.avatarUrl ? (
@@ -68,15 +70,16 @@ export function UserAvatar({
     <span
       data-testid="story-ring"
       data-close-friends={user.isCloseFriendStory ? 'true' : undefined}
+      data-seen={seen ? 'true' : undefined}
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-full',
-        user.isCloseFriendStory && 'bg-close-friends',
+        seen ? 'bg-stroke' : user.isCloseFriendStory && 'bg-close-friends',
         className,
       )}
       style={{
         width: outer,
         height: outer,
-        background: user.isCloseFriendStory ? undefined : 'var(--story-ring)',
+        background: seen || user.isCloseFriendStory ? undefined : 'var(--story-ring)',
       }}
     >
       <span

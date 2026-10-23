@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useGetPeopleSuggestionsQuery } from '../api';
+import { useStableList } from '../use-stable-list';
 import { FollowButton } from './follow-button';
 import { ListError, UserListSkeleton } from './list-states';
 import { UserListItem } from './user-list-item';
@@ -15,11 +16,13 @@ export function SuggestionsPanel({
   limit?: number;
   showSeeAll?: boolean;
 }) {
-  const { data, isLoading, error, refetch } = useGetPeopleSuggestionsQuery(limit);
+  const { data: fresh, isLoading, error, refetch } = useGetPeopleSuggestionsQuery(limit);
+  // После подписки человек остаётся в списке, кнопка становится «Подписки» (как в Instagram).
+  const data = useStableList(fresh);
 
   if (isLoading) return <UserListSkeleton rows={Math.min(limit, 5)} />;
   if (error) return <ListError error={error} onRetry={refetch} />;
-  if (!data || data.length === 0) return null; // нет рекомендаций — блок не показываем
+  if (data.length === 0) return null; // нет рекомендаций — блок не показываем
 
   return (
     <section aria-labelledby="suggestions-title">

@@ -3,11 +3,14 @@
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
 import { FollowButton, UserAvatar } from '@/components/temp/student-a';
+import { useStableList } from '@/features/users/use-stable-list';
 import { useGetSuggestionsQuery } from '../api';
 
 // Список рекомендованных аккаунтов (правая колонка и экран «Добро пожаловать»).
 export function Suggestions({ limit = 5, title = true }: { limit?: number; title?: boolean }) {
-  const { data, isLoading } = useGetSuggestionsQuery({ limit });
+  const { data: fresh, isLoading } = useGetSuggestionsQuery({ limit });
+  // После подписки человек остаётся в списке, кнопка становится «Подписки» (как в Instagram).
+  const data = useStableList(fresh);
 
   if (isLoading) {
     return (
@@ -21,7 +24,7 @@ export function Suggestions({ limit = 5, title = true }: { limit?: number; title
       </div>
     );
   }
-  if (!data || data.length === 0) return null;
+  if (data.length === 0) return null;
 
   return (
     <section>

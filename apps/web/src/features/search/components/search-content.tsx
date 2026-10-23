@@ -18,9 +18,11 @@ import {
   useAddRecentSearchMutation,
   useClearRecentSearchesMutation,
   useGetRecentSearchesInfiniteQuery,
+  useFindHashtagsQuery,
+  useFindLocationsQuery,
   useRemoveRecentSearchMutation,
-  useGlobalSearchQuery,
 } from '../api';
+import { useAccountSearch } from '../user-search';
 
 const MAX_QUERY = 50;
 
@@ -87,16 +89,28 @@ function RemoveEntryButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Содержимое панели «Поиск» (десктоп) и страницы /explore/search/ (мобильный).
-// Пустое поле — «Недавнее»; ввод (через ~300 мс) — аккаунты, хэштеги, места.
-export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
+// Содержимое панели «Поиск» (десктоп), страницы /explore/search/ (мобильный) и поиска на «Интересном».
+// Пустое поле — «Недавнее» (или idle, например сетка «Интересного»); ввод (через ~300 мс) — аккаунты
+// (TanStack Query), хэштеги и места (RTK Query).
+export function SearchContent({
+  onNavigate,
+  idle,
+  autoFocus,
+}: {
+  onNavigate?: () => void;
+  /** Что показать при пустом поле вместо «Недавнего». */
+  idle?: React.ReactNode;
+  autoFocus?: boolean;
+}) {
   const [text, setText] = useState('');
   const q = useDebouncedValue(text.trim().slice(0, MAX_QUERY), 300);
   const typing = text.trim().length > 0;
   const showResults = typing && q.length > 0;
 
-  const results = useGlobalSearchQuery(q, { skip: !showResults });
-  const history = useGetRecentSearchesInfiniteQuery(undefined, { skip: typing });
+  const accounts = useAccountSearch(showResults ? q : '');
+  const hashtags = useFindHashtagsQuery(q, { skip: !showResults });
+  const locations = useFindLocationsQuery(q, { skip: !showResults });
+  const history = useGetRecentSearchesInfiniteQuery(undefined, { skip: typing || !!idle });
   const [addHistory] = useAddRecentSearchMutation();
   const [removeEntry] = useRemoveRecentSearchMutation();
   const [clearHistory, { isLoading: clearing }] = useClearRecentSearchesMutation();
@@ -203,16 +217,16 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
 
   function renderResults() {
     // Пока ждём ответ на новый запрос или идёт debounce — показываем скелетон.
-    if (q !== text.trim().slice(0, MAX_QUERY) || results.isLoading)
+    const pending = accounts.isPending || hashtags.isLoading || locations.isLoading;
+    if (q !== text.trim().slice(0, MAX_QUERY) || (pending && !accounts.data))
       return <UserListSkeleton rows={5} />;
-    if (results.isError)
-      return <ListError error={results.error} onRetry={() => results.refetch()} />;
-    const { users, hashtags, locations } = results.data ?? {
-      users: [],
-      hashtags: [],
-      locations: [],
-    };
-    if (users.length + hashtags.length + locations.length === 0)
+    // Аккаунты — главное: их ошибка показывается; хэштеги и места просто пропадают.
+    if (accounts.isError)
+      return <ListError error={accounts.error} onRetry={() => void accounts.refetch()} />;
+    const users = accounts.data?.items ?? [];
+    const tags = hashtags.data?.items ?? [];
+    const places = locations.data?.items ?? [];
+    if (users.length + tags.length + places.length === 0)
       return <EmptyMessage>Ничего не найдено</EmptyMessage>;
     return (
       <>
@@ -223,7 +237,7 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
             onNavigate={() => remember({ type: 'USER', userId: user.id })}
           />
         ))}
-        {hashtags.map((tag) => (
+        {tags.map((tag) => (
           <PlainRow
             key={tag.name}
             href={hashtagHref(tag)}
@@ -233,7 +247,7 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
             onClick={() => remember({ type: 'HASHTAG', hashtagName: tag.name })}
           />
         ))}
-        {locations.map((place) => (
+        {places.map((place) => (
           <PlainRow
             key={place.id}
             href={locationHref(place)}
@@ -255,9 +269,10 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
           onChange={(value) => setText(value.slice(0, MAX_QUERY))}
           label="Поисковый запрос"
           placeholder="Поисковый запрос"
+          autoFocus={autoFocus}
         />
       </form>
-      <div>{typing ? renderResults() : renderHistory()}</div>
+      <div>{typing ? renderResults() : (idle ?? renderHistory())}</div>
     </div>
   );
 }

@@ -117,7 +117,7 @@ async function photoOr(url: string, w: number, h: number, fallbackSvg: string): 
 async function upload(
   s: Session,
   jpeg: Buffer,
-  purpose: 'POST' | 'AVATAR' | 'MESSAGE',
+  purpose: 'POST' | 'AVATAR' | 'MESSAGE' | 'STORY',
   name: string,
 ) {
   const form = new FormData();
@@ -172,6 +172,13 @@ async function main(): Promise<void> {
   const chats = await call<{ items: unknown[] }>(alice, 'GET', '/chats?folder=PRIMARY&limit=1');
   if (chats.items.length === 0) await seedChats(alice, bob, carol);
   else console.log('Чаты уже есть — пропускаю.');
+
+  await seedExtraUsers(alice);
+
+  // Истории живут 24 часа — добавляем свежие при каждом запуске, если у друзей alice их нет.
+  const tray = await call<{ author: { id: string } }[]>(alice, 'GET', '/stories/tray');
+  if (tray.some((t) => t.author.id !== alice.id)) console.log('Истории уже есть — пропускаю.');
+  else await seedStories(bob, carol);
 
   const reels = await call<{ items: unknown[] }>(alice, 'GET', '/reels?limit=1');
   if (reels.items.length === 0) await seedReels(alice, bob, carol);
@@ -348,6 +355,117 @@ async function seedChats(alice: Session, bob: Session, carol: Session): Promise<
     await pause(150);
   }
   await call(alice, 'POST', `/chats/${group.id}/read`, { messageId: lastGroup });
+}
+
+// ---------- Ещё пользователи для рекомендаций (prisma/seed.ts) ----------
+
+const EXTRA_USERS: {
+  userName: string;
+  portrait: string;
+  bio: string;
+  caption: string;
+  photo: number;
+}[] = [
+  {
+    userName: 'dasha.travel',
+    portrait: 'women/21',
+    bio: 'Каждый месяц — новая страна ✈️',
+    caption: 'Утро в старом городе',
+    photo: 1040,
+  },
+  {
+    userName: 'egor_photo',
+    portrait: 'men/45',
+    bio: 'Плёнка и улицы 📷',
+    caption: 'Свет после дождя',
+    photo: 1067,
+  },
+  {
+    userName: 'fatima.art',
+    portrait: 'women/90',
+    bio: 'Акварель и цвет 🎨',
+    caption: 'Новый этюд',
+    photo: 1015,
+  },
+  {
+    userName: 'gleb.runs',
+    portrait: 'men/12',
+    bio: 'Бег по утрам 🏃',
+    caption: '10 км до завтрака',
+    photo: 1018,
+  },
+  {
+    userName: 'hana.cooks',
+    portrait: 'women/33',
+    bio: 'Готовлю просто и вкусно 🍜',
+    caption: 'Ужин за 20 минут',
+    photo: 1080,
+  },
+  {
+    userName: 'ivan.mountains',
+    portrait: 'men/71',
+    bio: 'Горы — это навсегда ⛰️',
+    caption: 'Перевал на рассвете',
+    photo: 1036,
+  },
+];
+
+async function seedExtraUsers(alice: Session): Promise<void> {
+  for (const u of EXTRA_USERS) {
+    let s: Session;
+    try {
+      s = await login(u.userName);
+    } catch {
+      continue; // пользователя нет в БД — сначала npm run prisma:seed -w api
+    }
+    const profile = await call<{ postCount: number }>(s, 'GET', `/users/by-username/${u.userName}`);
+    if (profile.postCount > 0) continue;
+    console.log(`Пользователь ${u.userName}…`);
+    const avatar = await photoOr(
+      `https://randomuser.me/api/portraits/${u.portrait}.jpg`,
+      400,
+      400,
+      avatarSvg(['#7638fa', '#ff0169'], u.userName.charAt(0).toUpperCase()),
+    );
+    const media = await upload(s, avatar, 'AVATAR', `${u.userName}.jpg`);
+    await call(s, 'PUT', '/me/avatar', { mediaId: media.id });
+    await call(s, 'PATCH', '/me', { bio: u.bio });
+    const photo = await photoOr(
+      `https://picsum.photos/id/${u.photo}/1080/1440`,
+      1080,
+      1440,
+      sceneSvg(SCENES[u.photo % SCENES.length]!, u.photo),
+    );
+    const postMedia = await upload(s, photo, 'POST', `${u.userName}-1.jpg`);
+    await call(s, 'POST', '/posts', {
+      type: 'POST',
+      items: [{ mediaId: postMedia.id, altText: u.caption }],
+      caption: u.caption,
+    });
+    // На alice подписаны, alice на них — нет: они попадают к ней в рекомендации.
+    await call(s, 'PUT', `/users/${alice.id}/follow`).catch(() => undefined);
+  }
+}
+
+// Истории 9:16: у bob три, у carol две — видно и переход между историями, и между авторами.
+async function seedStories(bob: Session, carol: Session): Promise<void> {
+  const plan: [Session, number[]][] = [
+    [bob, [1015, 1016, 1018]],
+    [carol, [1025, 1039]],
+  ];
+  for (const [s, photos] of plan) {
+    console.log(`Истории ${s.userName}…`);
+    for (const id of photos) {
+      const jpeg = await photoOr(
+        `https://picsum.photos/id/${id}/1080/1920`,
+        1080,
+        1920,
+        sceneSvg(SCENES[id % SCENES.length]!, id, 1080, 1920),
+      );
+      const media = await upload(s, jpeg, 'STORY', `story-${id}.jpg`);
+      await call(s, 'POST', '/stories', { mediaId: media.id });
+    }
+  }
 }
 
 // ---------- Reels: ролики рисует сам ffmpeg (встроенные генераторы, без чужого видео) ----------

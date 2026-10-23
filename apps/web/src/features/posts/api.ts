@@ -1,5 +1,5 @@
 import { baseApi } from '@/lib/api/base-api';
-import type { Me } from '@/lib/api/types';
+import type { Me, Schemas } from '@/lib/api/types';
 import type { Post, PostPage } from './types';
 
 // Публикации и ленты — endpoints/posts.md. Постраничные списки — infiniteQuery (курсор nextCursor).
@@ -30,6 +30,28 @@ export const postsApi = baseApi.injectEndpoints({
         method: liked ? 'PUT' : 'DELETE',
       }),
     }),
+    // Редактирование своей публикации: PATCH /posts/{id}. Ответ — обновлённый пост; кладём его
+    // в кэш публикации и во все страницы ленты, где он есть (без повторной загрузки ленты).
+    updatePost: build.mutation<Post, { postId: string; patch: Schemas['UpdatePostDto'] }>({
+      query: ({ postId, patch }) => ({ url: `/posts/${postId}`, method: 'PATCH', body: patch }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        let post: Post;
+        try {
+          post = (await queryFulfilled).data;
+        } catch {
+          return; // ошибку показывает вызывающий
+        }
+        dispatch(postsApi.util.upsertQueryData('getPostByShortcode', post.shortcode, post));
+        dispatch(
+          postsApi.util.updateQueryData('getFeed', undefined, (feed) => {
+            for (const page of feed.pages) {
+              const i = page.items.findIndex((p) => p.id === post.id);
+              if (i >= 0) page.items[i] = post;
+            }
+          }),
+        );
+      },
+    }),
     deletePost: build.mutation<void, string>({
       query: (postId) => ({ url: `/posts/${postId}`, method: 'DELETE' }),
       invalidatesTags: ['Feed', 'Post'],
@@ -42,5 +64,6 @@ export const {
   useGetCurrentUserQuery,
   useGetPostByShortcodeQuery,
   useLikePostMutation,
+  useUpdatePostMutation,
   useDeletePostMutation,
 } = postsApi;

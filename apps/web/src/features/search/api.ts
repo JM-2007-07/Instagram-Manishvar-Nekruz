@@ -1,5 +1,5 @@
 import { baseApi } from '@/lib/api/base-api';
-import type { Page, Schemas, SearchHistoryEntry, SearchResult } from '@/lib/api/types';
+import type { Hashtag, Location, Page, Schemas, SearchHistoryEntry } from '@/lib/api/types';
 
 type AddHistoryBody = Schemas['AddSearchHistoryDto'];
 
@@ -7,9 +7,12 @@ const PAGE_SIZE = 20;
 
 export const searchApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // Аккаунты, хэштеги, места — до 10 каждого. Пустая строка: вызывающий передаёт skip.
-    globalSearch: build.query<SearchResult, string>({
-      query: (q) => ({ url: '/search', params: { q } }),
+    // Хэштеги и места для поиска. Аккаунты ищет TanStack Query (user-search.ts, ADR 0019).
+    findHashtags: build.query<Page<Hashtag>, string>({
+      query: (q) => ({ url: '/search/hashtags', params: { q, limit: 10 } }),
+    }),
+    findLocations: build.query<Page<Location>, string>({
+      query: (q) => ({ url: '/search/locations', params: { q, limit: 10 } }),
     }),
 
     getRecentSearches: build.infiniteQuery<Page<SearchHistoryEntry>, void, string | null>({
@@ -42,7 +45,8 @@ export const searchApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGlobalSearchQuery,
+  useFindHashtagsQuery,
+  useFindLocationsQuery,
   useGetRecentSearchesInfiniteQuery,
   useAddRecentSearchMutation,
   useRemoveRecentSearchMutation,

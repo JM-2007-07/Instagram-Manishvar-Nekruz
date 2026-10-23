@@ -44,7 +44,8 @@ export default defineConfig([
           patterns: [
             {
               group: ['@tanstack/*'],
-              message: 'TanStack Query запрещён: используйте RTK Query (AGENTS.md §5, ADR 0010).',
+              message:
+                'TanStack Query — только в поиске аккаунтов (features/search/user-search.ts, ADR 0019); иначе RTK Query (ADR 0010).',
             },
             {
               group: ['**/apps/api', '**/apps/api/**'],
@@ -58,6 +59,20 @@ export default defineConfig([
             },
           ],
         },
+      ],
+    },
+  },
+  {
+    // ADR 0019: TanStack Query разрешён только здесь — поиск аккаунтов и один QueryClient.
+    files: [
+      'src/features/search/user-search.ts',
+      'src/lib/query-client.tsx',
+      'src/features/search/components/search-content.test.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: bannedPackages, patterns: [{ group: ['**/apps/api', '**/apps/api/**'] }] },
       ],
     },
   },

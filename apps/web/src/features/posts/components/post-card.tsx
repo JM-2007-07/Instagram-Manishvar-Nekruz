@@ -8,7 +8,7 @@ import { CommentForm } from '@/features/comments/components/post-comments';
 import { renderCaption, timeAgo } from '../lib';
 import type { Post } from '../types';
 import { usePostLike } from '../use-post-like';
-import { LikeCount, PostActions } from './post-actions';
+import { PostActions } from './post-actions';
 import { PostMedia } from './post-media';
 import { PostMenu } from './post-menu';
 
@@ -72,8 +72,16 @@ export function PostCard({ post }: { post: Post }) {
       />
 
       <div className="pt-1">
-        <PostActions post={post} liked={liked} onLike={() => setLike(!liked)} commentHref={href} />
-        {!post.hideLikeCount && <LikeCount count={count} />}
+        <PostActions
+          post={post}
+          liked={liked}
+          onLike={() => setLike(!liked)}
+          commentHref={href}
+          counts={{
+            likeCount: post.hideLikeCount ? null : count,
+            commentCount: post.commentCount,
+          }}
+        />
         {caption && (
           <p className="mt-1 text-14 break-words">
             <Link href={`/${post.author.userName}/`} className="mr-1 font-semibold">

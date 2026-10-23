@@ -12,6 +12,43 @@ const users = [
   { userName: 'alice', email: 'alice@example.test', fullName: 'Alice Demo', role: 'USER' as const },
   { userName: 'bob', email: 'bob@example.test', fullName: 'Bob Demo', role: 'USER' as const },
   { userName: 'carol', email: 'carol@example.test', fullName: 'Carol Demo', role: 'USER' as const },
+  // Ещё демо-пользователи — чтобы на показе были рекомендации (prisma/demo-data.ts даёт им фото и посты).
+  {
+    userName: 'dasha.travel',
+    email: 'dasha@example.test',
+    fullName: 'Даша Путешествия',
+    role: 'USER' as const,
+  },
+  {
+    userName: 'egor_photo',
+    email: 'egor@example.test',
+    fullName: 'Егор Фото',
+    role: 'USER' as const,
+  },
+  {
+    userName: 'fatima.art',
+    email: 'fatima@example.test',
+    fullName: 'Фатима Арт',
+    role: 'USER' as const,
+  },
+  {
+    userName: 'gleb.runs',
+    email: 'gleb@example.test',
+    fullName: 'Глеб Бег',
+    role: 'USER' as const,
+  },
+  {
+    userName: 'hana.cooks',
+    email: 'hana@example.test',
+    fullName: 'Хана Кухня',
+    role: 'USER' as const,
+  },
+  {
+    userName: 'ivan.mountains',
+    email: 'ivan@example.test',
+    fullName: 'Иван Горы',
+    role: 'USER' as const,
+  },
 ];
 
 async function main(): Promise<void> {
