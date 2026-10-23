@@ -12,6 +12,9 @@ vi.mock('next/navigation', () => ({
     throw new Error(`REDIRECT:${url}`);
   },
 }));
+vi.mock('@/components/layout/modal-slot', () => ({
+  ModalSlot: ({ children }: { children: React.ReactNode }) => children,
+}));
 vi.mock('@/components/layout/app-shell', () => ({
   AppShell: ({
     me,

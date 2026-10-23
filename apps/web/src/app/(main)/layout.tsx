@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
+import { ModalSlot } from '@/components/layout/modal-slot';
 import { serverFetch } from '@/lib/api/server';
 import type { Me } from '@/lib/api/types';
 import { parseTheme, THEME_COOKIE } from '@/lib/theme';
@@ -23,7 +24,7 @@ export default async function MainLayout({
   return (
     <AppShell me={res.data} theme={theme}>
       {children}
-      {modal}
+      <ModalSlot>{modal}</ModalSlot>
     </AppShell>
   );
 }
