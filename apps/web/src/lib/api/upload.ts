@@ -1,14 +1,15 @@
+import type { Schemas } from './types';
+
 // Единственное исключение из «запросы только через RTK Query»: XMLHttpRequest даёт прогресс загрузки.
 // Значения purpose — endpoints/media.md.
 export type MediaPurpose =
   'POST' | 'REEL' | 'STORY' | 'AVATAR' | 'MESSAGE' | 'VOICE' | 'HIGHLIGHT_COVER';
 
-// TODO(T1.B1): вернуть тип MediaItem из schema.d.ts вместо unknown (появится после backend B)
 export function uploadMedia(
   file: Blob,
   purpose: MediaPurpose,
   onProgress?: (percent: number) => void,
-): Promise<unknown> {
+): Promise<Schemas['MediaItemDto']> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/v1/media');

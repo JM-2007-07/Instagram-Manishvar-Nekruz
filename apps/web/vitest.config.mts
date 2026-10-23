@@ -10,5 +10,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     passWithNoTests: true,
+    // Тесты окон с radix и RTK Query под полной параллельной нагрузкой (CI, OneDrive) не укладываются в 5 с.
+    testTimeout: 20_000,
   },
 });

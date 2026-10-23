@@ -38,18 +38,22 @@ describe('(main)/layout', () => {
 
   it('401 -> редирект на страницу входа', async () => {
     serverFetch.mockResolvedValue({ ok: false, status: 401, data: null });
-    await expect(MainLayout({ children: null })).rejects.toThrow('REDIRECT:/accounts/login/');
+    await expect(MainLayout({ children: null, modal: null })).rejects.toThrow(
+      'REDIRECT:/accounts/login/',
+    );
   });
 
   it('500 -> ошибка, а не редирект', async () => {
     serverFetch.mockResolvedValue({ ok: false, status: 500, data: null });
-    await expect(MainLayout({ children: null })).rejects.toThrow('GET /me failed: 500');
+    await expect(MainLayout({ children: null, modal: null })).rejects.toThrow(
+      'GET /me failed: 500',
+    );
   });
 
   it('200 -> оболочка с пользователем и темой из cookie', async () => {
     serverFetch.mockResolvedValue({ ok: true, status: 200, data: { userName: 'alice' } });
     cookieGet.mockReturnValue({ value: 'dark' });
-    render(await MainLayout({ children: <p>content</p> }));
+    render(await MainLayout({ children: <p>content</p>, modal: null }));
     expect(serverFetch).toHaveBeenCalledWith('/me');
     expect(screen.getByTestId('user')).toHaveTextContent('alice');
     expect(screen.getByTestId('theme')).toHaveTextContent('dark');
@@ -59,7 +63,7 @@ describe('(main)/layout', () => {
   it('без cookie тема system', async () => {
     serverFetch.mockResolvedValue({ ok: true, status: 200, data: { userName: 'alice' } });
     cookieGet.mockReturnValue(undefined);
-    render(await MainLayout({ children: null }));
+    render(await MainLayout({ children: null, modal: null }));
     expect(screen.getByTestId('theme')).toHaveTextContent('system');
   });
 });

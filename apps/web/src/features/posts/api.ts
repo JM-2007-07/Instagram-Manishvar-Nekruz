@@ -1,4 +1,5 @@
 import { baseApi } from '@/lib/api/base-api';
+import type { Me } from '@/lib/api/types';
 import type { Post, PostPage } from './types';
 
 // Публикации и ленты — endpoints/posts.md. Списки с курсором склеиваются в один кэш (бесконечная прокрутка).
@@ -17,6 +18,11 @@ export const postsApi = baseApi.injectEndpoints({
           : page,
       forceRefetch: ({ currentArg, previousArg }) => currentArg?.cursor !== previousArg?.cursor,
       providesTags: ['Feed'],
+    }),
+    // Текущий пользователь — чтобы понять, свой ли это пост.
+    getCurrentUser: build.query<Me, void>({
+      query: () => '/me',
+      providesTags: ['Me'],
     }),
     getPostByShortcode: build.query<Post, string>({
       query: (shortcode) => `/posts/by-shortcode/${encodeURIComponent(shortcode)}`,
@@ -38,6 +44,7 @@ export const postsApi = baseApi.injectEndpoints({
 
 export const {
   useGetFeedQuery,
+  useGetCurrentUserQuery,
   useGetPostByShortcodeQuery,
   useLikePostMutation,
   useDeletePostMutation,
