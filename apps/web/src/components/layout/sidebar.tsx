@@ -2,36 +2,66 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { MoreMenu } from '@/components/layout/more-menu';
-import { SIDEBAR_ITEMS, isActivePath, type NavItem } from '@/components/layout/nav-items';
+import {
+  SIDEBAR_ITEMS,
+  activeIconClass,
+  isActivePath,
+  type NavItem,
+} from '@/components/layout/nav-items';
+import { NavBadge } from '@/features/notifications/components/nav-badge';
+import { NotificationsPanel } from '@/features/notifications/components/notifications-panel';
+import { SearchPanel } from '@/features/search/components/search-panel';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
 import type { Theme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
 
-// Пункт: иконка 24 px, подпись 16 px с x = 64 px; фон при наведении — --hover-overlay.
+// Пункт как у Instagram (2026): 48 px + зазор 8, иконка 24 px, подпись 16/20 с x = 64 px;
+// фон при наведении — --hover-overlay (5 % чёрного), скругление 8.
 const itemClass =
-  'group flex h-14 w-full items-center gap-4 rounded-lg px-3 text-16 outline-none transition-colors duration-100 ease-[var(--ease-hover)] hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring';
+  'group flex h-12 w-full items-center gap-4 rounded-lg px-3 text-16 outline-none transition-colors duration-100 ease-[var(--ease-hover)] hover:bg-hover-overlay focus-visible:ring-2 focus-visible:ring-ring';
 
 // Подпись видна только в раскрытом меню. Меню остаётся раскрытым, пока открыто «Ещё»
 // (radix уводит фокус и наведение в выпадающий список, и без has-[…] меню бы свернулось).
+// Фокус раскрывает меню только с клавиатуры (:focus-visible): после клика мышью ссылка остаётся в фокусе,
+// и с focus-within меню не сворачивалось бы после перехода на другую страницу.
 const labelClass =
-  'whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100 group-has-[[data-state=open]]/sidebar:opacity-100';
+  'whitespace-nowrap opacity-0 transition-opacity duration-150 ease-(--ease-hover) group-hover/sidebar:opacity-100 group-has-[:focus-visible]/sidebar:opacity-100 group-has-[[data-state=open]]/sidebar:opacity-100';
 
-function SidebarItem({ item, active }: { item: NavItem; active: boolean }) {
+function SidebarItem({
+  item,
+  active,
+  onClick,
+}: {
+  item: NavItem;
+  active: boolean;
+  onClick?: () => void;
+}) {
   const Icon = item.icon;
   const content = (
     <>
-      <Icon className={cn('size-6 shrink-0', active && 'fill-current')} />
+      <span className="relative shrink-0">
+        <Icon className={cn('size-6', activeIconClass(item.key, active))} />
+        {item.key === 'notifications' && <NavBadge kind="notifications" />}
+        {item.key === 'messages' && <NavBadge kind="messages" />}
+      </span>
       <span className={cn(labelClass, active && 'font-bold')}>{item.label}</span>
     </>
   );
   // В свёрнутом виде подписи не видно, поэтому aria-label обязателен.
   if (!item.href) {
     return (
-      <button type="button" aria-label={item.label} aria-disabled="true" className={itemClass}>
+      <button
+        type="button"
+        aria-label={item.label}
+        aria-disabled={onClick ? undefined : 'true'}
+        onClick={onClick}
+        className={itemClass}
+      >
         {content}
       </button>
     );
@@ -52,30 +82,55 @@ function SidebarItem({ item, active }: { item: NavItem; active: boolean }) {
 // fixed-блок раскрывается поверх контента до 238 px (DESIGN_SYSTEM §4.1).
 export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
   const pathname = usePathname();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const profileHref = `/${me.userName}/`;
   const profileActive = isActivePath(pathname, profileHref, true);
+
+  // Перешли на другую страницу — закрываем панели и снимаем фокус с пункта, чтобы меню свернулось.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (shownPath !== pathname) {
+    setShownPath(pathname);
+    setNotificationsOpen(false);
+    setSearchOpen(false);
+  }
+  useEffect(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && active.closest('[data-sidebar]')) active.blur();
+  }, [pathname]);
 
   return (
     <aside className="hidden shrink-0 md:block" style={{ width: DESIGN.sidebarCollapsed }}>
       <nav
         aria-label="Основная навигация"
-        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-border bg-background px-3 pt-6 pb-5 transition-[width] duration-100 ease-[var(--ease-hover)] focus-within:w-[238px] hover:w-[238px] has-[[data-state=open]]:w-[238px]"
-        style={{ width: DESIGN.sidebarCollapsed }}
+        data-sidebar
+        className="group/sidebar fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden bg-background px-3 pt-6 pb-5 w-[72px] transition-[width] duration-150 ease-(--ease-move) hover:w-[238px] has-[:focus-visible]:w-[238px] has-[[data-state=open]]:w-[238px] motion-reduce:transition-none"
       >
-        <Link href="/" aria-label="Главная" className="mb-6 flex h-14 items-center px-3">
-          <span className="group-hover/sidebar:hidden group-focus-within/sidebar:hidden group-has-[[data-state=open]]/sidebar:hidden">
-            <BrandLogo variant="mark" />
-          </span>
-          <span className="hidden group-hover/sidebar:block group-focus-within/sidebar:block group-has-[[data-state=open]]/sidebar:block">
-            <BrandLogo />
-          </span>
+        {/* У Instagram знак 24 px остаётся и в раскрытом меню, без рамки справа */}
+        <Link href="/" aria-label="Главная" className="flex h-14 shrink-0 items-center px-3">
+          <BrandLogo variant="mark" className="size-6 text-12" />
         </Link>
 
-        <ul className="flex flex-col gap-1">
+        <ul className="my-auto flex flex-col gap-2">
           {SIDEBAR_ITEMS.map((item) => (
             <li key={item.key}>
-              {/* TODO(T3.A3, Студент A): счётчик на «Сообщения» и точка на «Уведомления» */}
-              <SidebarItem item={item} active={!!item.href && isActivePath(pathname, item.href)} />
+              <SidebarItem
+                item={item}
+                active={
+                  item.key === 'notifications'
+                    ? notificationsOpen
+                    : item.key === 'search'
+                      ? searchOpen
+                      : !!item.href && isActivePath(pathname, item.href)
+                }
+                onClick={
+                  item.key === 'notifications'
+                    ? () => setNotificationsOpen(true)
+                    : item.key === 'search'
+                      ? () => setSearchOpen(true)
+                      : undefined
+                }
+              />
             </li>
           ))}
           <li>
@@ -103,10 +158,12 @@ export function Sidebar({ me, theme }: { me: Me; theme: Theme }) {
           </li>
         </ul>
 
-        <div className="mt-auto">
+        <div>
           <MoreMenu userName={me.userName} theme={theme} triggerClassName={itemClass} />
         </div>
       </nav>
+      <NotificationsPanel open={notificationsOpen} onOpenChange={setNotificationsOpen} />
+      <SearchPanel open={searchOpen} onOpenChange={setSearchOpen} />
     </aside>
   );
 }

@@ -90,4 +90,5 @@ git fetch && git rebase origin/main         # подтянуть чужие из
 | `git push` отклонён | нет прав на репозиторий — Студент A добавляет `nek-yt` в Settings → Collaborators |
 | Нужно изменить общий файл или чужой модуль | сначала написать Студенту A; см. [CHANGE_PROCESS.md](CHANGE_PROCESS.md) |
 | Конфликт в `package-lock.json` | взять версию `main` и выполнить `npm install` |
+| Код подтверждения не приходит на почту | по умолчанию `MAIL_DRIVER=log`: письмо с кодом печатается в журнал API (окно, где запущен `npm run dev`, строка `Mail to …`). Чтобы письма приходили по-настоящему, в `apps/api/.env`: `MAIL_DRIVER=smtp`, `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, `SMTP_USER` и `MAIL_FROM` — ваш Gmail, `SMTP_PASSWORD` — пароль приложения Google (Аккаунт → Безопасность → Двухэтапная аутентификация → Пароли приложений); перезапустить API |
 | Документы противоречат друг другу | не угадывать — спросить Claude «найди противоречие» и обсудить со Студентом A |

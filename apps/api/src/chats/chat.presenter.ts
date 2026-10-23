@@ -68,6 +68,7 @@ export function chatSelect(viewerId: string) {
         mutedUntil: true,
         clearedAt: true,
         lastReadAt: true,
+        lastReadMessageId: true,
         user: {
           select: {
             ...userSummarySelect(viewerId),
@@ -246,6 +247,9 @@ export class ChatPresenter {
         role: p.role,
         isOnline: (p.user.settings?.showActivityStatus ?? true) && this.realtime.isOnline(p.userId),
         lastActiveAt: null,
+        // Как в chat:read: пока чат у участника в запросах, другие не видят, что он прочитал.
+        lastReadMessageId:
+          p.status === 'REQUEST' && p.userId !== viewerId ? null : (p.lastReadMessageId ?? null),
       })),
       lastMessage: last ? (await this.toMessages([last], viewerId))[0] : null,
       unreadCount,

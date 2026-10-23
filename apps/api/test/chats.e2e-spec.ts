@@ -17,7 +17,7 @@ interface ChatBody {
   isRequest: boolean;
   unreadCount: number;
   isMuted: boolean;
-  participants: { id: string; role: string }[];
+  participants: { id: string; role: string; lastReadMessageId: string | null }[];
   lastMessage: { id: string; text: string | null } | null;
 }
 interface MessageBody {
@@ -399,6 +399,9 @@ describe('Chats: Direct', () => {
       const read = events('chat:read');
       expect(read).toHaveLength(1);
       expect(read[0][2]).toEqual({ chatId: chat.id, userId: bob.id, messageId: last.id });
+      // «Просмотрено» видно и без события: участник отдаёт lastReadMessageId.
+      const seen = (await api('get', `/chats/${chat.id}`, a).expect(200)).body as ChatBody;
+      expect(seen.participants.find((p) => p.id === bob.id)?.lastReadMessageId).toBe(last.id);
       await api('post', `/chats/${chat.id}/read`, b)
         .send({ messageId: '00000000-0000-4000-8000-000000000000' })
         .expect(404);
@@ -472,6 +475,10 @@ describe('Chats: Direct', () => {
       const read = events('chat:read');
       expect(read).toHaveLength(1);
       expect(read[0][0]).toEqual([bob.id]);
+      const asSender = (await api('get', `/chats/${chat.id}`, a).expect(200)).body as ChatBody;
+      expect(asSender.participants.find((p) => p.id === bob.id)?.lastReadMessageId).toBeNull();
+      const asReader = (await api('get', `/chats/${chat.id}`, b).expect(200)).body as ChatBody;
+      expect(asReader.participants.find((p) => p.id === bob.id)?.lastReadMessageId).toBe(msg.id);
     });
   });
 

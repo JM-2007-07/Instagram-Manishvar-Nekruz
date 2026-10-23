@@ -8889,6 +8889,12 @@
             "type": "string",
             "nullable": true,
             "format": "date-time"
+          },
+          "lastReadMessageId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid",
+            "description": "До какого сообщения участник прочитал чат («Просмотрено»); null — не читал или чат у него в запросах"
           }
         },
         "required": [
@@ -8902,7 +8908,8 @@
           "isCloseFriendStory",
           "role",
           "isOnline",
-          "lastActiveAt"
+          "lastActiveAt",
+          "lastReadMessageId"
         ]
       },
       "MediaItemDto": {

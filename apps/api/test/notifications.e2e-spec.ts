@@ -145,6 +145,47 @@ describe('Notifications: создание, список, прочитано, з�
     expect(list.items[0].post.id).toBe(postId);
   });
 
+  it('комментарии разных людей к одному посту не склеиваются: у каждого свой текст', async () => {
+    const postId = (await createPost(app, me)).id;
+    const carol = await createUser(app, { userName: 'carol' });
+    for (const [user, text] of [
+      [bob, 'Первый'],
+      [carol, 'Второй'],
+    ] as const) {
+      const comment = await prisma.comment.create({ data: { postId, authorId: user.id, text } });
+      await service.create({
+        recipientId: me.id,
+        actorId: user.id,
+        type: 'COMMENT',
+        postId,
+        commentId: comment.id,
+      });
+    }
+    const list = (await get('/notifications').expect(200)).body;
+    expect(list.items).toHaveLength(2);
+    expect(list.items.map((n: { comment: { text: string } }) => n.comment.text).sort()).toEqual([
+      'Второй',
+      'Первый',
+    ]);
+    expect(list.items.every((n: { actorCount: number }) => n.actorCount === 1)).toBe(true);
+  });
+
+  it('лайки разных комментариев одного поста не склеиваются, лайки одного комментария — да', async () => {
+    const postId = (await createPost(app, me)).id;
+    const carol = await createUser(app, { userName: 'carol' });
+    const c1 = await prisma.comment.create({ data: { postId, authorId: me.id, text: 'A' } });
+    const c2 = await prisma.comment.create({ data: { postId, authorId: me.id, text: 'B' } });
+    const like = (actorId: string, commentId: string) =>
+      service.create({ recipientId: me.id, actorId, type: 'COMMENT_LIKE', postId, commentId });
+    await like(bob.id, c1.id);
+    await like(carol.id, c1.id);
+    await like(bob.id, c2.id);
+    const list = (await get('/notifications').expect(200)).body;
+    expect(list.items).toHaveLength(2);
+    const counts = list.items.map((n: { actorCount: number }) => n.actorCount).sort();
+    expect(counts).toEqual([1, 2]);
+  });
+
   it('курсорная пагинация', async () => {
     for (let i = 0; i < 3; i++) {
       const user = await createUser(app, { userName: `u${i}` });

@@ -29,3 +29,23 @@ export type ApiErrorBody = {
  * в OpenAPI страницы конкретные (NotificationPageDto и т.д.), в features используются они.
  */
 export type Page<T> = { items: T[]; nextCursor: string | null };
+
+// Direct и звонки
+export type ChatParticipant = Schemas['ChatParticipantDto'];
+export type MediaItem = Schemas['MediaItemDto'];
+export type Call = Schemas['CallDto'];
+export type IceServer = Schemas['IceServerDto'];
+export type SendMessageBody = Schemas['SendMessageDto'];
+
+// Подписки, приватность, поиск
+export type FollowListItem = Schemas['FollowListItemDto'];
+export type FollowRequestItem = Schemas['FollowRequestItemDto'];
+export type Suggestion = Schemas['SuggestionDto'];
+export type MutedUser = Schemas['MutedUserDto'];
+export type Hashtag = Schemas['HashtagDto'];
+export type Location = Schemas['LocationDto'];
+export type SearchResult = Schemas['SearchResultDto'];
+export type SearchHistoryEntry = Schemas['SearchHistoryEntryDto'];
+export type FollowStatus = FollowListItem['followStatus'];
+export type Collection = Schemas['CollectionDto'];
+export type Post = Schemas['PostDto'];

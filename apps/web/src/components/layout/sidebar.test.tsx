@@ -9,6 +9,12 @@ vi.mock('@/components/layout/more-menu', () => ({
   MoreMenu: () => <button type="button" aria-label="Ещё" />,
 }));
 
+vi.mock('@/features/notifications/components/nav-badge', () => ({ NavBadge: () => null }));
+vi.mock('@/features/notifications/components/notifications-panel', () => ({
+  NotificationsPanel: () => null,
+}));
+vi.mock('@/features/search/components/search-panel', () => ({ SearchPanel: () => null }));
+
 const me = { userName: 'alice', avatarUrl: null } as unknown as Me;
 
 function renderSidebar() {
@@ -43,7 +49,8 @@ describe('Sidebar', () => {
     // Next Link убирает завершающий слэш (trailingSlash: false), поэтому сравниваем без него.
     const href = (name: string) =>
       nav.getByRole('link', { name }).getAttribute('href')?.replace(/\/$/, '');
-    expect(href('Поисковый запрос')).toBe('/explore');
+    // «Поисковый запрос» — кнопка, открывающая панель поиска, а не ссылка.
+    expect(nav.getByRole('button', { name: 'Поисковый запрос' })).toBeInTheDocument();
     expect(href('Профиль')).toBe('/alice');
     expect(href('Reels')).toBe('/reels');
   });

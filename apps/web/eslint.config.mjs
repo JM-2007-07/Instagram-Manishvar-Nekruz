@@ -31,6 +31,7 @@ export default defineConfig([
             '**/*.test.{ts,tsx}',
             'vitest.config.mts',
             'vitest.setup.ts',
+            'src/lib/test-utils.tsx',
             'eslint.config.mjs',
             'postcss.config.mjs',
           ],

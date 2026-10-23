@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Heart, Send, User } from 'lucide-react';
 import { BrandLogo } from '@/components/layout/brand-logo';
-import { BOTTOM_ITEMS, MESSAGES, NOTIFICATIONS, isActivePath } from '@/components/layout/nav-items';
+import {
+  BOTTOM_ITEMS,
+  MESSAGES,
+  NOTIFICATIONS,
+  activeIconClass,
+  isActivePath,
+} from '@/components/layout/nav-items';
+import { NavBadge } from '@/features/notifications/components/nav-badge';
 import type { Me } from '@/lib/api/types';
 import { DESIGN } from '@/lib/design';
 import { cn } from '@/lib/utils';
@@ -12,31 +19,37 @@ import { cn } from '@/lib/utils';
 // Мобильная оболочка < 768 px: верхняя панель (логотип, уведомления, сообщения) и нижняя панель вкладок.
 const iconButton = 'flex size-10 items-center justify-center rounded-lg hover:bg-hover-overlay';
 
+// Как у Instagram: панель с логотипом — только в ленте; у остальных страниц своя шапка.
+// Пустой блок той же высоты не даёт фиксированной панели закрыть начало ленты.
 export function MobileTopBar() {
+  const pathname = usePathname();
+  if (pathname !== '/') return null;
   return (
-    <header
-      className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 md:hidden"
-      style={{ height: DESIGN.mobileTopBarHeight }}
-    >
-      <Link href="/" aria-label="Главная">
-        <BrandLogo />
-      </Link>
-      <div className="flex items-center gap-2">
-        {/* TODO(T3.A3, Студент A): панель уведомлений и точка */}
-        <button
-          type="button"
-          aria-label={NOTIFICATIONS.label}
-          aria-disabled="true"
-          className={iconButton}
-        >
-          <Heart className="size-6" />
-        </button>
-        {/* TODO(T3.A3, Студент A): счётчик непрочитанных сообщений */}
-        <Link href={MESSAGES.href ?? '/'} aria-label={MESSAGES.label} className={iconButton}>
-          <Send className="size-6" />
+    <>
+      <div aria-hidden className="md:hidden" style={{ height: DESIGN.mobileTopBarHeight }} />
+      <header
+        className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 md:hidden"
+        style={{ height: DESIGN.mobileTopBarHeight }}
+      >
+        <Link href="/" aria-label="Главная">
+          <BrandLogo />
         </Link>
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          <Link href="/notifications/" aria-label={NOTIFICATIONS.label} className={iconButton}>
+            <span className="relative">
+              <Heart className="size-6" />
+              <NavBadge kind="notifications" />
+            </span>
+          </Link>
+          <Link href={MESSAGES.href ?? '/'} aria-label={MESSAGES.label} className={iconButton}>
+            <span className="relative">
+              <Send className="size-6" />
+              <NavBadge kind="messages" />
+            </span>
+          </Link>
+        </div>
+      </header>
+    </>
   );
 }
 
@@ -55,7 +68,7 @@ export function MobileBottomBar({ me }: { me: Me }) {
       {BOTTOM_ITEMS.map((item) => {
         const Icon = item.icon;
         const active = !!item.href && isActivePath(pathname, item.href);
-        const icon = <Icon className={cn('size-6', active && 'fill-current')} />;
+        const icon = <Icon className={cn('size-6', activeIconClass(item.key, active))} />;
         return item.href ? (
           <Link
             key={item.key}

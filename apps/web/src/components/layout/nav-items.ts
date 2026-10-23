@@ -10,13 +10,8 @@ export type NavItem = {
 };
 
 export const HOME: NavItem = { key: 'home', label: 'Главная', icon: House, href: '/' };
-// «Поисковый запрос» в Instagram ведёт на /explore/ (SCREENS §1); панели поиска нет (задача A).
-export const SEARCH: NavItem = {
-  key: 'search',
-  label: 'Поисковый запрос',
-  icon: Search,
-  href: '/explore/',
-};
+// «Поисковый запрос» — кнопка без href: открывает панель поиска (features/search); на мобильном поиск — /explore/search/.
+export const SEARCH: NavItem = { key: 'search', label: 'Поисковый запрос', icon: Search };
 export const EXPLORE: NavItem = {
   key: 'explore',
   label: 'Интересное',
@@ -33,7 +28,20 @@ export const MESSAGES: NavItem = {
 // TODO(T3.A3, Студент A): панель уведомлений
 export const NOTIFICATIONS: NavItem = { key: 'notifications', label: 'Уведомления', icon: Heart };
 // TODO(T3.B2): окно создания публикации
-export const CREATE: NavItem = { key: 'create', label: 'Создать', icon: SquarePlus };
+export const CREATE: NavItem = {
+  key: 'create',
+  label: 'Создать',
+  icon: SquarePlus,
+  href: '/create/',
+};
+
+// Активный значок: как у Instagram — залитый, но только там, где заливка читается (дом, сердце…).
+// У компаса, лупы и «плюса» заливка дала бы сплошной круг или квадрат, поэтому они просто жирнее.
+const FILLABLE = new Set(['home', 'reels', 'messages', 'notifications']);
+export function activeIconClass(key: string, active: boolean): string {
+  if (!active) return '';
+  return FILLABLE.has(key) ? 'fill-current' : '[stroke-width:2.75]';
+}
 
 // Next.js открывает /explore/ как /explore (trailingSlash выключен), поэтому сравниваем пути без «/» в конце.
 const trimSlash = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);

@@ -1,6 +1,48 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Шрифты экранов входа и логотипа (DESIGN_SYSTEM §3.1). Шрифты Instagram (Optimistic, Instagram Sans)
+   закрыты, поэтому берём бесплатные похожие (лицензия SIL OFL): Inter, Manrope, Grand Hotel.
+   Файлы лежат в public/fonts — сайт не обращается к Google. Inter и Manrope — переменные (любой вес). */
+@font-face {
+  font-family: 'Inter';
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/inter-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Manrope';
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/manrope-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Manrope';
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/manrope-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Grand Hotel';
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/grand-hotel-latin.woff2') format('woff2');
+}
+
 /* Тёмная тема — класс .dark на <html> */
 @custom-variant dark (&:is(.dark *));
 
@@ -51,6 +93,9 @@
   --shadow-strong: 0 4px 32px 0 rgba(11, 16, 20, 0.16);
   --story-ring: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); /* 📝 */
   --story-ring-seen: var(--stroke); /* 📝 */
+  /* затемнение за модальным окном и фон просмотра историй — одинаковы в обеих темах 📝 */
+  --overlay: rgba(0, 0, 0, 0.65);
+  --media-backdrop: #1a1a1a;
 
   /* §2.4 поля ввода */
   --input-border-focus: #212328;
@@ -62,6 +107,21 @@
   --ease-move: cubic-bezier(0.17, 0.17, 0, 1);
   --ease-hover: cubic-bezier(0.33, 0.33, 0.33, 1);
   --duration-xxs: 100ms;
+
+  /* §2.5 экраны входа и регистрации (сверено с instagram.com 2026-10-23) */
+  --auth-panel: #ffffff;
+  --auth-divider: #e0e2e4;
+  --auth-text: #111112;
+  --auth-label: #686a6e;
+  --auth-field-border: #d1d3d5;
+  --auth-field-border-focus: #686a6e;
+  --auth-button: #0064e0;
+  --auth-button-text: #f3f4f5;
+  --auth-outline: #0064e0;
+  --auth-secondary: #f3f4f5;
+  --auth-secondary-text: #28292b;
+  --auth-footer: #737373;
+  --auth-gradient: linear-gradient(to right, #fb724b, #ff0069, #d300c5);
 
   /* Токены shadcn/ui, связанные с нашими (§6) */
   --foreground: #0c1014;
@@ -114,6 +174,17 @@
 
   --input-border-focus: #f8f9f9;
   --input-disabled: #25292e;
+
+  --auth-panel: #1f1f20;
+  --auth-divider: #4b4d4f;
+  --auth-text: #f3f4f5;
+  --auth-label: #a1a4a8;
+  --auth-field-border: #525456;
+  --auth-field-border-focus: #acafb2;
+  --auth-outline: #4ba9fe;
+  --auth-secondary: #28292b;
+  --auth-secondary-text: #b5b7bb;
+  --auth-footer: #a1a4a8;
 
   --foreground: #f8f9f9;
   --card: #0c1014;
@@ -179,6 +250,20 @@
   --color-bubble-incoming: var(--bubble-incoming);
   --color-bubble-outgoing: var(--bubble-outgoing);
   --color-toast: var(--toast);
+  --color-auth-panel: var(--auth-panel);
+  --color-auth-divider: var(--auth-divider);
+  --color-auth-text: var(--auth-text);
+  --color-auth-label: var(--auth-label);
+  --color-auth-field-border: var(--auth-field-border);
+  --color-auth-field-border-focus: var(--auth-field-border-focus);
+  --color-auth-button: var(--auth-button);
+  --color-auth-button-text: var(--auth-button-text);
+  --color-auth-outline: var(--auth-outline);
+  --color-auth-secondary: var(--auth-secondary);
+  --color-auth-secondary-text: var(--auth-secondary-text);
+  --color-auth-footer: var(--auth-footer);
+  --color-overlay: var(--overlay);
+  --color-media-backdrop: var(--media-backdrop);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -187,6 +272,10 @@
 
   /* §3 шрифт и размеры текста: text-14 = 14px / 18px */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* §3.1 экраны входа и логотип (файлы — public/fonts, @font-face ниже) */
+  --font-auth: 'Inter', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-display: 'Manrope', 'Segoe UI', sans-serif;
+  --font-wordmark: 'Grand Hotel', cursive;
   --text-10: 10px;
   --text-10--line-height: 12px;
   --text-11: 11px;
@@ -195,6 +284,12 @@
   --text-12--line-height: 16px;
   --text-14: 14px;
   --text-14--line-height: 18px;
+  --text-15: 15px;
+  --text-15--line-height: 19px;
+  --text-17: 17px;
+  --text-17--line-height: 22px;
+  --text-hero: 35.42px;
+  --text-hero--line-height: 64.8px;
   --text-16: 16px;
   --text-16--line-height: 20px;
   --text-18: 18px;
@@ -216,6 +311,27 @@
     border-color: var(--border);
   }
 
+  /* Системные элементы (раскрытый <select>, полосы прокрутки, календарь) — в цвете темы.
+     Без этого в тёмной теме список <select> открывался белым. */
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+
+  /* «Уменьшить движение» в системе: анимации и переходы почти мгновенные (DESIGN_SYSTEM §5). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   body {
     background-color: var(--background);
     color: var(--foreground);
@@ -223,5 +339,83 @@
     font-size: 14px; /* базовый текст 14/18, вес 400 */
     line-height: 18px;
     font-weight: 400;
+  }
+}
+
+/* §5 полоса загрузки при переходе (как у Instagram): 3 px, градиент бежит слева направо за 2 с */
+.nav-progress-strip {
+  background-image: linear-gradient(
+    to right,
+    #7638fa,
+    #ffd600,
+    #ff7a00,
+    #ff0169,
+    #d300c5,
+    #7638fa,
+    #ffd600
+  );
+  transform-origin: left;
+  animation: nav-progress-slide 2s linear infinite;
+}
+
+@keyframes nav-progress-slide {
+  from {
+    transform: translateX(-500%) scaleX(6);
+  }
+  to {
+    transform: translateX(0) scaleX(6);
+  }
+}
+
+@keyframes nav-progress-enter {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(-15%);
+  }
+}
+
+/* §5 лайк: большое сердце при двойном нажатии (0 → 1.2 → 1, затем исчезает) и «прыжок» значка «Нравится» */
+.animate-heart-burst {
+  animation: heart-burst 900ms var(--ease-move) forwards;
+}
+
+@keyframes heart-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  30% {
+    transform: scale(0.95);
+  }
+  45%,
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.animate-like-pop {
+  animation: like-pop 250ms var(--ease-move);
+}
+
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
   }
 }

@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-22 22:42.
+> Последнее обновление: 2026-10-23 18:15.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -58,7 +58,7 @@
 | T0.6 | CI, защита `main`, harness | A | ✔ | 🟨 | `feat/a-integrations` (CI готов; защита `main` — вручную) | — |
 | T0.7 | Оболочка `(main)` | B | ✔ | ✅ | влита в `main` ([PR #8](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/8)) | — |
 | T1.A1 | `auth` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | C0 в `main` |
-| T1.A2 | Frontend входа | A | ✔ | ⬜ | — | T1.A1, T0.4 |
+| T1.A2 | Frontend входа | A | ✔ | 🟨 | `feat/web-a` | — |
 | T1.A3 | `users` + `settings` | A | ✔ | 🟨 | в `main` (PR #9) + аватар в `feat/a-integrations` | — |
 | T1.A4 | `follows` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
 | T1.A5 | `privacy`, `VisibilityService` | A | ✔ | 🟨 | `feat/backend-a` (коммит, ревью пройдено) | — |
@@ -74,17 +74,17 @@
 | T2.A4 | `chats` | A | ✔ | 🟨 | в `main` (PR #9) + медиа, голосовые, «поделиться» в `feat/a-integrations` | — |
 | T2.B1 | `stories` + актуальное | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T2.B2 | Ответы на истории → Direct | B | ✔ | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
-| T3.A1 | UI профиля и настроек | A | ✔ | ⬜ | — | MA-1 |
-| T3.A2 | UI подписок, блокировки, поиска | A | ✔ | ⬜ | — | MA-1 |
-| T3.A3 | UI уведомлений | A | ✔ | ⬜ | — | T2.A2 |
-| T3.A4 | UI «Сохранённое» | A | ✔ | ⬜ | — | T2.A3, T3.B1 |
-| T3.A5 | UI Direct | A | ✔ | ⬜ | — | MA-2 |
-| T3.B1 | UI ленты, карточки, окна поста | B | ✔ | ⬜ | — | MB-1 |
-| T3.B2 | UI создания публикации | B | ✔ | ⬜ | — | MB-1 |
-| T3.B3 | UI «Интересного», хэштега, места | B | ✔ | ⬜ | — | MB-1 |
-| T3.B4 | UI Reels | B | ✔ | ⬜ | — | MB-1 |
-| T3.B5 | UI комментариев | B | ✔ | ⬜ | — | MB-1 |
-| T3.B6 | UI историй | B | ✔ | ⬜ | — | MB-2 |
+| T3.A1 | UI профиля и настроек | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A2 | UI подписок, блокировки, поиска | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A3 | UI уведомлений | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A4 | UI «Сохранённое» | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.A5 | UI Direct | A | ✔ | 🟦 | `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B1 | UI ленты, карточки, окна поста | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B2 | UI создания публикации | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B3 | UI «Интересного», хэштега, места | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B4 | UI Reels | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B5 | UI комментариев | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
+| T3.B6 | UI историй | B | ✔ | 🟦 | `feat/web-b`, влита в `feat/web-a` → [PR #14](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/14) | — |
 | T4.A1 | Соцвход | A | — | 🟨 | `feat/backend-a` (backend; ключи — Q32) | Q32 |
 | T4.A2 | Звонки 1:1 | A | — | 🟨 | `feat/backend-a` (backend и сигнализация; UI — T3.A5) | T3.A5 |
 | T4.A3 | Ограничение, скрытие, близкие друзья | A | — | 🟨 | `feat/backend-a` (backend) | — |
@@ -158,6 +158,16 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-23 18:15 | [ui-polish](stories/2026-10-23_1815_ui-polish.md) | полировка: меню сворачивается после перехода, выпадающие меню и окна с анимацией, `color-scheme`, лайк-анимации, 5 демо-Reels от ffmpeg |
+| 2026-10-23 15:49 | [merge-web-b](stories/2026-10-23_1549_merge-web-b.md) | frontend B влит в `feat/web-a`: ре-экспорты A для B, «Актуальное» в профиле, исправлены одинаковые имена эндпоинтов A и B; 172 теста web |
+| 2026-10-23 14:50 | [instagram-brand](stories/2026-10-23_1450_instagram-brand.md) | название и логотип Instagram по умолчанию (решение A, учебный проект): Q31 закрыт, ADR 0012 изменён |
+| 2026-10-23 14:00 | [web-b-content](stories/2026-10-23_1400_web-b-content.md) | frontend B: лента, окно поста, создание, «Интересное», Reels, комментарии, истории (T3.B1–T3.B6); бренд из env и `public/brand/` |
+| 2026-10-23 10:54 | [smtp-mail](stories/2026-10-23_1054_smtp-mail.md) | письма через SMTP (nodemailer, `MAIL_DRIVER=smtp`), Q23 частично; по умолчанию — журнал API |
+| 2026-10-23 10:31 | [notif-grouping-and-seen](stories/2026-10-23_1031_notif-grouping-and-seen.md) | уведомления о комментариях не склеиваются; `lastReadMessageId` у участников чата — «Просмотрено» сразу при открытии |
+| 2026-10-23 10:14 | [demo-data-and-nav-progress](stories/2026-10-23_1014_demo-data-and-nav-progress.md) | демо-данные через API (`npm run demo-data -w api`), фото Unsplash/randomuser, полоса загрузки при переходах как у Instagram |
+| 2026-10-23 09:57 | [web-a-design-pass-2](stories/2026-10-23_0957_web-a-design-pass-2.md) | часть 2: чат Direct, панели уведомлений и поиска 460 px, шапки страниц на телефоне, список настроек |
+| 2026-10-23 09:43 | [web-a-design-pass](stories/2026-10-23_0943_web-a-design-pass.md) | экраны A как Instagram-веб 2026: вход и регистрация, профиль, «Сохранённое», Direct, настройки, поиск, меню при наведении; шрифты Inter/Manrope/Grand Hotel |
+| 2026-10-23 00:01 | [web-a](stories/2026-10-23_0001_web-a.md) | frontend A: вход, профиль и настройки, подписки и поиск, уведомления, «Сохранённое», Direct и звонки; 113 тестов web |
 | 2026-10-22 22:42 | [a-integrations](stories/2026-10-22_2242_a-integrations.md) | стыки A с модулями B (аватар, медиа в Direct, превью уведомлений, поиск хэштегов и мест), «Сохранённое», CI; 566 e2e |
 | 2026-10-22 19:45 | [backend-b](stories/2026-10-22_1945_backend-b.md) | быстрый режим: backend B — media, tags, locations, posts, comments, stories, admin (e2e B 152); T0.5 в отдельной ветке |
 | 2026-10-22 16:44 | [backend-a-batch1](stories/2026-10-22_1644_backend-a-batch1.md) | быстрый режим: Direct, уведомления, соцвход, звонки, ограничения, 2FA, удаление аккаунта (backend A); 390 e2e |
