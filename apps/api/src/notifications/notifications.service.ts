@@ -36,6 +36,13 @@ interface Row {
 const GROUP_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_GROUP_ACTORS = 3;
 
+// Объект группировки: только для типов, которые можно объединять; иначе null (уведомление — отдельной строкой).
+function groupObject(row: { type: string; postId: string | null; commentId: string | null }) {
+  if (row.type === 'POST_LIKE') return row.postId;
+  if (row.type === 'COMMENT_LIKE') return row.commentId;
+  return null;
+}
+
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -232,17 +239,20 @@ export class NotificationsService {
     };
   }
 
-  // Группировка в пределах страницы: одинаковые type + объект (post/comment) в окне 24 часа.
+  // Группировка в пределах страницы: одинаковые действия с одним объектом в окне 24 часа.
+  // Объединяются только действия без своего текста (как у Instagram): лайки поста — по посту,
+  // лайки комментария — по комментарию. Комментарии, ответы, упоминания и отметки у каждого свои —
+  // их не склеиваем (иначе в группе виден текст только одного комментария).
   // Строки приходят новыми сначала; группа получает id и время самого нового.
   private group(rows: Row[]): NotificationDto[] {
     const groups: { head: Row; members: Row[] }[] = [];
     for (const row of rows) {
-      const object = row.postId ?? row.commentId;
+      const object = groupObject(row);
       const found = object
         ? groups.find(
             (g) =>
               g.head.type === row.type &&
-              (g.head.postId ?? g.head.commentId) === object &&
+              groupObject(g.head) === object &&
               g.head.createdAt.getTime() - row.createdAt.getTime() <= GROUP_WINDOW_MS,
           )
         : undefined;

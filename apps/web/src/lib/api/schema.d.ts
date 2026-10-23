@@ -2885,6 +2885,11 @@ export interface components {
             isOnline: boolean;
             /** Format: date-time */
             lastActiveAt: string | null;
+            /**
+             * Format: uuid
+             * @description До какого сообщения участник прочитал чат («Просмотрено»); null — не читал или чат у него в запросах
+             */
+            lastReadMessageId: string | null;
         };
         MediaItemDto: {
             /** Format: uuid */

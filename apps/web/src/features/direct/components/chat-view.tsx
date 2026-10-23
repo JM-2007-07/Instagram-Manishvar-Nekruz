@@ -38,6 +38,15 @@ export function isSeenByOthers(
   });
 }
 
+/** Отметки прочтения при открытии чата: кто до какого сообщения прочитал (из ответа сервера). */
+export function receiptsFromParticipants(
+  participants: { id: string; lastReadMessageId: string | null }[],
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const p of participants) if (p.lastReadMessageId) result[p.id] = p.lastReadMessageId;
+  return result;
+}
+
 function ChatSkeleton() {
   return (
     <div aria-hidden className="flex flex-1 flex-col justify-end gap-3 p-6">
@@ -122,7 +131,12 @@ export function ChatView({ chatId }: { chatId: string }) {
   const peer = chat.type === 'DIRECT' ? getPeer(chat, me.id) : undefined;
   const typing = typingIds.some((id) => id !== me.id);
   const groups = groupMessages(messages);
-  const seen = isSeenByOthers(messages, receipts, me.id);
+  // Сначала то, что прислал сервер, поверх — новые события chat:read.
+  const seen = isSeenByOthers(
+    messages,
+    { ...receiptsFromParticipants(chat.participants), ...receipts },
+    me.id,
+  );
   const lastMineId = messages.find((m) => m.sender?.id === me.id)?.id;
 
   async function handleAccept() {

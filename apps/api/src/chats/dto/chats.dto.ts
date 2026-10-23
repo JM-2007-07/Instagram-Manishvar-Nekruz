@@ -223,6 +223,15 @@ export class ChatParticipantDto extends UserSummaryDto {
 
   @ApiProperty({ type: String, nullable: true, format: 'date-time' })
   lastActiveAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    format: 'uuid',
+    description:
+      'До какого сообщения участник прочитал чат («Просмотрено»); null — не читал или чат у него в запросах',
+  })
+  lastReadMessageId!: string | null;
 }
 
 export class MessageReplyDto {

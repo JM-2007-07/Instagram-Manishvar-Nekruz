@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Message, UserSummary } from '@/lib/api/types';
 import { makeOptimisticMessage } from '../chat-utils';
-import { isSeenByOthers } from './chat-view';
+import { isSeenByOthers, receiptsFromParticipants } from './chat-view';
 import { MessageBubble } from './message-bubble';
 
 vi.mock('../api', () => ({
@@ -42,6 +42,17 @@ describe('MessageBubble', () => {
     );
     expect(screen.getByText('Привет')).toBeInTheDocument();
     expect(screen.getByLabelText('Реакции')).toHaveTextContent('❤️2');
+  });
+});
+
+describe('receiptsFromParticipants', () => {
+  it('берёт lastReadMessageId участников и пропускает null', () => {
+    expect(
+      receiptsFromParticipants([
+        { id: 'u2', lastReadMessageId: 'm3' },
+        { id: 'me', lastReadMessageId: null },
+      ]),
+    ).toEqual({ u2: 'm3' });
   });
 });
 
