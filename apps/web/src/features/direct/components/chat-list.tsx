@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, Search, SquarePen } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Search, SquarePen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGetMeQuery } from '@/features/profile/api';
 import { getApiError } from '@/lib/api/errors';
@@ -108,8 +108,11 @@ export function ChatList({
   return (
     <section aria-label="Чаты" className="flex h-full min-h-0 flex-col">
       {/* Шапка как у Instagram: имя 20/25 жирное, значок «Новое сообщение», поиск-«пилюля» 40 px */}
-      <div className="flex shrink-0 items-center justify-between px-6 pt-9 pb-3">
-        <h1 className="flex min-w-0 items-center gap-1 text-20 leading-[25px] font-bold">
+      <div className="relative flex shrink-0 items-center justify-between px-6 pt-2.5 pb-2.5 md:pt-9 md:pb-3">
+        <Link href="/" aria-label="Назад" className="rounded-lg p-0 hover:opacity-70 md:hidden">
+          <ArrowLeft className="size-6" />
+        </Link>
+        <h1 className="flex min-w-0 items-center gap-1 text-20 leading-[25px] font-bold max-md:absolute max-md:left-1/2 max-md:-translate-x-1/2">
           <span className="truncate">{me?.userName ?? ''}</span>
           <ChevronDown className="size-3 shrink-0" strokeWidth={3} aria-hidden />
         </h1>

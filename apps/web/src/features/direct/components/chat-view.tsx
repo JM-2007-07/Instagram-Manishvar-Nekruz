@@ -134,7 +134,7 @@ export function ChatView({ chatId }: { chatId: string }) {
   return (
     <div className="flex h-full min-h-0 flex-1">
       <section aria-label={`Переписка: ${title}`} className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-[75px] shrink-0 items-center gap-3 border-b border-border px-4">
+        <header className="flex h-[76px] shrink-0 items-center gap-3 border-b-[0.8px] border-separator px-4">
           <Link href="/direct/inbox/" aria-label="Назад к чатам" className="md:hidden">
             <ChevronLeft className="size-6" />
           </Link>
@@ -193,10 +193,31 @@ export function ChatView({ chatId }: { chatId: string }) {
         >
           {isMessagesLoading ? (
             <ChatSkeleton />
-          ) : messages.length === 0 ? (
-            <p className="m-auto text-14 text-muted-foreground">Напишите первое сообщение</p>
           ) : (
             <div className="flex flex-col gap-3">
+              {/* Начало переписки как у Instagram: фото 96, имя 20/25, «Посмотреть профиль» */}
+              {!hasNextPage && (
+                <div className="flex flex-col items-center pt-5 pb-8 text-center">
+                  <ChatAvatar
+                    url={getChatAvatarUrl(chat, me.id)}
+                    name={title}
+                    size={96}
+                    group={chat.type === 'GROUP'}
+                  />
+                  <p className="mt-3 text-20 font-semibold">{title}</p>
+                  {peer && (
+                    <Link
+                      href={`/${peer.userName}/`}
+                      className="mt-4 inline-flex h-8 items-center rounded-lg bg-secondary px-4 text-14 font-semibold hover:bg-button-secondary-hover"
+                    >
+                      Посмотреть профиль
+                    </Link>
+                  )}
+                  {messages.length === 0 && (
+                    <p className="mt-6 text-14 text-muted-foreground">Напишите первое сообщение</p>
+                  )}
+                </div>
+              )}
               {hasNextPage && (
                 <Button
                   variant="ghost"
@@ -209,7 +230,7 @@ export function ChatView({ chatId }: { chatId: string }) {
               )}
               {groups.map((group) => (
                 <div key={group.key} className="flex flex-col gap-0.5">
-                  <p className="my-1 text-center text-12 text-muted-foreground">
+                  <p className="my-3 text-center text-12 font-light text-muted-foreground">
                     {formatClock(group.messages[0]!.createdAt)}
                   </p>
                   {group.messages.map((message, i) => (
@@ -225,7 +246,9 @@ export function ChatView({ chatId }: { chatId: string }) {
                         onReply={setReplyTo}
                       />
                       {seen && message.id === lastMineId && (
-                        <p className="pr-2 text-right text-10 text-muted-foreground">Просмотрено</p>
+                        <p className="pt-0.5 pr-1 text-right text-12 text-muted-foreground">
+                          Просмотрено
+                        </p>
                       )}
                     </div>
                   ))}

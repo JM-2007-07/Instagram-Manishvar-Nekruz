@@ -12,7 +12,7 @@ export function DirectLayout({ children }: { children: React.ReactNode }) {
   const listOnly = pathname.startsWith('/direct/inbox') || pathname.startsWith('/direct/requests');
 
   return (
-    <div className="flex h-[calc(100dvh-110px)] md:h-screen">
+    <div className="flex h-[calc(100dvh-50px)] md:h-screen">
       <div
         className={cn(
           'w-full shrink-0 border-separator md:block md:w-[400px] md:border-r-[0.8px]',

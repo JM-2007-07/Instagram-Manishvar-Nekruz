@@ -63,19 +63,22 @@ export const SETTINGS_GROUPS = [
 export const SETTINGS_SECTIONS = SETTINGS_GROUPS.flatMap((group) => group.items);
 
 // Меню настроек как у Instagram: колонка 400 px, заголовок 20/25, группы 12/16 серым,
-// пункты 48 px со значком 24 px; на телефоне — полоса разделов с прокруткой.
-export function SettingsNav() {
+// пункты 48 px со значком 24 px. На телефоне то же меню — отдельная страница /accounts/settings/.
+export function SettingsNav({ className }: { className?: string }) {
   const pathname = usePathname();
   const current = pathname.endsWith('/') ? pathname : `${pathname}/`;
   return (
     <nav
       aria-label="Разделы настроек"
-      className="flex shrink-0 gap-1 overflow-x-auto border-b border-separator p-2 md:w-[400px] md:flex-col md:gap-0 md:overflow-x-visible md:border-b-0 md:px-[34px] md:pt-10 md:pb-6"
+      className={cn(
+        'flex shrink-0 flex-col px-3 pt-2 pb-6 md:w-[400px] md:px-[34px] md:pt-10',
+        className,
+      )}
     >
-      <h2 className="hidden px-4 pb-6 text-20 leading-[25px] font-bold md:block">Настройки</h2>
+      <h2 className="px-4 pb-2 text-20 leading-[25px] font-bold md:pb-6">Настройки</h2>
       {SETTINGS_GROUPS.map((group) => (
-        <div key={group.title} className="contents md:block md:pb-4">
-          <h3 className="hidden px-4 pt-4 pb-3 text-12 font-semibold text-muted-foreground md:block">
+        <div key={group.title} className="pb-4">
+          <h3 className="px-4 pt-4 pb-3 text-12 font-semibold text-muted-foreground">
             {group.title}
           </h3>
           {group.items.map(({ href, label, icon: Icon }) => (
@@ -84,11 +87,11 @@ export function SettingsNav() {
               href={href}
               aria-current={current === href ? 'page' : undefined}
               className={cn(
-                'flex shrink-0 items-center gap-3 rounded-lg px-3 py-3 text-14 whitespace-nowrap hover:bg-hover-overlay md:h-12 md:px-4 md:py-0',
-                current === href && 'bg-background-secondary max-md:font-semibold',
+                'flex h-12 items-center gap-3 rounded-lg px-4 text-14 hover:bg-hover-overlay',
+                current === href && 'md:bg-background-secondary',
               )}
             >
-              <Icon className="hidden size-6 shrink-0 md:block" aria-hidden />
+              <Icon className="size-6 shrink-0" aria-hidden />
               {label}
             </Link>
           ))}

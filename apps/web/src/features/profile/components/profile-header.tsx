@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BadgeCheck, Link2 } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, ChevronDown, Link2, Settings } from 'lucide-react';
 import { DESIGN } from '@/lib/design';
 import type { Profile } from '@/lib/api/types';
 import { formatCount } from '../format';
@@ -51,65 +51,83 @@ export function ProfileHeader({ profile }: { profile: Profile }) {
   );
 
   return (
-    <header className="mx-auto w-full max-w-[636px] px-4 pt-5 md:px-0 md:pt-[37px]">
-      <div className="flex items-center gap-[37px] md:items-start md:gap-7">
-        <div className="shrink-0 pl-2.5 md:hidden">
-          <UserAvatar user={profile} size={77} />
-        </div>
-        <div className="hidden shrink-0 md:block">
-          <UserAvatar user={profile} size={DESIGN.profileAvatar} />
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col md:pt-[10px]">
-          <div className="flex items-center gap-2">
-            <h1 className="flex min-w-0 items-center gap-1 text-14 font-semibold md:text-24 md:leading-[30px] md:font-bold">
-              <span className="truncate">{profile.userName}</span>
-              {profile.isVerified && (
-                <BadgeCheck
-                  className="size-[18px] shrink-0 fill-primary text-white"
-                  aria-label="Подтверждённый аккаунт"
-                />
-              )}
-            </h1>
-            <ProfileNameActions profile={profile} />
+    <>
+      {/* Телефон: своя шапка страницы, как у Instagram (44 px; имя по центру) */}
+      <div className="relative flex h-11 items-center px-4 md:hidden">
+        {profile.isMe ? (
+          <Link href="/accounts/settings/" aria-label="Настройки">
+            <Settings className="size-6" />
+          </Link>
+        ) : (
+          <Link href="/" aria-label="Назад">
+            <ArrowLeft className="size-6" />
+          </Link>
+        )}
+        <span className="absolute left-1/2 flex max-w-[60%] -translate-x-1/2 items-center gap-1 text-14 font-semibold">
+          <span className="truncate">{profile.userName}</span>
+          {profile.isMe && <ChevronDown className="size-3 shrink-0" strokeWidth={3} aria-hidden />}
+        </span>
+      </div>
+      <header className="mx-auto w-full max-w-[636px] px-4 pt-5 md:px-0 md:pt-[37px]">
+        <div className="flex items-center gap-[37px] md:items-start md:gap-7">
+          <div className="shrink-0 pl-2.5 md:hidden">
+            <UserAvatar user={profile} size={77} />
+          </div>
+          <div className="hidden shrink-0 md:block">
+            <UserAvatar user={profile} size={DESIGN.profileAvatar} />
           </div>
 
-          {profile.fullName && (
-            <div className="mt-[7px] hidden text-14 md:block">{profile.fullName}</div>
-          )}
+          <div className="flex min-w-0 flex-1 flex-col md:pt-[10px]">
+            <div className="flex items-center gap-2">
+              <h1 className="flex min-w-0 items-center gap-1 text-14 font-semibold md:text-24 md:leading-[30px] md:font-bold">
+                <span className="truncate">{profile.userName}</span>
+                {profile.isVerified && (
+                  <BadgeCheck
+                    className="size-[18px] shrink-0 fill-primary text-white"
+                    aria-label="Подтверждённый аккаунт"
+                  />
+                )}
+              </h1>
+              <ProfileNameActions profile={profile} />
+            </div>
 
-          <ul className="mt-3 flex gap-4 text-14 md:mt-[12px]">
-            {counters.map(({ label, value, href }) => {
-              const content = (
-                <>
-                  <span className="font-semibold">{formatCount(value)}</span>
-                  <span className="max-md:block max-md:[overflow-wrap:anywhere]"> {label}</span>
-                </>
-              );
-              return (
-                <li key={label} className="min-w-0 max-md:flex-1">
-                  {href ? (
-                    <Link href={href} className="hover:opacity-80">
-                      {content}
-                    </Link>
-                  ) : (
-                    <span>{content}</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+            {profile.fullName && (
+              <div className="mt-[7px] hidden text-14 md:block">{profile.fullName}</div>
+            )}
 
-          <div className="mt-[19px] hidden flex-col gap-1 text-14 md:flex">{about}</div>
+            <ul className="mt-3 flex gap-4 text-14 md:mt-[12px]">
+              {counters.map(({ label, value, href }) => {
+                const content = (
+                  <>
+                    <span className="font-semibold">{formatCount(value)}</span>
+                    <span className="max-md:block max-md:[overflow-wrap:anywhere]"> {label}</span>
+                  </>
+                );
+                return (
+                  <li key={label} className="min-w-0 max-md:flex-1">
+                    {href ? (
+                      <Link href={href} className="hover:opacity-80">
+                        {content}
+                      </Link>
+                    ) : (
+                      <span>{content}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-[19px] hidden flex-col gap-1 text-14 md:flex">{about}</div>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-4 flex flex-col gap-1 text-14 md:hidden">
-        {profile.fullName && <div className="font-semibold">{profile.fullName}</div>}
-        {about}
-      </div>
+        <div className="mt-4 flex flex-col gap-1 text-14 md:hidden">
+          {profile.fullName && <div className="font-semibold">{profile.fullName}</div>}
+          {about}
+        </div>
 
-      <ProfileActions profile={profile} />
-    </header>
+        <ProfileActions profile={profile} />
+      </header>
+    </>
   );
 }

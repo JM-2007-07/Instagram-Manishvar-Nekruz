@@ -170,7 +170,7 @@ export function MessageComposer({
 
       <form
         onSubmit={(e) => void handleSubmit(e)}
-        className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5"
+        className="flex min-h-11 items-center gap-3 rounded-[22px] border-[0.8px] border-separator px-[11px]"
       >
         <button type="button" aria-label="Эмодзи" onClick={() => setEmojiOpen((v) => !v)}>
           <Smile className="size-6" />
@@ -183,11 +183,11 @@ export function MessageComposer({
         ) : (
           <input
             aria-label="Сообщение"
-            placeholder="Сообщение…"
+            placeholder="Напишите сообщение…"
             value={text}
             onChange={(e) => handleChange(e.target.value)}
             maxLength={2000}
-            className="min-w-0 flex-1 bg-transparent py-1 text-14 outline-none"
+            className="min-w-0 flex-1 bg-transparent py-3 text-15 leading-[18px] outline-none placeholder:text-icon-secondary"
           />
         )}
 

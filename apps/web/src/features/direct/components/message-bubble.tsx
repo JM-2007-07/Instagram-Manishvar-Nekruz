@@ -171,8 +171,16 @@ export function MessageBubble({
 
   const hasCard = message.type === 'SHARE_POST' || message.type === 'SHARE_PROFILE';
   const bubbleShape = mine
-    ? cn('rounded-3xl', !isFirstInGroup && 'rounded-tr-md', !isLastInGroup && 'rounded-br-md')
-    : cn('rounded-3xl', !isFirstInGroup && 'rounded-tl-md', !isLastInGroup && 'rounded-bl-md');
+    ? cn(
+        'rounded-[18px]',
+        !isFirstInGroup && 'rounded-tr-[4px]',
+        !isLastInGroup && 'rounded-br-[4px]',
+      )
+    : cn(
+        'rounded-[18px]',
+        !isFirstInGroup && 'rounded-tl-[4px]',
+        !isLastInGroup && 'rounded-bl-[4px]',
+      );
 
   return (
     <div
@@ -194,7 +202,9 @@ export function MessageBubble({
         </span>
       )}
 
-      <div className={cn('flex max-w-[70%] flex-col', mine ? 'items-end' : 'items-start')}>
+      <div
+        className={cn('flex max-w-[min(70%,564px)] flex-col', mine ? 'items-end' : 'items-start')}
+      >
         {showSender && !mine && message.sender && (
           <span className="px-3 pb-0.5 text-12 text-muted-foreground">
             {message.sender.userName}
@@ -239,9 +249,11 @@ export function MessageBubble({
         ) : (
           <div
             data-testid="bubble"
+            title={formatClock(message.createdAt)}
             onDoubleClick={() => void setReaction(myReaction ? null : '❤️')}
             className={cn(
-              'px-3 py-2 text-14 select-text',
+              // Как у Instagram: 15/20, отступы 8/12, скругление 18 (на стыке группы — 4).
+              'px-3 py-2 text-15 leading-5 select-text',
               hasCard ? 'p-0' : '',
               hasCard
                 ? 'bg-transparent'
@@ -274,11 +286,8 @@ export function MessageBubble({
           </ul>
         )}
 
-        {isLastInGroup && (
-          <span className="px-2 pt-0.5 text-10 text-muted-foreground">
-            {formatClock(message.createdAt)}
-            {message.editedAt && ' · изменено'}
-          </span>
+        {isLastInGroup && message.editedAt && (
+          <span className="px-3 pt-0.5 text-12 text-muted-foreground">Изменено</span>
         )}
       </div>
 

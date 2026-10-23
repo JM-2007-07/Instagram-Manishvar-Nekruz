@@ -13,30 +13,37 @@ import { cn } from '@/lib/utils';
 // Мобильная оболочка < 768 px: верхняя панель (логотип, уведомления, сообщения) и нижняя панель вкладок.
 const iconButton = 'flex size-10 items-center justify-center rounded-lg hover:bg-hover-overlay';
 
+// Как у Instagram: панель с логотипом — только в ленте; у остальных страниц своя шапка.
+// Пустой блок той же высоты не даёт фиксированной панели закрыть начало ленты.
 export function MobileTopBar() {
+  const pathname = usePathname();
+  if (pathname !== '/') return null;
   return (
-    <header
-      className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 md:hidden"
-      style={{ height: DESIGN.mobileTopBarHeight }}
-    >
-      <Link href="/" aria-label="Главная">
-        <BrandLogo />
-      </Link>
-      <div className="flex items-center gap-2">
-        <Link href="/notifications/" aria-label={NOTIFICATIONS.label} className={iconButton}>
-          <span className="relative">
-            <Heart className="size-6" />
-            <NavBadge kind="notifications" />
-          </span>
+    <>
+      <div aria-hidden className="md:hidden" style={{ height: DESIGN.mobileTopBarHeight }} />
+      <header
+        className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 md:hidden"
+        style={{ height: DESIGN.mobileTopBarHeight }}
+      >
+        <Link href="/" aria-label="Главная">
+          <BrandLogo />
         </Link>
-        <Link href={MESSAGES.href ?? '/'} aria-label={MESSAGES.label} className={iconButton}>
-          <span className="relative">
-            <Send className="size-6" />
-            <NavBadge kind="messages" />
-          </span>
-        </Link>
-      </div>
-    </header>
+        <div className="flex items-center gap-2">
+          <Link href="/notifications/" aria-label={NOTIFICATIONS.label} className={iconButton}>
+            <span className="relative">
+              <Heart className="size-6" />
+              <NavBadge kind="notifications" />
+            </span>
+          </Link>
+          <Link href={MESSAGES.href ?? '/'} aria-label={MESSAGES.label} className={iconButton}>
+            <span className="relative">
+              <Send className="size-6" />
+              <NavBadge kind="messages" />
+            </span>
+          </Link>
+        </div>
+      </header>
+    </>
   );
 }
 

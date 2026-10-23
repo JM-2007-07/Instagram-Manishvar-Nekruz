@@ -111,7 +111,7 @@ export function NotificationsList() {
       ) : (
         groups.map((group) => (
           <section key={group.title} aria-label={group.title}>
-            <h2 className="px-6 pt-4 pb-2 text-16 font-bold">{group.title}</h2>
+            <h2 className="px-6 pt-4 pb-2 text-16 leading-5 font-bold">{group.title}</h2>
             <ul>
               {group.items.map((item) => (
                 <NotificationItem key={item.id} item={item} />

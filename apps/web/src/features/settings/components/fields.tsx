@@ -1,13 +1,33 @@
 'use client';
 
 import { useId } from 'react';
+import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 // Общие элементы страниц настроек: простые, на токенах дизайн-системы.
 
+// Заголовок страницы настроек. На телефоне — шапка 44 px как у Instagram: «назад» к списку и название по центру.
 export function SettingsHeading({ children }: { children: React.ReactNode }) {
-  return <h1 className="mb-6 text-20 leading-[25px] font-bold md:mb-11">{children}</h1>;
+  return (
+    <>
+      <div className="relative -mx-3 mb-4 flex h-11 items-center px-4 md:hidden">
+        <Link href="/accounts/settings/" aria-label="Назад">
+          <ChevronLeft className="size-6" />
+        </Link>
+        <span
+          aria-hidden
+          className="absolute left-1/2 max-w-[70%] -translate-x-1/2 truncate text-16 leading-[18px] font-semibold"
+        >
+          {children}
+        </span>
+      </div>
+      <h1 className="max-md:sr-only md:mb-11 md:text-20 md:leading-[25px] md:font-bold">
+        {children}
+      </h1>
+    </>
+  );
 }
 
 export function Section({ title, children }: { title: string; children: React.ReactNode }) {
