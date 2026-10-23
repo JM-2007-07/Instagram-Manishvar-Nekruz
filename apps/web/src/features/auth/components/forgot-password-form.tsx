@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MailCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useForgotPasswordMutation } from '../api';
 import { authErrorText } from '../auth-error';
-import { AuthCard, AuthPage, AuthSwitchCard, FormError } from './auth-card';
+import { AuthHeading, AuthPage, FormError, authButton } from './auth-card';
 import { TextField } from './text-field';
 
 export function ForgotPasswordForm() {
@@ -30,48 +30,45 @@ export function ForgotPasswordForm() {
   if (sent) {
     return (
       <AuthPage>
-        <AuthCard title="Проверьте почту">
-          <MailCheck className="mx-auto size-12 text-muted-foreground" aria-hidden="true" />
-          <p className="text-center text-14 text-muted-foreground">
-            Если аккаунт существует, мы отправили ссылку для сброса пароля.
-          </p>
-          <Link
-            href="/accounts/login/"
-            className="text-center text-14 font-semibold text-button-borderless hover:text-button-borderless-hover"
-          >
-            Вернуться ко входу
-          </Link>
-        </AuthCard>
+        <MailCheck className="mt-6 size-12 text-auth-text" aria-hidden="true" />
+        <AuthHeading
+          title="Проверьте почту"
+          description="Если аккаунт существует, мы отправили ссылку для сброса пароля."
+        />
+        <Link href="/accounts/login/" className={authButton.primary}>
+          Вернуться ко входу
+        </Link>
       </AuthPage>
     );
   }
 
   return (
     <AuthPage>
-      <AuthCard
-        title="Проблемы со входом?"
+      <AuthHeading
+        title="Найдите свой аккаунт"
         description="Введите имя пользователя или электронный адрес, и мы отправим ссылку для восстановления доступа."
-      >
-        <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
-          <TextField
-            label="Имя пользователя или электронный адрес"
-            name="login"
-            autoComplete="username"
-            autoCapitalize="none"
-            value={identity}
-            onChange={(e) => setIdentity(e.target.value)}
-          />
-          <Button
-            type="submit"
-            className="h-9 w-full"
-            disabled={identity.trim() === '' || isLoading}
-          >
-            Отправить ссылку
-          </Button>
-          <FormError>{error}</FormError>
-        </form>
-      </AuthCard>
-      <AuthSwitchCard text="Вспомнили пароль?" linkText="Вход" href="/accounts/login/" />
+      />
+      <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
+        <TextField
+          label="Имя пользователя или электронный адрес"
+          name="login"
+          autoComplete="username"
+          autoCapitalize="none"
+          value={identity}
+          onChange={(e) => setIdentity(e.target.value)}
+        />
+        <button
+          type="submit"
+          className={cn(authButton.primary, 'mt-3')}
+          disabled={identity.trim() === '' || isLoading}
+        >
+          Продолжить
+        </button>
+        <FormError>{error}</FormError>
+        <Link href="/accounts/login/" className={authButton.secondary}>
+          Вернуться ко входу
+        </Link>
+      </form>
     </AuthPage>
   );
 }

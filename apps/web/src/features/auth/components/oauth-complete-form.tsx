@@ -2,12 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { showApiError } from '@/lib/api/errors';
 import { useCompleteOAuthMutation } from '../api';
 import { useFieldErrors } from '../use-field-errors';
 import { isUserNameFormatValid, toBirthday } from '../validation';
-import { AuthCard, AuthPage } from './auth-card';
+import { AuthHeading, AuthPage, AuthSection, authButton } from './auth-card';
 import { BirthdayFields } from './birthday-fields';
 import { TextField } from './text-field';
 
@@ -40,11 +39,12 @@ export function OAuthCompleteForm() {
 
   return (
     <AuthPage>
-      <AuthCard
+      <AuthHeading
         title="Почти готово"
         description="Выберите имя пользователя и укажите дату рождения."
-      >
-        <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
+      />
+      <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
+        <AuthSection title="Имя пользователя">
           <TextField
             label="Имя пользователя"
             name="userName"
@@ -54,12 +54,14 @@ export function OAuthCompleteForm() {
             error={form.errors.userName}
             onChange={(e) => setUserName(e.target.value.toLowerCase())}
           />
+        </AuthSection>
+        <AuthSection title="Дата рождения">
           <BirthdayFields value={birth} onChange={setBirth} error={form.errors.birthday} />
-          <Button type="submit" className="h-9 w-full" disabled={!isReady || isLoading}>
-            Продолжить
-          </Button>
-        </form>
-      </AuthCard>
+        </AuthSection>
+        <button type="submit" className={authButton.primary} disabled={!isReady || isLoading}>
+          Продолжить
+        </button>
+      </form>
     </AuthPage>
   );
 }

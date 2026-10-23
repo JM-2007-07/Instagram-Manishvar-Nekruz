@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useResendCodeMutation, useVerifyEmailMutation } from '../api';
 import { authErrorText } from '../auth-error';
-import { AuthCard, AuthPage, FormError } from './auth-card';
+import { AuthHeading, AuthPage, FormError, authButton } from './auth-card';
 import { TextField } from './text-field';
 
 // Экран «Введите код подтверждения» (6 цифр) с повторной отправкой.
@@ -44,36 +44,44 @@ export function VerifyCodeForm({ email }: { email: string }) {
   }
 
   return (
-    <AuthPage>
-      <AuthCard
+    <AuthPage backHref="/accounts/emailsignup/">
+      <AuthHeading
         title="Введите код подтверждения"
-        description={`Мы отправили 6-значный код на ${email}.`}
-      >
-        <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
-          <TextField
-            label="Код подтверждения"
-            name="code"
-            inputMode="numeric"
-            maxLength={6}
-            autoComplete="one-time-code"
-            autoFocus
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-          />
-          <Button type="submit" className="h-9 w-full" disabled={!isValid || isLoading}>
-            Подтвердить
-          </Button>
-          <FormError>{error}</FormError>
-          {info && (
-            <p role="status" className="text-center text-14 text-success">
-              {info}
-            </p>
-          )}
-        </form>
-        <Button variant="link" onClick={onResend} disabled={isResending}>
+        description={`Чтобы подтвердить аккаунт, введите 6-значный код, который мы отправили на ${email}.`}
+      />
+      <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
+        <TextField
+          label="Код подтверждения"
+          name="code"
+          inputMode="numeric"
+          maxLength={6}
+          autoComplete="one-time-code"
+          autoFocus
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+        />
+        <button
+          type="submit"
+          className={cn(authButton.primary, 'mt-3')}
+          disabled={!isValid || isLoading}
+        >
+          Продолжить
+        </button>
+        <FormError>{error}</FormError>
+        {info && (
+          <p role="status" className="text-center text-14 text-success">
+            {info}
+          </p>
+        )}
+        <button
+          type="button"
+          className={authButton.secondary}
+          onClick={onResend}
+          disabled={isResending}
+        >
           Отправить код ещё раз
-        </Button>
-      </AuthCard>
+        </button>
+      </form>
     </AuthPage>
   );
 }

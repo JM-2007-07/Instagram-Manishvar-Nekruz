@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Check, CircleHelp } from 'lucide-react';
+import { APP_NAME } from '@/lib/config';
 import { showApiError } from '@/lib/api/errors';
 import { useCheckUserNameQuery, useRegisterMutation } from '../api';
 import { useFieldErrors } from '../use-field-errors';
 import { PASSWORD_MIN, isEmailValid, isUserNameFormatValid, toBirthday } from '../validation';
-import { AuthCard, AuthPage, AuthSwitchCard } from './auth-card';
+import { AuthHeading, AuthPage, AuthSection, authButton } from './auth-card';
 import { BirthdayFields } from './birthday-fields';
-import { OAuthButtons } from './oauth-buttons';
 import { TextField } from './text-field';
 import { UserNameSuggestions } from './user-name-suggestions';
 import { VerifyCodeForm } from './verify-code-form';
@@ -82,12 +82,12 @@ export function SignupForm() {
 
   return (
     <AuthPage>
-      <AuthCard>
-        <p className="text-center text-16 font-semibold text-muted-foreground">
-          Зарегистрируйтесь, чтобы смотреть фото и видео ваших друзей.
-        </p>
-        <OAuthButtons />
-        <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
+      <AuthHeading
+        title={`Начните пользоваться ${APP_NAME}`}
+        description="Зарегистрируйтесь, чтобы смотреть фото и видео ваших друзей."
+      />
+      <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
+        <AuthSection title="Электронный адрес">
           <TextField
             label="Электронный адрес"
             name="email"
@@ -97,8 +97,30 @@ export function SignupForm() {
             error={form.errors.email}
             onChange={(e) => setEmail(e.target.value)}
           />
+          <p className="mt-2 text-15 text-auth-text">
+            На этот адрес мы отправим код подтверждения.
+          </p>
+        </AuthSection>
+        <AuthSection title="Пароль">
           <TextField
-            label="Полное имя"
+            label="Пароль"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            error={form.errors.password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </AuthSection>
+        <AuthSection
+          title="Дата рождения"
+          aside={<CircleHelp className="size-6" aria-hidden="true" />}
+        >
+          <BirthdayFields value={birth} onChange={setBirth} error={form.errors.birthday} />
+        </AuthSection>
+        <AuthSection title="Имя">
+          <TextField
+            label="Имя и фамилия"
             name="fullName"
             autoComplete="name"
             maxLength={64}
@@ -106,6 +128,8 @@ export function SignupForm() {
             error={form.errors.fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
+        </AuthSection>
+        <AuthSection title="Имя пользователя">
           <TextField
             label="Имя пользователя"
             name="userName"
@@ -117,7 +141,7 @@ export function SignupForm() {
             onChange={(e) => setUserName(e.target.value.toLowerCase())}
             hint={
               canCheckName && availability.data?.available ? (
-                <p className="flex items-center gap-1 text-12 text-success">
+                <p className="flex items-center gap-1 px-1 text-12 text-success">
                   <Check className="size-3" aria-hidden="true" /> Имя свободно
                 </p>
               ) : null
@@ -129,22 +153,21 @@ export function SignupForm() {
               onPick={(name) => setUserName(name)}
             />
           )}
-          <TextField
-            label="Пароль"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            error={form.errors.password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <BirthdayFields value={birth} onChange={setBirth} error={form.errors.birthday} />
-          <Button type="submit" className="h-9 w-full" disabled={!isReady || isLoading}>
-            Зарегистрироваться
-          </Button>
-        </form>
-      </AuthCard>
-      <AuthSwitchCard text="Есть аккаунт?" linkText="Вход" href="/accounts/login/" />
+        </AuthSection>
+        <p className="text-15 text-auth-text">
+          Нажимая <span className="font-bold">Отправить</span>, вы соглашаетесь создать аккаунт и
+          принимаете <span className="font-bold">Условия использования</span> и{' '}
+          <span className="font-bold">Политику конфиденциальности</span> {APP_NAME}.
+        </p>
+        <div className="flex flex-col gap-3">
+          <button type="submit" className={authButton.primary} disabled={!isReady || isLoading}>
+            Отправить
+          </button>
+          <Link href="/accounts/login/" className={authButton.secondary}>
+            У меня уже есть аккаунт
+          </Link>
+        </div>
+      </form>
     </AuthPage>
   );
 }

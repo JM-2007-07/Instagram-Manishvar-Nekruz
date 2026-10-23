@@ -1,5 +1,6 @@
 'use client';
 
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const MONTHS = [
@@ -19,8 +20,41 @@ const MONTHS = [
 
 export type Birth = { year: string; month: string; day: string };
 
+// Как у Instagram: три поля 60 px со скруглением 16 и стрелкой справа.
 const selectClass =
-  'h-11 min-w-0 flex-1 rounded-(--radius-input) border border-input bg-background-secondary px-2 text-14 text-foreground outline-none focus:border-(--input-border-focus)';
+  'h-[60px] w-full appearance-none rounded-2xl border-[0.8px] border-auth-field-border bg-transparent pr-11 pl-4 text-15 font-medium text-auth-text outline-none focus:border-auth-field-border-focus [&:has(option[value=""]:checked)]:text-auth-label';
+
+function Select({
+  label,
+  value,
+  invalid,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  invalid: boolean;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative min-w-0 flex-1">
+      <select
+        aria-label={label}
+        className={cn(selectClass, invalid && 'border-destructive')}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">{label}</option>
+        {children}
+      </select>
+      <ChevronDown
+        aria-hidden="true"
+        className="pointer-events-none absolute top-1/2 right-4 size-6 -translate-y-1/2 text-auth-text"
+      />
+    </div>
+  );
+}
 
 // Дата рождения: три списка (день, месяц, год).
 export function BirthdayFields({
@@ -35,57 +69,53 @@ export function BirthdayFields({
   const thisYear = new Date().getFullYear();
   const years = Array.from({ length: 110 }, (_, i) => String(thisYear - i));
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
-  const cls = cn(selectClass, error && 'border-destructive');
+  const invalid = Boolean(error);
 
   return (
-    <fieldset className="flex flex-col gap-1">
-      <legend className="mb-1 text-12 text-muted-foreground">Дата рождения</legend>
-      <div className="flex gap-2">
-        <select
-          aria-label="День"
-          className={cls}
+    <div className="flex flex-col gap-1">
+      <div className="flex gap-4">
+        <Select
+          label="День"
           value={value.day}
-          onChange={(e) => onChange({ ...value, day: e.target.value })}
+          invalid={invalid}
+          onChange={(day) => onChange({ ...value, day })}
         >
-          <option value="">День</option>
           {days.map((d) => (
             <option key={d} value={d}>
               {d}
             </option>
           ))}
-        </select>
-        <select
-          aria-label="Месяц"
-          className={cls}
+        </Select>
+        <Select
+          label="Месяц"
           value={value.month}
-          onChange={(e) => onChange({ ...value, month: e.target.value })}
+          invalid={invalid}
+          onChange={(month) => onChange({ ...value, month })}
         >
-          <option value="">Месяц</option>
           {MONTHS.map((m, i) => (
             <option key={m} value={String(i + 1)}>
               {m}
             </option>
           ))}
-        </select>
-        <select
-          aria-label="Год"
-          className={cls}
+        </Select>
+        <Select
+          label="Год"
           value={value.year}
-          onChange={(e) => onChange({ ...value, year: e.target.value })}
+          invalid={invalid}
+          onChange={(year) => onChange({ ...value, year })}
         >
-          <option value="">Год</option>
           {years.map((y) => (
             <option key={y} value={y}>
               {y}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       {error && (
-        <p role="alert" className="text-12 text-destructive">
+        <p role="alert" className="px-1 text-12 text-destructive">
           {error}
         </p>
       )}
-    </fieldset>
+    </div>
   );
 }

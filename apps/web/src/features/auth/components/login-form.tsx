@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { BrandLogo } from '@/components/layout/brand-logo';
+import { APP_NAME } from '@/lib/config';
+import { cn } from '@/lib/utils';
 import { getApiError } from '@/lib/api/errors';
 import { useLoginMutation, useLoginTwoFactorMutation } from '../api';
 import { authErrorText } from '../auth-error';
 import { isLoginFormValid } from '../validation';
-import { AuthCard, AuthPage, AuthSwitchCard, FormError, PhonePreview } from './auth-card';
+import { AuthHeading, AuthHeroPage, AuthPage, FormError, authButton } from './auth-card';
 import { OAuthButtons } from './oauth-buttons';
 import { TextField } from './text-field';
 import { VerifyCodeForm } from './verify-code-form';
@@ -69,40 +71,49 @@ export function LoginForm({ oauthFailed = false }: { oauthFailed?: boolean }) {
   if (step === 'twoFactor') {
     return (
       <AuthPage>
-        <AuthCard
+        <AuthHeading
           title="Двухфакторная аутентификация"
           description="Введите код из приложения-аутентификатора или резервный код."
-        >
-          <form onSubmit={onSubmitCode} className="flex flex-col gap-3" noValidate>
-            <TextField
-              label="Код"
-              name="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              autoFocus
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-            <Button
-              type="submit"
-              className="h-9 w-full"
-              disabled={code.trim().length === 0 || isCheckingCode}
-            >
-              Подтвердить
-            </Button>
-            <FormError>{error}</FormError>
-          </form>
-          <Button variant="link" onClick={() => setStep('credentials')}>
+        />
+        <form onSubmit={onSubmitCode} className="flex flex-col gap-3" noValidate>
+          <TextField
+            label="Код"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
+          <button
+            type="submit"
+            className={cn(authButton.primary, 'mt-3')}
+            disabled={code.trim().length === 0 || isCheckingCode}
+          >
+            Подтвердить
+          </button>
+          <FormError>{error}</FormError>
+          <button
+            type="button"
+            className={authButton.secondary}
+            onClick={() => setStep('credentials')}
+          >
             Назад
-          </Button>
-        </AuthCard>
+          </button>
+        </form>
       </AuthPage>
     );
   }
 
   return (
-    <AuthPage aside={<PhonePreview />}>
-      <AuthCard>
+    <AuthHeroPage>
+      <div className="flex w-full flex-1 flex-col min-[640px]:max-w-[546px] min-[640px]:flex-none min-[1064px]:max-w-[529px]">
+        <div className="flex justify-center pt-[121px] pb-[107px] min-[640px]:hidden">
+          <BrandLogo variant="mark" className="size-[60px] text-30" />
+        </div>
+        <h1 className="mb-6 hidden text-17 font-semibold text-auth-text min-[640px]:block">
+          Войти в {APP_NAME}
+        </h1>
         <form onSubmit={onSubmit} className="flex flex-col gap-3" noValidate>
           <TextField
             label="Имя пользователя или электронный адрес"
@@ -120,28 +131,25 @@ export function LoginForm({ oauthFailed = false }: { oauthFailed?: boolean }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Button
+          <button
             type="submit"
-            className="h-9 w-full"
+            className={cn(authButton.primary, 'mt-3')}
             disabled={!isLoginFormValid(identity, password) || isLoading}
           >
             Войти
-          </Button>
+          </button>
           <FormError>{error}</FormError>
         </form>
-        <OAuthButtons />
-        <Link
-          href="/accounts/password/reset/"
-          className="text-center text-12 text-link-profile hover:underline"
-        >
+        <Link href="/accounts/password/reset/" className={cn(authButton.link, 'mt-3')}>
           Забыли пароль?
         </Link>
-      </AuthCard>
-      <AuthSwitchCard
-        text="Нет аккаунта?"
-        linkText="Зарегистрироваться"
-        href="/accounts/emailsignup/"
-      />
-    </AuthPage>
+        <div className="mt-auto flex flex-col gap-3 pt-[52px] pb-[34px] min-[640px]:mt-0 min-[640px]:pb-0">
+          <OAuthButtons />
+          <Link href="/accounts/emailsignup/" className={authButton.outline}>
+            Создать новый аккаунт
+          </Link>
+        </div>
+      </div>
+    </AuthHeroPage>
   );
 }
