@@ -1,8 +1,8 @@
-import { APP_NAME } from '@/lib/config';
+import { APP_NAME, BRAND_LOGO_URL, BRAND_MARK_URL } from '@/lib/config';
 import { cn } from '@/lib/utils';
 
-// Логотип проекта (ADR 0012: свой бренд, без знаков и шрифта Instagram).
-// full — название; mark — знак для узкого меню: первая буква в круге (📝 пока Q31 открыт).
+// Логотип проекта. full — логотип (файл public/brand/logo.* или название текстом);
+// mark — знак для узкого меню и заставки (файл public/brand/mark.* или первая буква в круге).
 export function BrandLogo({
   className,
   variant = 'full',
@@ -11,6 +11,12 @@ export function BrandLogo({
   variant?: 'full' | 'mark';
 }) {
   if (variant === 'mark') {
+    if (BRAND_MARK_URL) {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={BRAND_MARK_URL} alt="" aria-hidden="true" className={cn('size-6', className)} />
+      );
+    }
     return (
       <span
         aria-hidden="true"
@@ -21,6 +27,18 @@ export function BrandLogo({
       >
         {APP_NAME.charAt(0)}
       </span>
+    );
+  }
+  if (BRAND_LOGO_URL) {
+    // Высота логотипа в меню Instagram — 29 px 📝; в тёмной теме svg с fill="currentColor" не перекрашивается,
+    // поэтому для тёмной темы инвертируем (логотип — чёрный на прозрачном).
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={BRAND_LOGO_URL}
+        alt={APP_NAME}
+        className={cn('h-[29px] w-auto dark:invert', className)}
+      />
     );
   }
   return (

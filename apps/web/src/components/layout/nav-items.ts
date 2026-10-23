@@ -33,7 +33,12 @@ export const MESSAGES: NavItem = {
 // TODO(T3.A3, Студент A): панель уведомлений
 export const NOTIFICATIONS: NavItem = { key: 'notifications', label: 'Уведомления', icon: Heart };
 // TODO(T3.B2): окно создания публикации
-export const CREATE: NavItem = { key: 'create', label: 'Создать', icon: SquarePlus };
+export const CREATE: NavItem = {
+  key: 'create',
+  label: 'Создать',
+  icon: SquarePlus,
+  href: '/create/',
+};
 
 // Next.js открывает /explore/ как /explore (trailingSlash выключен), поэтому сравниваем пути без «/» в конце.
 const trimSlash = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
