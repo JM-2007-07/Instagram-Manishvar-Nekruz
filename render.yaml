@@ -44,12 +44,22 @@ services:
         value: '30'
       - key: PASSWORD_RESET_TTL_MINUTES
         value: '30'
+      # В production MAIL_DRIVER=log запрещён (apps/api/src/config/env.ts): API не запустится.
+      # SMTP_* и MAIL_FROM — в панели Render (Gmail: smtp.gmail.com, 465, адрес, пароль приложения; MAIL_FROM = тот же адрес).
       - key: MAIL_DRIVER
-        value: log
+        value: smtp
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
       - key: APP_NAME
         value: Instagram
       - key: MAIL_FROM
-        value: no-reply@example.com
+        sync: false
       - key: STORAGE_DRIVER
         value: local
       # На бесплатном плане диск временный: файлы пропадают при перезапуске и после сна (15 минут без запросов)

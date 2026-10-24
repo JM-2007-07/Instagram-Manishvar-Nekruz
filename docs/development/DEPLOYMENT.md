@@ -48,8 +48,9 @@
 - **Файлы на диске временные:** фото, видео и голосовые пропадают после сна, перезапуска и нового деплоя.
   Запускать `demo-data` незадолго до показа и не давать сервису уснуть. Постоянно — только платный план с диском
   или драйвер `s3` (T5.B2).
-- Письма с кодами не отправляются (`MAIL_DRIVER=log`): код регистрации виден в **Logs** сервиса `instagram-api`.
-  Для писем — `MAIL_DRIVER=smtp` и `SMTP_*` в Environment.
+- Почта — только `MAIL_DRIVER=smtp`: с `log` при `NODE_ENV=production` API не запускается
+  (`MAIL_DRIVER: "log" is not allowed in production`, `apps/api/src/config/env.ts`). В Environment задать
+  `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` (для Gmail — пароль приложения, как в `.env.example`).
 - Звонки между разными сетями могут не соединиться без TURN (`TURN_URLS`, `TURN_SHARED_SECRET`).
 
 ## Локальная проверка схемы
@@ -96,8 +97,8 @@
      | `SESSION_COOKIE_NAME` | `__Host-sid` |
      | `SESSION_IDLE_TTL_DAYS` / `SESSION_ABSOLUTE_TTL_DAYS` | `7` / `30` |
      | `PASSWORD_RESET_TTL_MINUTES` | `30` |
-     | `MAIL_DRIVER` | `log` (или `smtp` + `SMTP_*`) |
-     | `APP_NAME` / `MAIL_FROM` | `Instagram` / `no-reply@example.com` |
+     | `MAIL_DRIVER` | `smtp` + `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` (`log` в production запрещён) |
+     | `APP_NAME` / `MAIL_FROM` | `Instagram` / адрес отправителя (для Gmail — тот же, что `SMTP_USER`) |
      | `STORAGE_DRIVER` / `STORAGE_LOCAL_DIR` | `local` / `/data/storage` |
      | `RAILPACK_DEPLOY_APT_PACKAGES` | `ffmpeg` |
      | `TWO_FACTOR_ENCRYPTION_KEY` | любая случайная строка от 32 символов (по желанию) |
