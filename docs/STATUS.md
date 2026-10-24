@@ -158,6 +158,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-24 13:00 | [render-mail-fix](stories/2026-10-24_1300_render-mail-fix.md) | деплой API на Render падал: `MAIL_DRIVER=log` запрещён в production → SMTP в `render.yaml` |
 | 2026-10-24 01:40 | [render-prep-and-story-rings](stories/2026-10-24_0140_render-prep-and-story-rings.md) | подготовка к Render (render.yaml, API пересылает страницы, ADR 0020, Q24 закрыт); кольца историй серые и кликабельные на всех аватарах |
 | 2026-10-24 01:00 | [share-and-profile-grid](stories/2026-10-24_0100_share-and-profile-grid.md) | окно «Поделиться» в Direct (выбор чатов, сообщение, «Отправить»); в «Публикациях» профиля и reels |
 | 2026-10-24 00:30 | [release-audit](stories/2026-10-24_0030_release-audit.md) | проверка перед экзаменом: 76 загрузок экранов без ошибок, стабильный запуск API, очистка кэша поиска при выходе, чек-лист деплоя; Campus Mode отложен |
