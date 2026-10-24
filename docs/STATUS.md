@@ -1,7 +1,7 @@
 # STATUS — текущее состояние проекта
 
 > Статус: живой документ. **Обновляется в каждом PR**, который меняет состояние задач.
-> Последнее обновление: 2026-10-23 19:19.
+> Последнее обновление: 2026-10-24 16:40.
 > План (что, в каком порядке, кто) — в [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md); здесь — только состояние.
 
 ## 1. Коротко
@@ -158,6 +158,7 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-24 16:40 | [render-mail-log-fallback](stories/2026-10-24_1640_render-mail-log-fallback.md) | на Render письма не уходили (SMTP-порты закрыты, Brevo отключил отправку) → `MAIL_LOG_IN_PRODUCTION`, коды в Logs; сайт запущен и проверен частично |
 | 2026-10-24 13:00 | [render-mail-fix](stories/2026-10-24_1300_render-mail-fix.md) | деплой API на Render падал: `MAIL_DRIVER=log` запрещён в production → SMTP в `render.yaml` |
 | 2026-10-24 01:40 | [render-prep-and-story-rings](stories/2026-10-24_0140_render-prep-and-story-rings.md) | подготовка к Render (render.yaml, API пересылает страницы, ADR 0020, Q24 закрыт); кольца историй серые и кликабельные на всех аватарах |
 | 2026-10-24 01:00 | [share-and-profile-grid](stories/2026-10-24_0100_share-and-profile-grid.md) | окно «Поделиться» в Direct (выбор чатов, сообщение, «Отправить»); в «Публикациях» профиля и reels |

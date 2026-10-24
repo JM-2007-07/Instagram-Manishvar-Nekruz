@@ -60,6 +60,12 @@ export class Env {
   @IsIn(['log', 'smtp'])
   MAIL_DRIVER!: 'log' | 'smtp';
 
+  // Запасной вариант для показа на Render без SMTP: 'true' разрешает MAIL_DRIVER=log в production,
+  // коды подтверждения тогда видны в Logs сервиса. Без флага log в production запрещён.
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  MAIL_LOG_IN_PRODUCTION?: 'true' | 'false';
+
   @IsString()
   @IsNotEmpty()
   APP_NAME!: string;
@@ -156,8 +162,14 @@ export function validateEnv(raw: Record<string, unknown>): Env {
   }
   env.WEB_ORIGIN = env.WEB_ORIGIN.replace(/\/+$/, ''); // завершающий «/» не ошибка, просто убираем
   const problems = [...checkDatabaseUrl(env.DATABASE_URL), ...checkWebOrigin(env.WEB_ORIGIN)];
-  if (env.NODE_ENV === 'production' && env.MAIL_DRIVER === 'log') {
-    problems.push('MAIL_DRIVER: "log" is not allowed in production');
+  if (
+    env.NODE_ENV === 'production' &&
+    env.MAIL_DRIVER === 'log' &&
+    env.MAIL_LOG_IN_PRODUCTION !== 'true'
+  ) {
+    problems.push(
+      'MAIL_DRIVER: "log" is not allowed in production (set MAIL_LOG_IN_PRODUCTION=true to allow)',
+    );
   }
   if (env.MAIL_DRIVER === 'smtp' && (!env.SMTP_HOST || !env.SMTP_PORT)) {
     problems.push('SMTP_HOST, SMTP_PORT: required when MAIL_DRIVER is "smtp"');
