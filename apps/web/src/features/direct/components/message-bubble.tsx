@@ -13,6 +13,7 @@ import {
 } from '../api';
 import { canEdit, formatClock, isTemp, REACTION_EMOJIS } from '../chat-utils';
 import { ChatAvatar } from './chat-avatar';
+import { VoicePlayer } from './voice-player';
 
 function MessageBody({ message }: { message: Message }) {
   switch (message.type) {
@@ -37,12 +38,7 @@ function MessageBody({ message }: { message: Message }) {
       );
     case 'VOICE':
       return message.media[0] ? (
-        <audio
-          src={message.media[0].url}
-          controls
-          aria-label="Голосовое сообщение"
-          className="h-10"
-        />
+        <VoicePlayer src={message.media[0].url} durationSec={message.media[0].durationSec} />
       ) : (
         <span>Голосовое сообщение</span>
       );

@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
-import { UserAvatar } from '@/components/temp/student-a';
 import { CommentForm } from '@/features/comments/components/post-comments';
 import { renderCaption, timeAgo } from '../lib';
 import type { Post } from '../types';
 import { usePostLike } from '../use-post-like';
-import { LikeCount, PostActions } from './post-actions';
+import { PostActions } from './post-actions';
 import { PostMedia } from './post-media';
 import { PostMenu } from './post-menu';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 // Формат медиа: по размерам первого файла (3:4 по умолчанию), в пределах 3:4 … 1.91:1.
 export function mediaAspect(post: Post): number {
@@ -33,9 +33,7 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <article className="mx-auto w-full max-w-[470px] border-b border-border pb-4">
       <header className="flex items-center gap-3 py-3">
-        <Link href={`/${post.author.userName}/`}>
-          <UserAvatar user={post.author} size={32} />
-        </Link>
+        <StoryAvatar user={post.author} size={32} fallbackHref={`/${post.author.userName}/`} />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-1 text-14">
             <Link href={`/${post.author.userName}/`} className="truncate font-semibold">
@@ -72,8 +70,16 @@ export function PostCard({ post }: { post: Post }) {
       />
 
       <div className="pt-1">
-        <PostActions post={post} liked={liked} onLike={() => setLike(!liked)} commentHref={href} />
-        {!post.hideLikeCount && <LikeCount count={count} />}
+        <PostActions
+          post={post}
+          liked={liked}
+          onLike={() => setLike(!liked)}
+          commentHref={href}
+          counts={{
+            likeCount: post.hideLikeCount ? null : count,
+            commentCount: post.commentCount,
+          }}
+        />
         {caption && (
           <p className="mt-1 text-14 break-words">
             <Link href={`/${post.author.userName}/`} className="mr-1 font-semibold">

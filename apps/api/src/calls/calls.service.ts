@@ -92,6 +92,18 @@ export class CallsService implements OnModuleDestroy {
     }
 
     const everyone = [userId, ...others.map((other) => other.userId)];
+    // Свои «брошенные» звонки (закрыли вкладку или обновили страницу посреди разговора): человек не может
+    // быть в двух звонках сразу, раз он звонит снова — старый уже не идёт. Завершаем его, иначе 409 на 12 часов.
+    // Входящий звонок, который ещё звонит, не трогаем: на него нужно ответить (ниже — 409).
+    const abandoned = await this.prisma.call.findMany({
+      where: {
+        participants: { some: { userId, leftAt: null } },
+        OR: [{ status: 'ONGOING' }, { status: 'RINGING', initiatorId: userId }],
+      },
+      select: { id: true },
+    });
+    for (const old of abandoned) await this.end(userId, old.id);
+
     const now = Date.now();
     const busy = await this.prisma.call.findFirst({
       where: {

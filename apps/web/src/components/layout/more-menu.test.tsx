@@ -5,6 +5,7 @@ import { MoreMenu } from './more-menu';
 const setTheme = vi.fn();
 const replace = vi.fn();
 const logout = vi.fn(() => ({ unwrap: () => Promise.resolve() }));
+vi.mock('@/features/search/user-search', () => ({ useClearAccountSearch: () => () => {} }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace }) }));
 vi.mock('@/features/auth/api', () => ({
   useLogoutMutation: () => [logout, { isLoading: false }],

@@ -451,7 +451,11 @@ describe('Posts: публикации, ленты, лайки', () => {
       });
       await createPost(app, priv);
 
-      expect(ids((await get(`/users/${bob.id}/posts`).expect(200)).body)).toEqual([photo.id]);
+      // «Публикации» — и фото, и reels (новые первыми); «Reels» — только reels.
+      expect(ids((await get(`/users/${bob.id}/posts`).expect(200)).body)).toEqual([
+        reel.id,
+        photo.id,
+      ]);
       expect(ids((await get(`/users/${bob.id}/reels`).expect(200)).body)).toEqual([reel.id]);
       const res = await get(`/users/${priv.id}/posts`).expect(403);
       expect(res.body.code).toBe('PRIVATE_ACCOUNT');

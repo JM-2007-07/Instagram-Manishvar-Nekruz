@@ -147,6 +147,18 @@ describe('Calls', () => {
       expect((await api('get', `/calls/${started.body.id}`, b)).body.endedAt).not.toBeNull();
     });
 
+    it('новый звонок завершает свой брошенный (закрыли вкладку посреди разговора)', async () => {
+      const { chatId, a, b } = await setup();
+      const first = await api('post', `/chats/${chatId}/calls`, a).send({ type: 'VIDEO' });
+      expect((await api('post', `/calls/${first.body.id}/accept`, b)).status).toBe(200);
+
+      // alice обновила страницу и звонит снова: старый ONGOING-звонок не мешает.
+      const second = await api('post', `/chats/${chatId}/calls`, a).send({ type: 'AUDIO' });
+      expect(second.status).toBe(201);
+      expect((await api('get', `/calls/${first.body.id}`, a)).body.status).toBe('ENDED');
+      await api('post', `/calls/${second.body.id}/end`, a);
+    });
+
     it('отклонить: DECLINED; чужой звонок и неизвестный id: 404', async () => {
       const { chatId, a, b, c } = await setup();
       const started = await api('post', `/chats/${chatId}/calls`, a).send({ type: 'AUDIO' });

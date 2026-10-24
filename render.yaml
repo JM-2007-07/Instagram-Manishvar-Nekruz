@@ -1,0 +1,82 @@
+# Render Blueprint (бесплатный план). Как развернуть — docs/development/DEPLOYMENT.md, решение — ADR 0020.
+# Публичный адрес — сервис instagram-api: он сам отвечает на /api/v1 и /socket.io, а страницы пересылает
+# в instagram-web. Значения с sync: false задаются в панели Render после первого создания сервисов.
+
+databases:
+  - name: instagram-db
+    plan: free
+    databaseName: instagram
+    user: instagram
+
+services:
+  - type: web
+    name: instagram-api
+    runtime: node
+    plan: free
+    # devDependencies (nest, prisma, typescript) нужны для сборки, поэтому --include=dev
+    buildCommand: npm ci --include=dev && npm run build -w api
+    # Миграции — при каждом запуске (на бесплатном плане нет pre-deploy). Только migrate deploy, без reset.
+    startCommand: npm exec -w api -- prisma migrate deploy && npm run start -w api
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: instagram-db
+          property: connectionString
+      # Публичный адрес этого сервиса, например https://instagram-api-xxxx.onrender.com (без «/» в конце)
+      - key: WEB_ORIGIN
+        sync: false
+      # Адрес сервиса instagram-web, например https://instagram-web-xxxx.onrender.com
+      - key: WEB_UPSTREAM_URL
+        sync: false
+      - key: TRUST_PROXY
+        value: 'true'
+      # Как в .env.example: в production — __Host-sid (только HTTPS, Render даёт HTTPS сам)
+      - key: SESSION_COOKIE_NAME
+        value: __Host-sid
+      - key: SESSION_IDLE_TTL_DAYS
+        value: '7'
+      - key: SESSION_ABSOLUTE_TTL_DAYS
+        value: '30'
+      - key: PASSWORD_RESET_TTL_MINUTES
+        value: '30'
+      - key: MAIL_DRIVER
+        value: log
+      - key: APP_NAME
+        value: Instagram
+      - key: MAIL_FROM
+        value: no-reply@example.com
+      - key: STORAGE_DRIVER
+        value: local
+      # На бесплатном плане диск временный: файлы пропадают при перезапуске и после сна (15 минут без запросов)
+      - key: STORAGE_LOCAL_DIR
+        value: ./storage
+      # ffmpeg есть в нативной среде Render (Debian); путь по умолчанию — «ffmpeg» из PATH
+      - key: TWO_FACTOR_ENCRYPTION_KEY
+        generateValue: true
+
+  - type: web
+    name: instagram-web
+    runtime: node
+    plan: free
+    # NEXT_PUBLIC_* встраиваются при сборке: после смены адреса — пересобрать (Manual Deploy)
+    buildCommand: npm ci --include=dev && npm run build -w web
+    startCommand: npm exec -w web -- next start -p $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: NODE_ENV
+        value: production
+      # Все три — публичный адрес instagram-api (тот же, что WEB_ORIGIN выше)
+      - key: API_INTERNAL_URL
+        sync: false
+      - key: NEXT_PUBLIC_REALTIME_URL
+        sync: false
+      - key: PUBLIC_ORIGIN
+        sync: false
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Instagram

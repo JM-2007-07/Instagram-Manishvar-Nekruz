@@ -4,7 +4,7 @@ import { DESIGN } from '@/lib/design';
 import type { Profile } from '@/lib/api/types';
 import { formatCount } from '../format';
 import { ProfileActions, ProfileNameActions } from './profile-actions';
-import { UserAvatar } from '@/features/users/components/user-avatar';
+import { StoryAvatarLink } from '@/features/stories/components/story-avatar-link';
 
 function mutualText(profile: Profile): string | null {
   const { users, total } = profile.mutualFollowers;
@@ -71,10 +71,10 @@ export function ProfileHeader({ profile }: { profile: Profile }) {
       <header className="mx-auto w-full max-w-[636px] px-4 pt-5 md:px-0 md:pt-[37px]">
         <div className="flex items-center gap-[37px] md:items-start md:gap-7">
           <div className="shrink-0 pl-2.5 md:hidden">
-            <UserAvatar user={profile} size={77} />
+            <StoryAvatarLink user={profile} size={77} />
           </div>
           <div className="hidden shrink-0 md:block">
-            <UserAvatar user={profile} size={DESIGN.profileAvatar} />
+            <StoryAvatarLink user={profile} size={DESIGN.profileAvatar} />
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col md:pt-[10px]">

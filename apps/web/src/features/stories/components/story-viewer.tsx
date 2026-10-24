@@ -78,10 +78,13 @@ export function StoryViewer({ username, storyId }: { username: string; storyId: 
     return <Unavailable onNext={nextAuthor ?? close} />;
   }
 
-  const startIndex = Math.max(
-    0,
-    list.data.findIndex((s) => s.id === storyId),
-  );
+  // Из ленты историй (ссылка на первую историю автора) начинаем, как Instagram, с первой непросмотренной.
+  const requested = list.data.findIndex((s) => s.id === storyId);
+  const firstUnseen = list.data.findIndex((s) => !s.isViewedByMe);
+  const startIndex =
+    requested <= 0 && firstUnseen > 0 && trayItem?.storyIds[0] === storyId
+      ? firstUnseen
+      : Math.max(0, requested);
   return (
     <StoryPlayer
       key={username}

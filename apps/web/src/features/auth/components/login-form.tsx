@@ -107,7 +107,8 @@ export function LoginForm({ oauthFailed = false }: { oauthFailed?: boolean }) {
 
   return (
     <AuthHeroPage>
-      <div className="flex w-full flex-1 flex-col min-[640px]:max-w-[546px] min-[640px]:flex-none min-[1064px]:max-w-[529px]">
+      {/* min-h 484 px — высота блока формы у instagram.com: форма стоит на той же высоте экрана */}
+      <div className="flex w-full flex-1 flex-col min-[640px]:max-w-[546px] min-[640px]:flex-none min-[1064px]:min-h-[484px]">
         {/* Телефон: знак и надпись по центру (на компьютере знак — в левой колонке, надпись не нужна) */}
         <div className="flex flex-col items-center gap-5 pt-[96px] pb-[56px] min-[640px]:hidden">
           <BrandLogo variant="mark" className="size-[60px] text-30" />

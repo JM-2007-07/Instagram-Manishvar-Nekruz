@@ -31,6 +31,16 @@ export class Env {
   @IsUrl({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
   WEB_ORIGIN!: string;
 
+  // Render (ADR 0020): публичный адрес сервиса Next.js — API пересылает ему страницы. Не задан — не пересылает.
+  @IsOptional()
+  @IsUrl({ require_tld: false, require_protocol: true, protocols: ['http', 'https'] })
+  WEB_UPSTREAM_URL?: string;
+
+  // Сколько прокси перед API доверять (X-Forwarded-For): не задан — только локальный; на Render — true.
+  @IsOptional()
+  @IsString()
+  TRUST_PROXY?: string;
+
   @IsString()
   @IsNotEmpty()
   SESSION_COOKIE_NAME!: string;

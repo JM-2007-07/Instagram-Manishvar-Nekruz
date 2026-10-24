@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { UserAvatar } from '@/components/temp/student-a';
 import { APP_NAME } from '@/lib/config';
 import { useGetCurrentUserQuery } from '@/features/posts/api';
 import { Suggestions } from './suggestions';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 // Правая колонка главной (только ≥ 1264 px): свой аккаунт, рекомендации, подвал.
 export function HomeSidebar() {
@@ -13,9 +13,7 @@ export function HomeSidebar() {
     <aside className="hidden w-[319px] shrink-0 pt-8 pl-16 min-[1264px]:block">
       {me && (
         <div className="mb-4 flex items-center gap-3">
-          <Link href={`/${me.userName}/`}>
-            <UserAvatar user={me} size={44} />
-          </Link>
+          <StoryAvatar user={me} size={44} fallbackHref={`/${me.userName}/`} />
           <div className="min-w-0 text-14">
             <Link href={`/${me.userName}/`} className="block truncate font-semibold">
               {me.userName}

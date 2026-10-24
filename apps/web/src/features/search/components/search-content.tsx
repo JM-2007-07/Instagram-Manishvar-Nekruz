@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Clock, Hash, MapPin, X } from 'lucide-react';
+import { ChevronLeft, Clock, Hash, MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchField } from '@/features/users/components/search-field';
 import {
@@ -18,9 +18,11 @@ import {
   useAddRecentSearchMutation,
   useClearRecentSearchesMutation,
   useGetRecentSearchesInfiniteQuery,
+  useFindHashtagsQuery,
+  useFindLocationsQuery,
   useRemoveRecentSearchMutation,
-  useGlobalSearchQuery,
 } from '../api';
+import { useAccountSearch } from '../user-search';
 
 const MAX_QUERY = 50;
 
@@ -87,22 +89,58 @@ function RemoveEntryButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Содержимое панели «Поиск» (десктоп) и страницы /explore/search/ (мобильный).
-// Пустое поле — «Недавнее»; ввод (через ~300 мс) — аккаунты, хэштеги, места.
-export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
+// Содержимое панели «Поиск» (десктоп), страницы /explore/search/ (мобильный) и поиска на «Интересном».
+// Пустое поле — «Недавнее» (или idle, например сетка «Интересного»); ввод (через ~300 мс) — аккаунты
+// (TanStack Query), хэштеги и места (RTK Query).
+export function SearchContent({
+  onNavigate,
+  idle,
+  autoFocus,
+}: {
+  onNavigate?: () => void;
+  /**
+   * Вид «Интересного» (сверено с instagram.com 2026-10-23): поле «Поиск» над сеткой (idle). Фокус на поле —
+   * режим поиска: сетка скрывается, слева от поля «‹», ниже «Недавнее» или результаты; «‹» или Esc — назад к сетке.
+   */
+  idle?: React.ReactNode;
+  autoFocus?: boolean;
+}) {
   const [text, setText] = useState('');
   const q = useDebouncedValue(text.trim().slice(0, MAX_QUERY), 300);
   const typing = text.trim().length > 0;
   const showResults = typing && q.length > 0;
+  const dropdown = !!idle; // вид «Интересного»
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
 
-  const results = useGlobalSearchQuery(q, { skip: !showResults });
-  const history = useGetRecentSearchesInfiniteQuery(undefined, { skip: typing });
+  // Выход из режима поиска: поле очищается, снова видна сетка.
+  function closeSearch() {
+    setOpen(false);
+    setText('');
+    box.current?.querySelector('input')?.blur();
+  }
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') closeSearch();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const accounts = useAccountSearch(showResults ? q : '');
+  const hashtags = useFindHashtagsQuery(q, { skip: !showResults });
+  const locations = useFindLocationsQuery(q, { skip: !showResults });
+  const history = useGetRecentSearchesInfiniteQuery(undefined, {
+    skip: typing || (dropdown && !open),
+  });
   const [addHistory] = useAddRecentSearchMutation();
   const [removeEntry] = useRemoveRecentSearchMutation();
   const [clearHistory, { isLoading: clearing }] = useClearRecentSearchesMutation();
 
   function remember(body: Parameters<typeof addHistory>[0]) {
     void addHistory(body); // запись истории второстепенна: ошибка не должна мешать переходу
+    setOpen(false);
     onNavigate?.();
   }
 
@@ -203,16 +241,16 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
 
   function renderResults() {
     // Пока ждём ответ на новый запрос или идёт debounce — показываем скелетон.
-    if (q !== text.trim().slice(0, MAX_QUERY) || results.isLoading)
+    const pending = accounts.isPending || hashtags.isLoading || locations.isLoading;
+    if (q !== text.trim().slice(0, MAX_QUERY) || (pending && !accounts.data))
       return <UserListSkeleton rows={5} />;
-    if (results.isError)
-      return <ListError error={results.error} onRetry={() => results.refetch()} />;
-    const { users, hashtags, locations } = results.data ?? {
-      users: [],
-      hashtags: [],
-      locations: [],
-    };
-    if (users.length + hashtags.length + locations.length === 0)
+    // Аккаунты — главное: их ошибка показывается; хэштеги и места просто пропадают.
+    if (accounts.isError)
+      return <ListError error={accounts.error} onRetry={() => void accounts.refetch()} />;
+    const users = accounts.data?.items ?? [];
+    const tags = hashtags.data?.items ?? [];
+    const places = locations.data?.items ?? [];
+    if (users.length + tags.length + places.length === 0)
       return <EmptyMessage>Ничего не найдено</EmptyMessage>;
     return (
       <>
@@ -223,7 +261,7 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
             onNavigate={() => remember({ type: 'USER', userId: user.id })}
           />
         ))}
-        {hashtags.map((tag) => (
+        {tags.map((tag) => (
           <PlainRow
             key={tag.name}
             href={hashtagHref(tag)}
@@ -233,7 +271,7 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
             onClick={() => remember({ type: 'HASHTAG', hashtagName: tag.name })}
           />
         ))}
-        {locations.map((place) => (
+        {places.map((place) => (
           <PlainRow
             key={place.id}
             href={locationHref(place)}
@@ -247,6 +285,53 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
     );
   }
 
+  if (dropdown) {
+    // Размеры с instagram.com (1366 px): поле 40 px, над сеткой — 56 % её ширины; в режиме поиска
+    // колонка 552 px: «‹» 24 px, поле 500 px, строки 60 px.
+    return (
+      <div ref={box} className="flex flex-col">
+        <div
+          className={
+            open
+              ? 'mx-auto flex w-full max-w-[552px] items-center gap-3 px-4 md:px-2'
+              : 'mx-auto w-full px-4 md:w-[56%] md:px-0'
+          }
+        >
+          {open && (
+            <button
+              type="button"
+              aria-label="Назад"
+              onClick={closeSearch}
+              className="flex size-6 shrink-0 items-center justify-center"
+            >
+              <ChevronLeft className="size-6" />
+            </button>
+          )}
+          <form onSubmit={handleSubmit} className="min-w-0 flex-1">
+            <SearchField
+              value={text}
+              onChange={(value) => {
+                setText(value.slice(0, MAX_QUERY));
+                setOpen(true);
+              }}
+              onFocus={() => setOpen(true)}
+              label="Поиск"
+              placeholder="Поиск"
+              autoFocus={autoFocus}
+            />
+          </form>
+        </div>
+        {open ? (
+          <div className="mx-auto mt-5 w-full max-w-[552px]">
+            {typing ? renderResults() : renderHistory()}
+          </div>
+        ) : (
+          <div className="mt-6">{idle}</div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
       <form onSubmit={handleSubmit} className="px-4 pb-3">
@@ -255,6 +340,7 @@ export function SearchContent({ onNavigate }: { onNavigate?: () => void }) {
           onChange={(value) => setText(value.slice(0, MAX_QUERY))}
           label="Поисковый запрос"
           placeholder="Поисковый запрос"
+          autoFocus={autoFocus}
         />
       </form>
       <div>{typing ? renderResults() : renderHistory()}</div>

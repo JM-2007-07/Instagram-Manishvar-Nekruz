@@ -30,6 +30,7 @@ import {
 } from '../api';
 import { CommentText, likesLabel, shortTime } from './comment-text';
 import { useThread } from './thread-context';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 type Comment = Schemas['CommentDto'];
 
@@ -94,9 +95,11 @@ export function CommentItem({ comment, postId, rootId, meId, isPostAuthor, isRep
   return (
     <li className={cn('group', isReply && 'ml-[44px]')}>
       <div className="flex items-start gap-3 py-2">
-        <Link href={`/${comment.author.userName}/`} className="shrink-0">
-          <UserAvatar user={comment.author} size={32} />
-        </Link>
+        <StoryAvatar
+          user={comment.author}
+          size={32}
+          fallbackHref={`/${comment.author.userName}/`}
+        />
         <div className="min-w-0 flex-1">
           {comment.isPinned && !isReply && (
             <p className="mb-0.5 text-12 text-muted-foreground">Закреплено</p>

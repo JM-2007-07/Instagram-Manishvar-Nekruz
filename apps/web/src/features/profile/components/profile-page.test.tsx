@@ -17,6 +17,7 @@ vi.mock('@/features/users/api', () => ({
   useFollowUserMutation: () => [vi.fn(), { isLoading: false }],
   useUnfollowUserMutation: () => [vi.fn(), { isLoading: false }],
 }));
+vi.mock('@/features/stories/api', () => ({ useGetUserStoriesQuery: () => ({ data: undefined }) }));
 vi.mock('@/features/stories/components/highlights-row', () => ({ HighlightsRow: () => null }));
 vi.mock('@/features/privacy/components/profile-actions-menu', () => ({
   ProfileActionsMenu: () => null,

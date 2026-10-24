@@ -1,4 +1,4 @@
-// То же для перехода на главную «/» (catch-all не совпадает с пустым путём).
+// Слот на главной «/» пустой (окна закрывает ModalSlot в (main)/layout).
 export default function ModalRoot() {
   return null;
 }

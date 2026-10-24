@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+import { QueryProvider } from '@/lib/query-client';
 import { StoreProvider } from '@/lib/store-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { NavigationProgress } from '@/components/layout/navigation-progress';
@@ -22,7 +23,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <NavigationProgress />
-        <StoreProvider>{children}</StoreProvider>
+        <StoreProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </StoreProvider>
         <Toaster />
       </body>
     </html>

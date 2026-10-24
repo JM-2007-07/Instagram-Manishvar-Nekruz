@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { getApiError } from '@/lib/api/errors';
 import type { UserSummary } from '@/lib/api/types';
-import { useSearchPeopleQuery } from '../api';
+import { useAccountSearch } from '@/features/search/user-search';
+import { useDebouncedValue } from '@/features/users/use-debounced-value';
 import { ChatAvatar } from './chat-avatar';
 
 // Поиск людей с выбором (чекбоксы): для нового чата и добавления участников.
@@ -18,9 +19,10 @@ export function PeoplePicker({
   excludeIds?: string[];
 }) {
   const [query, setQuery] = useState('');
-  const q = query.trim();
-  const { data, isFetching, isError, error } = useSearchPeopleQuery(q, { skip: q.length === 0 });
-  const users = (data?.items ?? []).filter((u) => !excludeIds.includes(u.id));
+  // Поиск аккаунтов — общий для приложения (TanStack Query, ADR 0019), с задержкой 300 мс.
+  const q = useDebouncedValue(query.trim(), 300);
+  const { data, isFetching, isError, error } = useAccountSearch(q);
+  const users: UserSummary[] = (data?.items ?? []).filter((u) => !excludeIds.includes(u.id));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
-import { Mic, MicOff, PhoneOff, Video, VideoOff } from 'lucide-react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Maximize2, Mic, MicOff, Minimize2, PhoneOff, Video, VideoOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { showApiError } from '@/lib/api/errors';
@@ -61,12 +61,31 @@ function VideoView({
   );
 }
 
+// «0:42» — сколько идёт разговор.
+function CallTimer({ since }: { since: number | null }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  if (since === null) return null;
+  const sec = Math.max(0, Math.floor((now - since) / 1000));
+  return (
+    <span className="tabular-nums">
+      {Math.floor(sec / 60)}:{String(sec % 60).padStart(2, '0')}
+    </span>
+  );
+}
+
 // Окно входящего звонка и окно звонка (SCREENS §3.12). Монтируется один раз в AppShell: входящие звонки приходят на любой странице.
 export function CallManager({ children }: { children: React.ReactNode }) {
   const [incoming, setIncoming] = useState<Call | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
+  // Свёрнутый звонок — маленькая панель в углу; разговор идёт, приложением можно пользоваться.
+  const [minimized, setMinimized] = useState(false);
+  const [connectedAt, setConnectedAt] = useState<number | null>(null);
   const peerRef = useRef<Peer | null>(null);
   const callIdRef = useRef<string | null>(null);
   const pendingSignals = useRef<Signal[]>([]);
@@ -84,6 +103,8 @@ export function CallManager({ children }: { children: React.ReactNode }) {
     pendingSignals.current = [];
     setSession(null);
     setIncoming(null);
+    setMinimized(false);
+    setConnectedAt(null);
   }, []);
 
   // Создаёт RTCPeerConnection и открывает окно звонка.
@@ -95,10 +116,12 @@ export function CallManager({ children }: { children: React.ReactNode }) {
         remoteUserId,
         iceServers: iceServers as RTCIceServer[],
         video: call.type === 'VIDEO',
-        onRemoteStream: (remoteStream) =>
+        onRemoteStream: (remoteStream) => {
+          setConnectedAt((t) => t ?? Date.now());
           setSession((s) =>
             s ? { ...s, remoteStream: new MediaStream(remoteStream.getTracks()) } : s,
-          ),
+          );
+        },
         onConnectionState: (state) => {
           if (state === 'failed') toast.error('Соединение потеряно');
         },
@@ -120,14 +143,23 @@ export function CallManager({ children }: { children: React.ReactNode }) {
     async (chat: Chat, meId: string, type: Call['type']) => {
       const peerUser = chat.participants.find((p) => p.id !== meId);
       if (!peerUser) return;
+      let call: Call;
       try {
-        const call = await startCallMutation({ chatId: chat.id, type }).unwrap();
-        await openSession(call, true, peerUser.id, peerUser.userName);
+        call = await startCallMutation({ chatId: chat.id, type }).unwrap();
       } catch (error) {
         showApiError(error);
+        return;
+      }
+      try {
+        await openSession(call, true, peerUser.id, peerUser.userName);
+      } catch {
+        // Нет доступа к камере/микрофону — звонок не должен «висеть» у собеседника.
+        toast.error('Нет доступа к камере или микрофону');
+        closeSession();
+        void endCall({ callId: call.id, chatId: call.chatId });
       }
     },
-    [openSession, startCallMutation],
+    [closeSession, endCall, openSession, startCallMutation],
   );
 
   useRealtimeEvent<{ call: Call }>('call:incoming', ({ call }) => {
@@ -164,7 +196,13 @@ export function CallManager({ children }: { children: React.ReactNode }) {
     try {
       const accepted = await acceptCall(call.id).unwrap();
       setIncoming(null);
-      await openSession(accepted, false, call.initiator.id, call.initiator.userName);
+      try {
+        await openSession(accepted, false, call.initiator.id, call.initiator.userName);
+      } catch {
+        toast.error('Нет доступа к камере или микрофону');
+        closeSession();
+        void endCall({ callId: call.id, chatId: call.chatId });
+      }
     } catch (error) {
       callIdRef.current = null;
       setIncoming(null);
@@ -231,63 +269,182 @@ export function CallManager({ children }: { children: React.ReactNode }) {
       )}
 
       {session && (
-        <div
-          role="dialog"
-          aria-label="Звонок"
-          className="fixed inset-0 z-50 flex flex-col bg-black text-white"
-        >
-          <div className="relative flex-1">
-            <VideoView stream={session.remoteStream} className="size-full object-contain" />
-            {!session.remoteStream && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                <p className="text-20 font-semibold">{session.remoteName}</p>
-                <p className="text-14 opacity-70">{session.isCaller ? 'Вызов…' : 'Соединение…'}</p>
-              </div>
-            )}
-            {session.call.type === 'VIDEO' && (
-              <VideoView
-                stream={session.localStream}
-                muted
-                className="absolute right-4 bottom-4 h-40 w-28 rounded-xl border border-white/30 object-cover md:h-48 md:w-36"
-              />
-            )}
-          </div>
-          <div className="flex justify-center gap-4 p-5">
-            <button
-              type="button"
-              aria-label={micOn ? 'Выключить микрофон' : 'Включить микрофон'}
-              onClick={() => {
-                peerRef.current?.setMicEnabled(!micOn);
-                setMicOn(!micOn);
-              }}
-              className="flex size-12 items-center justify-center rounded-full bg-white/20"
-            >
-              {micOn ? <Mic /> : <MicOff />}
-            </button>
-            {session.call.type === 'VIDEO' && (
-              <button
-                type="button"
-                aria-label={cameraOn ? 'Выключить камеру' : 'Включить камеру'}
-                onClick={() => {
-                  peerRef.current?.setCameraEnabled(!cameraOn);
-                  setCameraOn(!cameraOn);
-                }}
-                className="flex size-12 items-center justify-center rounded-full bg-white/20"
-              >
-                {cameraOn ? <Video /> : <VideoOff />}
-              </button>
-            )}
-            <button
-              type="button"
-              aria-label="Завершить звонок"
-              onClick={() => void handleEnd()}
-              className="flex size-12 items-center justify-center rounded-full bg-destructive"
-            >
-              <PhoneOff />
-            </button>
-          </div>
-        </div>
+        <CallWindow
+          session={session}
+          minimized={minimized}
+          connectedAt={connectedAt}
+          micOn={micOn}
+          cameraOn={cameraOn}
+          onToggleMic={() => {
+            peerRef.current?.setMicEnabled(!micOn);
+            setMicOn(!micOn);
+          }}
+          onToggleCamera={() => {
+            peerRef.current?.setCameraEnabled(!cameraOn);
+            setCameraOn(!cameraOn);
+          }}
+          onMinimize={setMinimized}
+          onEnd={() => void handleEnd()}
+        />
       )}
     </CallContext.Provider>
+  );
+}
+
+const roundBtn =
+  'flex size-12 items-center justify-center rounded-full bg-white/20 hover:bg-white/30';
+const smallBtn =
+  'flex size-9 items-center justify-center rounded-full bg-white/20 hover:bg-white/30';
+
+// Окно звонка: на весь экран или свёрнутое в правый нижний угол (видео и связь не прерываются —
+// меняется только разметка, RTCPeerConnection живёт в CallManager).
+export function CallWindow({
+  session,
+  minimized,
+  connectedAt,
+  micOn,
+  cameraOn,
+  onToggleMic,
+  onToggleCamera,
+  onMinimize,
+  onEnd,
+}: {
+  session: Session;
+  minimized: boolean;
+  connectedAt: number | null;
+  micOn: boolean;
+  cameraOn: boolean;
+  onToggleMic: () => void;
+  onToggleCamera: () => void;
+  onMinimize: (minimized: boolean) => void;
+  onEnd: () => void;
+}) {
+  const isVideo = session.call.type === 'VIDEO';
+  const status = session.remoteStream ? (
+    <CallTimer since={connectedAt} />
+  ) : session.isCaller ? (
+    'Вызов…'
+  ) : (
+    'Соединение…'
+  );
+
+  if (minimized) {
+    return (
+      <div
+        role="dialog"
+        aria-label="Звонок (свёрнут)"
+        className="fixed right-4 bottom-20 z-50 w-[260px] overflow-hidden rounded-2xl bg-black text-white shadow-[var(--shadow-strong)] md:bottom-24"
+      >
+        {isVideo ? (
+          <button
+            type="button"
+            aria-label="Развернуть звонок"
+            onClick={() => onMinimize(false)}
+            className="relative block aspect-video w-full"
+          >
+            <VideoView stream={session.remoteStream} className="size-full object-cover" />
+          </button>
+        ) : (
+          // Аудио: звук идёт через скрытый <video>, чтобы он не пропал при сворачивании.
+          <VideoView stream={session.remoteStream} className="hidden" />
+        )}
+        <div className="flex items-center gap-2 p-2">
+          <div className="min-w-0 flex-1 px-1">
+            <p className="truncate text-14 font-semibold">{session.remoteName}</p>
+            <p className="text-12 opacity-70">{status}</p>
+          </div>
+          <button
+            type="button"
+            aria-label={micOn ? 'Выключить микрофон' : 'Включить микрофон'}
+            onClick={onToggleMic}
+            className={smallBtn}
+          >
+            {micOn ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+          </button>
+          <button
+            type="button"
+            aria-label="Развернуть звонок"
+            onClick={() => onMinimize(false)}
+            className={smallBtn}
+          >
+            <Maximize2 className="size-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Завершить звонок"
+            onClick={onEnd}
+            className="flex size-9 items-center justify-center rounded-full bg-destructive"
+          >
+            <PhoneOff className="size-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-label="Звонок"
+      className="fixed inset-0 z-50 flex flex-col bg-black text-white"
+    >
+      {/* min-h-0 и absolute: иначе видео высотой с камеру (720–1080 px) растягивает блок и
+          выталкивает кнопки за нижний край экрана */}
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <VideoView
+          stream={session.remoteStream}
+          className="absolute inset-0 size-full object-contain"
+        />
+        {(!session.remoteStream || !isVideo) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <p className="text-20 font-semibold">{session.remoteName}</p>
+            <p className="text-14 opacity-70">{status}</p>
+          </div>
+        )}
+        <button
+          type="button"
+          aria-label="Свернуть звонок"
+          onClick={() => onMinimize(true)}
+          className="absolute top-4 left-4 flex size-10 items-center justify-center rounded-full bg-white/20 hover:bg-white/30"
+        >
+          <Minimize2 className="size-5" />
+        </button>
+        {isVideo && (
+          <VideoView
+            stream={session.localStream}
+            muted
+            className="absolute right-4 bottom-4 h-40 w-28 rounded-xl border border-white/30 object-cover md:h-48 md:w-36"
+          />
+        )}
+      </div>
+      <div className="flex shrink-0 justify-center gap-4 p-5 pb-[max(20px,env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          aria-label={micOn ? 'Выключить микрофон' : 'Включить микрофон'}
+          onClick={onToggleMic}
+          className={roundBtn}
+        >
+          {micOn ? <Mic /> : <MicOff />}
+        </button>
+        {isVideo && (
+          <button
+            type="button"
+            aria-label={cameraOn ? 'Выключить камеру' : 'Включить камеру'}
+            onClick={onToggleCamera}
+            className={roundBtn}
+          >
+            {cameraOn ? <Video /> : <VideoOff />}
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="Завершить звонок"
+          onClick={onEnd}
+          className="flex size-12 items-center justify-center rounded-full bg-destructive"
+        >
+          <PhoneOff />
+        </button>
+      </div>
+    </div>
   );
 }

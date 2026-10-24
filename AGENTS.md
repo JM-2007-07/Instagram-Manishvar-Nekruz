@@ -78,9 +78,10 @@
   `NEXT_PUBLIC_REALTIME_URL` для Socket.IO (ADR 0013).
 - Запросы из браузера — только RTK Query: один `baseApi` (`apps/web/src/lib/api/base-api.ts`), эндпоинты функции — `injectEndpoints`
   в `features/<name>/api.ts` ([образец](docs/development/CODING_CONVENTIONS.md#32-apits--образец-формы)). Server Components — только `serverFetch` для проверки сессии.
-  Не добавлять axios, TanStack Query, SWR, openapi-fetch, Zustand, свои Redux slice'ы, Server Actions для изменений.
-  Исключения ровно два: загрузка файлов с прогрессом — `uploadMedia()` в `lib/api/upload.ts`; события — одно подключение
-  Socket.IO в `lib/realtime.ts`, которое обновляет кэш RTK Query.
+  Не добавлять axios, TanStack Query (кроме поиска аккаунтов, ADR 0019), SWR, openapi-fetch, Zustand, свои Redux slice'ы, Server Actions для изменений.
+  Исключения ровно три: загрузка файлов с прогрессом — `uploadMedia()` в `lib/api/upload.ts`; события — одно подключение
+  Socket.IO в `lib/realtime.ts`, которое обновляет кэш RTK Query; поиск аккаунтов — TanStack Query в
+  `features/search/user-search.ts` (один `QueryClient` в `lib/query-client.tsx`, [ADR 0019](docs/decisions/0019-tanstack-query-user-search.md)).
 - Компоненты не вызывают API напрямую — только через `features/<name>/api.ts`.
 - Типы API генерируются (`npm run contract`). Не редактировать руками: `docs/api/openapi.json`,
   `apps/web/src/lib/api/schema.d.ts`, `docs/api/original-swagger.json`, влитые миграции Prisma.

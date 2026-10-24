@@ -27,7 +27,7 @@ same-origin прокси, HttpOnly-сессия, типы из Swagger backend, 
 4. **Кэш:** инвалидация тегами по единой таблице (API_REQUEST_ARCHITECTURE.md §6).
 5. **Server Components** не загружают данные страниц: только проверка сессии в layout `(main)` через небольшой
    `serverFetch` (`lib/api/server.ts`). Данные страниц загружает RTK Query в Client Components.
-6. `openapi-fetch` и TanStack Query **не используются**.
+6. `openapi-fetch` и TanStack Query **не используются** (исключение — поиск аккаунтов, [ADR 0019](0019-tanstack-query-user-search.md)).
 
 ## Рассмотренные альтернативы
 

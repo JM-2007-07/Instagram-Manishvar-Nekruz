@@ -43,10 +43,13 @@ export const directApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, chatId) => [{ type: 'Message', id: chatId }],
     }),
 
-    // Поиск людей для нового чата
-    searchPeople: build.query<Page<UserSummary>, string>({
-      query: (q) => ({ url: '/search/users', params: { q } }),
-      providesTags: [{ type: 'User', id: 'SEARCH' }],
+    // «Поделиться» публикацией в несколько чатов и/или людям (личный чат найдётся или создастся).
+    sharePost: build.mutation<
+      { messages: Message[] },
+      { postId: string; chatIds: string[]; userIds: string[] }
+    >({
+      query: (body) => ({ url: '/messages/share', method: 'POST', body }),
+      invalidatesTags: [{ type: 'Chat', id: 'LIST' }],
     }),
 
     createChat: build.mutation<Chat, { userIds: string[]; title?: string }>({
@@ -291,7 +294,7 @@ export const {
   useGetChatsInfiniteQuery,
   useGetChatQuery,
   useGetMessagesInfiniteQuery,
-  useSearchPeopleQuery,
+  useSharePostMutation,
   useCreateChatMutation,
   useUpdateChatMutation,
   useAddParticipantsMutation,

@@ -16,6 +16,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useClearAccountSearch } from '@/features/search/user-search';
 import { useLogoutMutation } from '@/features/auth/api';
 import { parseTheme, setTheme, type Theme } from '@/lib/theme';
 
@@ -37,6 +38,7 @@ export function MoreMenu({
 }) {
   const router = useRouter();
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
+  const clearAccountSearch = useClearAccountSearch();
   const [current, setCurrent] = useState<Theme>(theme);
 
   async function onLogout() {
@@ -45,6 +47,7 @@ export function MoreMenu({
     } catch {
       // Сессия могла уже закончиться — всё равно уходим на страницу входа.
     }
+    clearAccountSearch(); // кэш RTK Query очищает сам logout, кэш TanStack Query (поиск) — здесь
     router.replace('/accounts/login/');
   }
 

@@ -522,19 +522,16 @@ export class PostsService {
     if (kind === 'TAGGED') {
       return this.pageByTime(viewerId, [{ userTags: { some: { taggedUserId: userId } } }], query);
     }
-    const type = kind === 'REELS' ? 'REEL' : 'POST';
-    if (kind === 'REELS') return this.pageByTime(viewerId, [{ authorId: userId, type }], query);
+    if (kind === 'REELS') {
+      return this.pageByTime(viewerId, [{ authorId: userId, type: 'REEL' }], query);
+    }
 
-    const page = await this.pageByTime(
-      viewerId,
-      [{ authorId: userId, type, pinnedAt: null }],
-      query,
-    );
+    // «Публикации» — все публикации автора, и фото, и reels (как у Instagram и как postCount).
+    const page = await this.pageByTime(viewerId, [{ authorId: userId, pinnedAt: null }], query);
     if (query.cursor) return page;
     const pinned = await this.prisma.post.findMany({
       where: {
         authorId: userId,
-        type,
         pinnedAt: { not: null },
         isArchived: false,
         status: 'PUBLISHED',

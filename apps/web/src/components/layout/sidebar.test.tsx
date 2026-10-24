@@ -4,6 +4,7 @@ import type { Me } from '@/lib/api/types';
 import { Sidebar } from './sidebar';
 
 let pathname = '/';
+vi.mock('@/features/search/user-search', () => ({ useClearAccountSearch: () => () => {} }));
 vi.mock('next/navigation', () => ({ usePathname: () => pathname }));
 vi.mock('@/components/layout/more-menu', () => ({
   MoreMenu: () => <button type="button" aria-label="Ещё" />,
@@ -13,7 +14,6 @@ vi.mock('@/features/notifications/components/nav-badge', () => ({ NavBadge: () =
 vi.mock('@/features/notifications/components/notifications-panel', () => ({
   NotificationsPanel: () => null,
 }));
-vi.mock('@/features/search/components/search-panel', () => ({ SearchPanel: () => null }));
 
 const me = { userName: 'alice', avatarUrl: null } as unknown as Me;
 
@@ -36,7 +36,7 @@ describe('Sidebar', () => {
       'Главная',
       'Reels',
       'Сообщения',
-      'Поисковый запрос',
+      'Поиск',
       'Уведомления',
       'Создать',
       'Профиль',
@@ -49,8 +49,8 @@ describe('Sidebar', () => {
     // Next Link убирает завершающий слэш (trailingSlash: false), поэтому сравниваем без него.
     const href = (name: string) =>
       nav.getByRole('link', { name }).getAttribute('href')?.replace(/\/$/, '');
-    // «Поисковый запрос» — кнопка, открывающая панель поиска, а не ссылка.
-    expect(nav.getByRole('button', { name: 'Поисковый запрос' })).toBeInTheDocument();
+    // «Поиск» ведёт на «Интересное» (поле поиска там, как у instagram.com).
+    expect(href('Поиск')).toBe('/explore');
     expect(href('Профиль')).toBe('/alice');
     expect(href('Reels')).toBe('/reels');
   });
