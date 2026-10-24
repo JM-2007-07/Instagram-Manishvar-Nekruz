@@ -66,6 +66,21 @@ describe('validateEnv', () => {
     ).toThrow(/MAIL_DRIVER/);
   });
 
+  it('MAIL_DRIVER=log в production разрешён только с MAIL_LOG_IN_PRODUCTION=true', () => {
+    const prod = {
+      DATABASE_URL: 'postgresql://u:p@h/db',
+      NODE_ENV: 'production',
+      WEB_ORIGIN: 'https://example.onrender.com',
+      SESSION_COOKIE_NAME: '__Host-sid',
+      MAIL_DRIVER: 'log',
+    };
+    expect(validateEnv({ ...prod, MAIL_LOG_IN_PRODUCTION: 'true' }).MAIL_DRIVER).toBe('log');
+    expect(() => validateEnv({ ...prod, MAIL_LOG_IN_PRODUCTION: 'false' })).toThrow(/MAIL_DRIVER/);
+    expect(() => validateEnv({ ...prod, MAIL_LOG_IN_PRODUCTION: 'yes' })).toThrow(
+      /MAIL_LOG_IN_PRODUCTION/,
+    );
+  });
+
   it('MAIL_DRIVER=smtp без SMTP_HOST/SMTP_PORT -> ошибка; пустые строки = не задано', () => {
     expect(() =>
       validateEnv({

@@ -44,10 +44,14 @@ services:
         value: '30'
       - key: PASSWORD_RESET_TTL_MINUTES
         value: '30'
-      # В production MAIL_DRIVER=log запрещён (apps/api/src/config/env.ts): API не запустится.
-      # SMTP_* и MAIL_FROM — в панели Render (Gmail: smtp.gmail.com, 465, адрес, пароль приложения; MAIL_FROM = тот же адрес).
+      # Бесплатный Render блокирует SMTP-порты 25/465/587, а новый аккаунт Brevo (порт 2525) может быть отключён.
+      # Поэтому для показа письма пишутся в лог: коды подтверждения — в Logs сервиса (поиск «код подтверждения»).
+      # Без MAIL_LOG_IN_PRODUCTION=true драйвер log в production запрещён (apps/api/src/config/env.ts).
+      # Настоящая почта: MAIL_DRIVER=smtp, MAIL_LOG_IN_PRODUCTION убрать, SMTP_* и MAIL_FROM — в панели Render.
       - key: MAIL_DRIVER
-        value: smtp
+        value: log
+      - key: MAIL_LOG_IN_PRODUCTION
+        value: 'true'
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT

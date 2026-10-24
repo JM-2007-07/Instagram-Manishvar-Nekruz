@@ -45,12 +45,17 @@
 ## Ограничения бесплатного плана (важно для экзамена)
 
 - Сервисы засыпают через 15 минут без запросов, первое открытие — около минуты. **Открыть сайт за 5 минут до показа.**
+  Пока спит `instagram-web`, публичный адрес отвечает **502**: запрос через API его не будит. Сначала открыть адрес
+  `instagram-web` напрямую, потом публичный — или пинговать оба раз в 10 минут (cron-job.org, UptimeRobot).
 - **Файлы на диске временные:** фото, видео и голосовые пропадают после сна, перезапуска и нового деплоя.
   Запускать `demo-data` незадолго до показа и не давать сервису уснуть. Постоянно — только платный план с диском
   или драйвер `s3` (T5.B2).
-- Почта — только `MAIL_DRIVER=smtp`: с `log` при `NODE_ENV=production` API не запускается
-  (`MAIL_DRIVER: "log" is not allowed in production`, `apps/api/src/config/env.ts`). В Environment задать
-  `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` (для Gmail — пароль приложения, как в `.env.example`).
+- **Почта.** Бесплатный Render блокирует исходящие SMTP-порты 25, 465, 587 (Gmail: `Connection timeout`).
+  Brevo на порту 2525 доходит, но новый аккаунт Brevo отключил отправку («Your sending platform is currently
+  disabled»). Поэтому сейчас `render.yaml` задаёт `MAIL_DRIVER=log` + `MAIL_LOG_IN_PRODUCTION=true`: письма не
+  уходят, а пишутся в **Logs** сервиса `instagram-api` — код регистрации искать по «код подтверждения».
+  Без флага `log` в production запрещён (`apps/api/src/config/env.ts`). Настоящая почта: `MAIL_DRIVER=smtp`, флаг
+  убрать, в Environment — `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=2525`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`.
 - Звонки между разными сетями могут не соединиться без TURN (`TURN_URLS`, `TURN_SHARED_SECRET`).
 
 ## Локальная проверка схемы
@@ -97,7 +102,7 @@
      | `SESSION_COOKIE_NAME` | `__Host-sid` |
      | `SESSION_IDLE_TTL_DAYS` / `SESSION_ABSOLUTE_TTL_DAYS` | `7` / `30` |
      | `PASSWORD_RESET_TTL_MINUTES` | `30` |
-     | `MAIL_DRIVER` | `smtp` + `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` (`log` в production запрещён) |
+     | `MAIL_DRIVER` | `log` + `MAIL_LOG_IN_PRODUCTION=true` (коды в Logs); для настоящей почты — `smtp` + `SMTP_*` (порт 2525) |
      | `APP_NAME` / `MAIL_FROM` | `Instagram` / адрес отправителя (для Gmail — тот же, что `SMTP_USER`) |
      | `STORAGE_DRIVER` / `STORAGE_LOCAL_DIR` | `local` / `/data/storage` |
      | `RAILPACK_DEPLOY_APT_PACKAGES` | `ffmpeg` |
