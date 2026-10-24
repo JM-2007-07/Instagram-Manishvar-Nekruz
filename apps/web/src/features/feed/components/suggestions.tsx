@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { ProfileHoverCard } from '@/features/profile/components/profile-hover-card';
 import type { FollowStatus } from '@/lib/api/types';
 import { BadgeCheck } from 'lucide-react';
-import { FollowButton, UserAvatar } from '@/components/temp/student-a';
+import { FollowButton } from '@/components/temp/student-a';
 import { useStableList } from '@/features/users/use-stable-list';
 import { useGetSuggestionsQuery } from '../api';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 // Список рекомендованных аккаунтов (правая колонка и экран «Добро пожаловать»).
 export function Suggestions({ limit = 5, title = true }: { limit?: number; title?: boolean }) {
@@ -61,11 +62,7 @@ function SuggestionItem({ user }: { user: Suggestion }) {
   );
   return (
     <li className="flex items-center gap-3">
-      {card(
-        <Link href={`/${user.userName}/`}>
-          <UserAvatar user={user} size={44} />
-        </Link>,
-      )}
+      {card(<StoryAvatar user={user} size={44} fallbackHref={`/${user.userName}/`} />)}
       <div className="min-w-0 flex-1 text-14">
         {card(
           <Link href={`/${user.userName}/`} className="flex items-center gap-1 font-semibold">

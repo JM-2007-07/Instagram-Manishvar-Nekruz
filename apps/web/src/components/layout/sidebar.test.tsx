@@ -4,6 +4,7 @@ import type { Me } from '@/lib/api/types';
 import { Sidebar } from './sidebar';
 
 let pathname = '/';
+vi.mock('@/features/search/user-search', () => ({ useClearAccountSearch: () => () => {} }));
 vi.mock('next/navigation', () => ({ usePathname: () => pathname }));
 vi.mock('@/components/layout/more-menu', () => ({
   MoreMenu: () => <button type="button" aria-label="Ещё" />,

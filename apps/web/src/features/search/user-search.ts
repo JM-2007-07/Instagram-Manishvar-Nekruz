@@ -1,6 +1,6 @@
 'use client';
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Schemas } from '@/lib/api/types';
 
 export type FoundAccount = Schemas['FollowListItemDto'];
@@ -35,4 +35,10 @@ export function useAccountSearch(q: string) {
     enabled: q.length > 0,
     placeholderData: keepPreviousData, // пока идёт новый запрос, видны прошлые результаты
   });
+}
+
+/** Очистка кэша поиска при выходе: результаты зависят от того, кто ищет (закрытые аккаунты, блокировки). */
+export function useClearAccountSearch() {
+  const client = useQueryClient();
+  return () => client.removeQueries({ queryKey: ['search'] });
 }

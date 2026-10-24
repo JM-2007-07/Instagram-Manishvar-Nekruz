@@ -96,7 +96,7 @@
 | T4.B3 | Редактор историй, стикеры P2 | B | — | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T4.B4 | Жалобы и админ-панель | B | — | 🟦 | `feat/backend-b` → [PR #9](https://github.com/JM-2007-07/Instagram-Manishvar-Nekruz/pull/9) | — |
 | T4.B5 | Обрезка и фильтры | B | — | ⬜ | — | T3.B2 |
-| T5.A1 | Почта, TURN, деплой | A | — | ⬜ | — | Q23, Q24, Q34 |
+| T5.A1 | Почта, TURN, деплой | A | — | 🟡 | — | Q23, Q24, Q34 |
 | T5.A2 | Дизайн-сверка экранов A | A | ✔ | ⬜ | — | M-FE |
 | T5.A3 | Подготовка к защите (A) | A | ✔ | ⬜ | — | M-FE |
 | T5.B1 | Playwright | B | ✔ | ⬜ | — | M-FE |
@@ -158,6 +158,9 @@
 
 | Дата и время | История | Кратко |
 |---|---|---|
+| 2026-10-24 01:40 | [render-prep-and-story-rings](stories/2026-10-24_0140_render-prep-and-story-rings.md) | подготовка к Render (render.yaml, API пересылает страницы, ADR 0020, Q24 закрыт); кольца историй серые и кликабельные на всех аватарах |
+| 2026-10-24 01:00 | [share-and-profile-grid](stories/2026-10-24_0100_share-and-profile-grid.md) | окно «Поделиться» в Direct (выбор чатов, сообщение, «Отправить»); в «Публикациях» профиля и reels |
+| 2026-10-24 00:30 | [release-audit](stories/2026-10-24_0030_release-audit.md) | проверка перед экзаменом: 76 загрузок экранов без ошибок, стабильный запуск API, очистка кэша поиска при выходе, чек-лист деплоя; Campus Mode отложен |
 | 2026-10-24 00:10 | [login-like-instagram](stories/2026-10-24_0010_login-like-instagram.md) | страница входа по размерам instagram.com: колонки, картинка 840×480, слоган шрифтом с засечками 2,8vw с теми же переносами |
 | 2026-10-23 23:20 | [explore-search-like-instagram](stories/2026-10-23_2320_explore-search-like-instagram.md) | «Поиск» ведёт на «Интересное»: поле сверху, сетка 5 колонок, режим поиска с «‹» — размеры сверены с instagram.com |
 | 2026-10-23 22:40 | [call-layout-rings-hovercard-dock](stories/2026-10-23_2240_call-layout-rings-hovercard-dock.md) | кнопки звонка на большом экране, кольца историй как у Instagram, карточка профиля при наведении на рекомендации, кнопка «Сообщения» справа внизу |

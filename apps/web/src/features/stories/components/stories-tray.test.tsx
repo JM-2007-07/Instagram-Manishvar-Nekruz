@@ -40,6 +40,8 @@ describe('StoriesTray', () => {
     ]);
     renderWithStore(<StoriesTray />);
     const link = await screen.findByRole('link', { name: /Ваша история/ });
+    // Своя история есть — «+» остаётся: можно добавить ещё одну.
+    expect(screen.getByRole('button', { name: 'Добавить историю' })).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/stories/me/s-me');
   });
 });

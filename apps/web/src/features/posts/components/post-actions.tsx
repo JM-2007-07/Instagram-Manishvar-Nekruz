@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Heart, MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { SaveButton } from '@/components/temp/student-a';
+import { SharePostDialog } from '@/features/direct/components/share-post-dialog';
 import { cn } from '@/lib/utils';
 import type { Post } from '../types';
 
@@ -46,6 +48,7 @@ export function PostActions({
   /** Если не задан — кнопка «Комментировать» не ведёт никуда (мы уже в окне поста). */
   commentHref?: string;
 }) {
+  const [sharing, setSharing] = useState(false);
   return (
     <div className="-ml-2 flex items-center">
       <button
@@ -62,11 +65,7 @@ export function PostActions({
       </button>
       {!post.commentsDisabled &&
         (commentHref ? (
-          <Link
-            href={commentHref}
-            aria-label="Комментировать"
-            className={counts ? withCount : btn}
-          >
+          <Link href={commentHref} aria-label="Комментировать" className={counts ? withCount : btn}>
             <MessageCircle className="size-6" />
             {!!counts?.commentCount && (
               <span data-testid="comment-count">{compactCount(counts.commentCount)}</span>
@@ -80,11 +79,17 @@ export function PostActions({
       <button
         type="button"
         aria-label="Поделиться"
-        onClick={() => copyPostLink(post.shortcode)}
+        onClick={() => setSharing(true)}
         className={btn}
       >
         <Send className="size-6" />
       </button>
+      <SharePostDialog
+        postId={post.id}
+        shortcode={post.shortcode}
+        open={sharing}
+        onOpenChange={setSharing}
+      />
       <div className="ml-auto -mr-2">
         <SaveButton postId={post.id} isSavedByMe={post.isSavedByMe} />
       </div>

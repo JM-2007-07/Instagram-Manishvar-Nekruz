@@ -24,7 +24,11 @@ export function proxy(request: NextRequest) {
 
   const hasSession = request.cookies.has('sid') || request.cookies.has('__Host-sid');
   if (!hasSession) {
-    return NextResponse.redirect(new URL('/accounts/login/', request.url));
+    // На Render страницы приходят через API (ADR 0020): request.url — внутренний адрес сервиса Next.js,
+    // поэтому редирект строим от публичного PUBLIC_ORIGIN, если он задан.
+    return NextResponse.redirect(
+      new URL('/accounts/login/', process.env.PUBLIC_ORIGIN || request.url),
+    );
   }
 
   return NextResponse.next();

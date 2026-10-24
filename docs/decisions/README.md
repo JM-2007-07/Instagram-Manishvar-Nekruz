@@ -26,6 +26,7 @@ ADR (Architecture Decision Record) — короткая запись: какое
 | [0017](0017-cursor-pagination.md) | Курсорная пагинация для всех списков | ✅ Принято |
 | [0018](0018-parallel-backend-workstreams.md) | Параллельный backend: многофайловая схема Prisma, заглушки общих сервисов, backend-first | ✅ Принято |
 | [0019](0019-tanstack-query-user-search.md) | TanStack Query — только для поиска аккаунтов (требование преподавателя) | ✅ Принято |
+| [0020](0020-render-single-origin.md) | Render (бесплатный план): один публичный адрес — API пересылает страницы в Next.js | ✅ Принято |
 
 ## Как добавить ADR
 

@@ -15,17 +15,19 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
-import { SaveButton, UserAvatar } from '@/components/temp/student-a';
+import { SaveButton } from '@/components/temp/student-a';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { SharePostDialog } from '@/features/direct/components/share-post-dialog';
 import { useLikePostMutation } from '@/features/posts/api';
 import type { Post } from '@/features/posts/types';
 import { cn } from '@/lib/utils';
 import { usePlayReelMutation } from '../api';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 type Props = {
   post: Post;
@@ -48,6 +50,7 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [bigHeart, setBigHeart] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [sharing, setSharing] = useState(false);
   // Состояние видео: загружается (или буферизуется), готово, ошибка — у каждого свой вид поверх ролика.
   const [videoState, setVideoState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [likePost] = useLikePostMutation();
@@ -136,9 +139,20 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
         <MessageCircle className="size-6" />
         <span>{post.commentCount}</span>
       </Link>
-      <button type="button" aria-label="Поделиться" className={actionClass} onClick={copyLink}>
+      <button
+        type="button"
+        aria-label="Поделиться"
+        className={actionClass}
+        onClick={() => setSharing(true)}
+      >
         <Send className="size-6" />
       </button>
+      <SharePostDialog
+        postId={post.id}
+        shortcode={post.shortcode}
+        open={sharing}
+        onOpenChange={setSharing}
+      />
       <SaveButton postId={post.id} isSavedByMe={post.isSavedByMe} />
       <DropdownMenu>
         <DropdownMenuTrigger aria-label="Ещё" className={actionClass}>
@@ -238,7 +252,7 @@ export function ReelItem({ post, muted, onToggleMute }: Props) {
         {/* Низ видео: автор и подпись */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 pr-16 text-white md:pr-4">
           <div className="pointer-events-auto flex items-center gap-2">
-            <UserAvatar user={post.author} size={32} />
+            <StoryAvatar user={post.author} size={32} fallbackHref={`/${post.author.userName}/`} />
             <Link href={`/${post.author.userName}/`} className="text-14 font-semibold drop-shadow">
               {post.author.userName}
             </Link>

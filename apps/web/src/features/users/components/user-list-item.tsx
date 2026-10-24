@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
-import { UserAvatar } from './user-avatar';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 type ListUser = {
+  id?: string;
   userName: string;
   fullName?: string;
   avatarUrl: string | null;
@@ -29,26 +30,32 @@ export function UserListItem({
   wrapLink?: (link: React.ReactElement) => React.ReactNode;
 }) {
   const caption = subtitle ?? user.fullName;
+  const href = `/${user.userName}/`;
+  // Аватар — отдельная ссылка: на историю, если она есть (кольцо), иначе на профиль; имя — на профиль.
   const link = (
-    <Link
-      href={`/${user.userName}/`}
-      onClick={onNavigate}
-      className="flex min-w-0 flex-1 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <UserAvatar user={user} size={avatarSize} />
-      <span className="flex min-w-0 flex-col">
-        <span className="flex items-center gap-1 text-14 font-semibold">
-          <span className="truncate">{user.userName}</span>
-          {user.isVerified && (
-            <BadgeCheck
-              aria-label="Подтверждённый аккаунт"
-              className="size-3.5 shrink-0 fill-primary text-primary-foreground"
-            />
-          )}
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      <StoryAvatar user={user} size={avatarSize} fallbackHref={href} onClick={onNavigate} />
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span className="flex min-w-0 flex-col">
+          <span className="flex items-center gap-1 text-14 font-semibold">
+            <span className="truncate">{user.userName}</span>
+            {user.isVerified && (
+              <BadgeCheck
+                aria-label="Подтверждённый аккаунт"
+                className="size-3.5 shrink-0 fill-primary text-primary-foreground"
+              />
+            )}
+          </span>
+          {caption ? (
+            <span className="truncate text-14 text-muted-foreground">{caption}</span>
+          ) : null}
         </span>
-        {caption ? <span className="truncate text-14 text-muted-foreground">{caption}</span> : null}
-      </span>
-    </Link>
+      </Link>
+    </div>
   );
   return (
     <div className="flex items-center gap-3 px-4 py-2">

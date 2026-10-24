@@ -11,11 +11,14 @@ import { ChatAvatar } from './chat-avatar';
 /**
  * Плавающая кнопка «Сообщения» в правом нижнем углу (как у Instagram на компьютере):
  * значок с числом непрочитанных чатов, подпись и фото трёх последних собеседников.
- * Не показывается на телефоне и в самом Direct.
+ * Не показывается на телефоне, в самом Direct и там, где закрыла бы кнопки формы:
+ * страница публикации (поле комментария), настройки (кнопка «Отправить»), истории.
  */
+const HIDDEN = /^\/(direct|accounts|p|stories)(\/|$)/;
+
 export function MessagesDock({ meId }: { meId: string }) {
   const pathname = usePathname();
-  const hidden = pathname.startsWith('/direct');
+  const hidden = HIDDEN.test(pathname);
   const { data } = useGetChatsInfiniteQuery('PRIMARY', { skip: hidden });
   if (hidden) return null;
 

@@ -98,38 +98,42 @@ export function StoriesTray() {
         onScroll={updateEdges}
         className="flex gap-[15px] overflow-x-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {/* «Ваша история» всегда первая */}
-        {own ? (
-          <Link
-            href={storyPath(own.author.userName, own.storyIds[0])}
-            className={itemClass}
-            style={{ width: DESIGN.storyRing }}
-          >
-            <Ring kind={own.hasUnseen ? (own.isCloseFriends ? 'close-friends' : 'unseen') : 'seen'}>
-              {ownAvatar}
-            </Ring>
-            <span className="w-full truncate text-center text-12 text-foreground">
-              Ваша история
-            </span>
-          </Link>
-        ) : (
+        {/* «Ваша история» всегда первая. Есть история — фото открывает её, а «+» добавляет ещё одну
+            (кнопка рядом со ссылкой, а не внутри: кнопка в ссылке недопустима) */}
+        <div className="relative shrink-0" style={{ width: DESIGN.storyRing }}>
+          {own ? (
+            <Link
+              href={storyPath(own.author.userName, own.storyIds[0])}
+              aria-label="Ваша история"
+              className={itemClass}
+            >
+              <Ring
+                kind={own.hasUnseen ? (own.isCloseFriends ? 'close-friends' : 'unseen') : 'seen'}
+              >
+                {ownAvatar}
+              </Ring>
+              <span className="w-full truncate text-center text-12 text-foreground">
+                Ваша история
+              </span>
+            </Link>
+          ) : (
+            <button type="button" onClick={() => setCreateOpen(true)} className={itemClass}>
+              <Ring kind="none">{ownAvatar}</Ring>
+              <span className="w-full truncate text-center text-12 text-foreground">
+                Ваша история
+              </span>
+            </button>
+          )}
           <button
             type="button"
+            aria-label="Добавить историю"
             onClick={() => setCreateOpen(true)}
-            className={itemClass}
-            style={{ width: DESIGN.storyRing }}
+            className="absolute right-1 flex size-6 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            style={{ top: DESIGN.storyRing - 26 }}
           >
-            <span className="relative">
-              <Ring kind="none">{ownAvatar}</Ring>
-              <span className="absolute right-0 bottom-0 flex size-6 items-center justify-center rounded-full border-2 border-background bg-primary text-primary-foreground">
-                <Plus className="size-4" />
-              </span>
-            </span>
-            <span className="w-full truncate text-center text-12 text-foreground">
-              Ваша история
-            </span>
+            <Plus className="size-4" />
           </button>
-        )}
+        </div>
 
         {others.map((item) => (
           <Link

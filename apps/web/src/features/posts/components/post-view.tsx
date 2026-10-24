@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
-import { UserAvatar } from '@/components/temp/student-a';
 import {
   CommentForm,
   CommentThreadProvider,
@@ -18,6 +17,7 @@ import { LikeCount, PostActions } from './post-actions';
 import { mediaAspect } from './post-card';
 import { PostMedia } from './post-media';
 import { PostMenu } from './post-menu';
+import { StoryAvatar } from '@/features/stories/components/story-avatar-link';
 
 // Окно поста: и в модальном окне, и на странице /p/{shortcode}/ (SCREENS §3.5).
 export function PostView({
@@ -94,9 +94,7 @@ function PostContent({
 
         <div className="contents md:order-2 md:flex md:w-[400px] md:shrink-0 md:flex-col md:border-l md:border-border">
           <header className="order-1 flex items-center gap-3 border-b border-border px-4 py-3">
-            <Link href={`/${author.userName}/`}>
-              <UserAvatar user={author} size={32} />
-            </Link>
+            <StoryAvatar user={author} size={32} fallbackHref={`/${author.userName}/`} />
             <div className="flex min-w-0 flex-1 items-center gap-1 text-14">
               <Link href={`/${author.userName}/`} className="truncate font-semibold">
                 {author.userName}
@@ -116,7 +114,7 @@ function PostContent({
           <div className="order-4 px-4 py-3 md:order-2 md:min-h-0 md:flex-1 md:overflow-y-auto">
             {post.caption && (
               <div className="flex gap-3 pb-4">
-                <UserAvatar user={author} size={32} />
+                <StoryAvatar user={author} size={32} fallbackHref={`/${author.userName}/`} />
                 <div className="min-w-0 text-14 break-words">
                   <Link href={`/${author.userName}/`} className="mr-1 font-semibold">
                     {author.userName}

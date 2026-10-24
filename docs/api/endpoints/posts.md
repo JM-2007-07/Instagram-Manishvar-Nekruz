@@ -26,8 +26,8 @@
 | `GET /feed/favorites` | User | `?cursor` | `Page<Post>` | F-FED-03 |
 | `GET /explore` | User | `?cursor` | `Page<Post>` (посты и reels вперемешку) | F-SRC-01 / #21 |
 | `GET /reels` | User | `?cursor` | `Page<Post>` (`type = REEL`) | F-REL-02 / #22 |
-| `GET /users/{userId}/posts` | User (видимость) | `?cursor` — закреплённые первыми | `Page<Post>` | F-PRF-08 / #21, #24 |
-| `GET /users/{userId}/reels` | User (видимость) | `?cursor` | `Page<Post>` | F-PRF-07 |
+| `GET /users/{userId}/posts` | User (видимость) | `?cursor` — закреплённые первыми; и фото, и reels (как `postCount`) | `Page<Post>` | F-PRF-08 / #21, #24 |
+| `GET /users/{userId}/reels` | User (видимость) | `?cursor` — только reels | `Page<Post>` | F-PRF-07 |
 | `GET /users/{userId}/tagged` | User (видимость) | `?cursor` | `Page<Post>` | F-PRF-07 |
 | `GET /me/archive/posts` | User | `?cursor` | `Page<Post>` | F-PST-17 |
 
