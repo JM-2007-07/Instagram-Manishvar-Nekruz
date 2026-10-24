@@ -62,3 +62,52 @@
 
 - `prisma migrate reset` и `migrate dev` на рабочей базе — только `migrate deploy` (он в команде запуска API).
 - Не коммитить значения переменных и адрес базы.
+
+---
+
+# Вариант: Railway
+
+Та же схема (ADR 0020): публичный адрес — сервис API, он пересылает страницы сервису сайта. Отличия от Render:
+постоянный диск (Volume) — файлы не пропадают; сервисы не засыпают; ffmpeg ставится переменной;
+пробный период $5 на 30 дней, дальше Hobby $5/мес. `render.yaml` не нужен — настройки задаются в панели Railway.
+
+## Шаги
+
+1. [railway.com](https://railway.com) → **Login → GitHub**, дать доступ к репозиторию.
+2. **New Project → Deploy from GitHub repo** → `JM-2007-07/Instagram-Manishvar-Nekruz`. Появится один сервис —
+   переименовать в `api`. В проекте **+ Create → Database → PostgreSQL**. Ещё раз **+ Create → GitHub Repo** →
+   тот же репозиторий → переименовать в `web`.
+3. У обоих сервисов: **Settings → Source → Branch** — ветка с этим кодом (`fix/auth-404` или `main`);
+   **Settings → Networking → Generate Domain** — получить адрес `https://…up.railway.app`.
+4. **Сервис `api`:**
+   - Settings → Build → Custom Build Command: `npm ci --include=dev && npm run build -w api`
+   - Settings → Deploy → Custom Start Command: `npm exec -w api -- prisma migrate deploy && npm run start -w api`
+   - Settings → Deploy → Healthcheck Path: `/api/v1/health`
+   - правая кнопка на сервисе → **Attach Volume**, Mount path `/data`
+   - Variables:
+
+     | Переменная | Значение |
+     |---|---|
+     | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (ссылка на базу, Railway подставит сам) |
+     | `NODE_ENV` | `production` |
+     | `WEB_ORIGIN` | адрес сервиса **api** |
+     | `WEB_UPSTREAM_URL` | адрес сервиса **web** |
+     | `TRUST_PROXY` | `true` |
+     | `SESSION_COOKIE_NAME` | `__Host-sid` |
+     | `SESSION_IDLE_TTL_DAYS` / `SESSION_ABSOLUTE_TTL_DAYS` | `7` / `30` |
+     | `PASSWORD_RESET_TTL_MINUTES` | `30` |
+     | `MAIL_DRIVER` | `log` (или `smtp` + `SMTP_*`) |
+     | `APP_NAME` / `MAIL_FROM` | `Instagram` / `no-reply@example.com` |
+     | `STORAGE_DRIVER` / `STORAGE_LOCAL_DIR` | `local` / `/data/storage` |
+     | `RAILPACK_DEPLOY_APT_PACKAGES` | `ffmpeg` |
+     | `TWO_FACTOR_ENCRYPTION_KEY` | любая случайная строка от 32 символов (по желанию) |
+
+5. **Сервис `web`:**
+   - Custom Build Command: `npm ci --include=dev && npm run build -w web`
+   - Custom Start Command: `npm exec -w web -- next start -p $PORT`
+   - Variables: `NODE_ENV=production`, `NEXT_PUBLIC_APP_NAME=Instagram`, а `API_INTERNAL_URL`,
+     `NEXT_PUBLIC_REALTIME_URL`, `PUBLIC_ORIGIN` — **все три = адрес сервиса api**.
+6. **Deploy** у обоих (после изменения адресов `web` пересобрать — `NEXT_PUBLIC_*` встраиваются при сборке).
+7. Данные — со своего компьютера, как в разделе Render: адрес базы — в сервисе Postgres → **Connect → Public
+   Network** (`DATABASE_PUBLIC_URL`), `prisma:seed`; затем `demo-data` с `API_URL` и `WEB_ORIGIN` = адрес api.
+8. Сайт — **адрес сервиса api**. Проверки — те же, что выше.

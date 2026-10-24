@@ -20,7 +20,7 @@ services:
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_VERSION
-        value: "24"
+        value: '24'
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -34,16 +34,16 @@ services:
       - key: WEB_UPSTREAM_URL
         sync: false
       - key: TRUST_PROXY
-        value: "true"
+        value: 'true'
       # Как в .env.example: в production — __Host-sid (только HTTPS, Render даёт HTTPS сам)
       - key: SESSION_COOKIE_NAME
         value: __Host-sid
       - key: SESSION_IDLE_TTL_DAYS
-        value: "7"
+        value: '7'
       - key: SESSION_ABSOLUTE_TTL_DAYS
-        value: "30"
+        value: '30'
       - key: PASSWORD_RESET_TTL_MINUTES
-        value: "30"
+        value: '30'
       - key: MAIL_DRIVER
         value: log
       - key: APP_NAME
@@ -68,7 +68,7 @@ services:
     startCommand: npm exec -w web -- next start -p $PORT
     envVars:
       - key: NODE_VERSION
-        value: "24"
+        value: '24'
       - key: NODE_ENV
         value: production
       # Все три — публичный адрес instagram-api (тот же, что WEB_ORIGIN выше)
